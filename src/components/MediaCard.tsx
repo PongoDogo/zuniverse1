@@ -1,0 +1,70 @@
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Play, Star } from "lucide-react";
+import { Movie, getImageUrl } from "@/lib/tmdb";
+
+interface MediaCardProps {
+  item: Movie;
+  index?: number;
+}
+
+const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
+  const title = item.title || item.name || "Unknown";
+  const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
+  const year = (item.release_date || item.first_air_date || "").split("-")[0];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      whileHover={{ scale: 1.05 }}
+      className="group relative"
+    >
+      <Link to={`/${mediaType}/${item.id}`}>
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-shadow">
+          <img
+            src={getImageUrl(item.poster_path)}
+            alt={title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            loading="lazy"
+          />
+          
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Play Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileHover={{ opacity: 1, scale: 1 }}
+            className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          >
+            <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center glow-shadow">
+              <Play className="w-6 h-6 text-primary-foreground fill-current ml-1" />
+            </div>
+          </motion.div>
+
+          {/* Rating Badge */}
+          {item.vote_average > 0 && (
+            <div className="absolute top-2 right-2 flex items-center gap-1 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-medium">
+              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+              {item.vote_average.toFixed(1)}
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="mt-3 space-y-1">
+          <h3 className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
+            {title}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {year} • {mediaType === "tv" ? "TV Show" : "Movie"}
+          </p>
+        </div>
+      </Link>
+    </motion.div>
+  );
+};
+
+export default MediaCard;
