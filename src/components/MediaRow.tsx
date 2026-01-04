@@ -25,13 +25,13 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="h-8 w-48 bg-secondary rounded animate-pulse" />
-        <div className="flex gap-4 overflow-hidden">
+      <div className="relative group/row min-h-[320px] md:min-h-[350px]">
+        <div className="h-8 w-48 bg-secondary rounded animate-pulse mb-4" />
+        <div className="flex gap-4 overflow-hidden pb-4 -mx-4 px-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="flex-shrink-0 w-[180px] aspect-[2/3] bg-secondary rounded-lg animate-pulse"
+              className="flex-shrink-0 w-[150px] md:w-[180px] aspect-[2/3] bg-secondary rounded-lg animate-pulse"
             />
           ))}
         </div>
@@ -42,7 +42,7 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
   if (!items?.length) return null;
 
   return (
-    <div className="relative group/row">
+    <div className="relative group/row min-h-[320px] md:min-h-[350px]">
       <motion.h2
         initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}

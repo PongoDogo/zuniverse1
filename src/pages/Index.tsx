@@ -46,8 +46,10 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Banner */}
-      {trending && <HeroBanner items={trending} />}
+      {/* Hero Banner - min-height prevents CLS */}
+      <div className="min-h-[70vh] md:min-h-[85vh]">
+        {trending && <HeroBanner items={trending} />}
+      </div>
 
       {/* Content Rows */}
       <div className="relative z-10 -mt-20 space-y-8 pb-16">
