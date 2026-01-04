@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
 import MediaRow from "@/components/MediaRow";
+import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import {
   getTrending,
   getPopular,
@@ -51,6 +52,9 @@ const Index = () => {
       {/* Content Rows */}
       <div className="relative z-10 -mt-20 space-y-8 pb-16">
         <div className="container mx-auto px-4 space-y-10">
+          {/* Continue Watching */}
+          <ContinueWatchingRow />
+
           <MediaRow
             title="Trending Now"
             items={trending || []}
@@ -92,7 +96,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
-          <p>© 2024 StreamVix. Powered by TMDB.</p>
+          <p>© 2024 Zuniverse. Powered by TMDB.</p>
         </div>
       </footer>
     </div>

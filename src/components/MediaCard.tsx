@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, Star } from "lucide-react";
+import { Play, Star, Heart } from "lucide-react";
 import { Movie, getImageUrl } from "@/lib/tmdb";
+import { isInWatchlist, addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface MediaCardProps {
   item: Movie;
@@ -12,6 +15,25 @@ const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
   const title = item.title || item.name || "Unknown";
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const year = (item.release_date || item.first_air_date || "").split("-")[0];
+  const [inWatchlist, setInWatchlist] = useState(false);
+
+  useEffect(() => {
+    setInWatchlist(isInWatchlist(item.id, mediaType));
+  }, [item.id, mediaType]);
+
+  const handleWatchlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inWatchlist) {
+      removeFromWatchlist(item.id, mediaType);
+      setInWatchlist(false);
+      toast.success("Removed from watchlist");
+    } else {
+      addToWatchlist(item, mediaType);
+      setInWatchlist(true);
+      toast.success("Added to watchlist");
+    }
+  };
 
   return (
     <motion.div
@@ -43,6 +65,18 @@ const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
               <Play className="w-6 h-6 text-primary-foreground fill-current ml-1" />
             </div>
           </motion.div>
+
+          {/* Watchlist Button */}
+          <button
+            onClick={handleWatchlistClick}
+            className="absolute top-2 left-2 p-2 rounded-full bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all hover:bg-primary"
+          >
+            <Heart
+              className={`w-4 h-4 ${
+                inWatchlist ? "fill-primary text-primary" : "text-foreground"
+              }`}
+            />
+          </button>
 
           {/* Rating Badge */}
           {item.vote_average > 0 && (

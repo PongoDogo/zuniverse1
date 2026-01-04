@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
+import MediaRow from "@/components/MediaRow";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDetails, getSeasonDetails } from "@/lib/tmdb";
+import { getDetails, getSeasonDetails, getSimilar } from "@/lib/tmdb";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -38,6 +39,12 @@ const Watch = () => {
     queryKey: ["episodes", mediaId, currentSeason],
     queryFn: () => getSeasonDetails(mediaId, currentSeason),
     enabled: !!mediaId && mediaType === "tv",
+  });
+
+  const { data: similar } = useQuery({
+    queryKey: ["similar", mediaType, mediaId],
+    queryFn: () => getSimilar(mediaType, mediaId),
+    enabled: !!mediaId,
   });
 
   const title = details?.title || details?.name || "Loading...";
@@ -99,6 +106,10 @@ const Watch = () => {
               mediaType={mediaType}
               season={mediaType === "tv" ? currentSeason : undefined}
               episode={mediaType === "tv" ? currentEpisode : undefined}
+              title={title}
+              posterPath={details?.poster_path}
+              backdropPath={details?.backdrop_path}
+              episodeName={currentEpisodeData?.name}
             />
           </motion.div>
 
@@ -185,6 +196,16 @@ const Watch = () => {
                 {currentEpisodeData.overview}
               </p>
             </motion.div>
+          )}
+
+          {/* Similar Content */}
+          {similar && similar.length > 0 && (
+            <div className="mt-12">
+              <MediaRow
+                title={`More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
+                items={similar}
+              />
+            </div>
           )}
         </div>
       </div>
