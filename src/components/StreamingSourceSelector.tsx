@@ -43,6 +43,59 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
+    id: "vidsrcpro",
+    name: "VidSrc Pro",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.pro/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.pro/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcicu",
+    name: "VidSrc ICU",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.icu/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.icu/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrccc",
+    name: "VidSrc CC",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.cc/v2/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.cc/v2/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcnl",
+    name: "VidSrc NL",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://player.vidsrc.nl/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://player.vidsrc.nl/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcembed",
+    name: "VidSrc Embed",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}&autoplay=1`;
+      }
+      if (mediaType === "tv") {
+        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}`;
+      }
+      return `https://vidsrc-embed.ru/embed/movie?tmdb=${tmdbId}&autoplay=1`;
+    },
+  },
+  {
     id: "2embed",
     name: "2Embed",
     buildUrl: (tmdbId, mediaType, season, episode) => {
@@ -63,16 +116,163 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
-    id: "vidsrcembed",
-    name: "VidSrc Embed",
+    id: "multiembed",
+    name: "MultiEmbed",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}&autoplay=1`;
+        return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`;
       }
-      if (mediaType === "tv") {
-        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}`;
+      return `https://multiembed.mov/?video_id=${tmdbId}&tmdb=1`;
+    },
+  },
+  {
+    id: "embedapi",
+    name: "Embed API",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://player.embed-api.stream/?id=${tmdbId}&s=${season}&e=${episode}`;
       }
-      return `https://vidsrc-embed.ru/embed/movie?tmdb=${tmdbId}&autoplay=1`;
+      return `https://player.embed-api.stream/?id=${tmdbId}`;
+    },
+  },
+  {
+    id: "vembed",
+    name: "VEmbed",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vembed.stream/play/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://vembed.stream/play/${tmdbId}`;
+    },
+  },
+  {
+    id: "moviesapi",
+    name: "MoviesAPI",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://moviesapi.club/tv/${tmdbId}-${season}-${episode}`;
+      }
+      return `https://moviesapi.club/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "embedsu",
+    name: "Embed.su",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://embed.su/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://embed.su/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "smashystream",
+    name: "SmashyStream",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://player.smashy.stream/tv/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://player.smashy.stream/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "nontongo",
+    name: "Nontongo",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://www.nontongo.win/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://www.nontongo.win/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "moviee",
+    name: "Moviee",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://moviee.tv/embed/tv/${tmdbId}?seasion=${season}&episode=${episode}`;
+      }
+      return `https://moviee.tv/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidlink",
+    name: "VidLink",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?autoplay=true`;
+      }
+      return `https://vidlink.pro/movie/${tmdbId}?autoplay=true`;
+    },
+  },
+  {
+    id: "superembed",
+    name: "SuperEmbed",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://superembed.stream/embed?video_id=${tmdbId}&tmdb=1&season=${season}&episode=${episode}`;
+      }
+      return `https://superembed.stream/embed?video_id=${tmdbId}&tmdb=1`;
+    },
+  },
+  {
+    id: "ridoo",
+    name: "Ridoo",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://ridoo.net/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://ridoo.net/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "nunflix",
+    name: "NunFlix",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://nunflix-embed.vercel.app/api/show/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://nunflix-embed.vercel.app/api/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "gomoplayer",
+    name: "Gomo",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://gomo.to/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://gomo.to/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "primewire",
+    name: "PrimeWire",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://www.primewire.tf/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
+      }
+      return `https://www.primewire.tf/embed/movie?tmdb=${tmdbId}`;
+    },
+  },
+  {
+    id: "vidbinge",
+    name: "VidBinge",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidbinge.dev/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidbinge.dev/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "111movies",
+    name: "111Movies",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://111movies.com/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://111movies.com/movie/${tmdbId}`;
     },
   },
 ];
