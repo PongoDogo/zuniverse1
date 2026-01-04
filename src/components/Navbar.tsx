@@ -81,11 +81,12 @@ const Navbar = () => {
             <AnimatePresence>
               {isSearchOpen && (
                 <motion.form
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 250, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  exit={{ opacity: 0, scaleX: 0 }}
+                  style={{ originX: 1 }}
                   onSubmit={handleSearch}
-                  className="overflow-hidden"
+                  className="w-[250px]"
                 >
                   <Input
                     type="text"
@@ -119,10 +120,10 @@ const Navbar = () => {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="md:hidden"
             >
               <div className="py-4 space-y-1">
                 {navLinks.map((link) => (
