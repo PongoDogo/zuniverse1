@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
 import { Server, Check } from "lucide-react";
 import {
   DropdownMenu,
@@ -8,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface StreamingSource {
   id: string;
@@ -294,19 +293,23 @@ const StreamingSourceSelector = ({
           {currentSource.name}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {streamingSources.map((source) => (
-          <DropdownMenuItem
-            key={source.id}
-            onClick={() => onSourceChange(source)}
-            className="flex items-center justify-between"
-          >
-            {source.name}
-            {currentSource.id === source.id && (
-              <Check className="w-4 h-4 text-primary" />
-            )}
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="end" className="p-0">
+        <ScrollArea className="h-[300px]">
+          <div className="p-1">
+            {streamingSources.map((source) => (
+              <DropdownMenuItem
+                key={source.id}
+                onClick={() => onSourceChange(source)}
+                className="flex items-center justify-between"
+              >
+                {source.name}
+                {currentSource.id === source.id && (
+                  <Check className="w-4 h-4 text-primary" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </div>
+        </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
   );
