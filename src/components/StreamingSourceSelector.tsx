@@ -62,6 +62,19 @@ export const streamingSources: StreamingSource[] = [
       return `https://player.autoembed.cc/embed/movie/${tmdbId}`;
     },
   },
+  {
+    id: "vidsrcembed",
+    name: "VidSrc Embed",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}&autoplay=1`;
+      }
+      if (mediaType === "tv") {
+        return `https://vidsrc-embed.ru/embed/tv?tmdb=${tmdbId}`;
+      }
+      return `https://vidsrc-embed.ru/embed/movie?tmdb=${tmdbId}&autoplay=1`;
+    },
+  },
 ];
 
 interface StreamingSourceSelectorProps {
