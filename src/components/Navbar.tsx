@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Menu, X, Film, Tv, Home, Compass } from "lucide-react";
+import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 
@@ -34,6 +34,7 @@ const Navbar = () => {
     { href: "/movies", label: "Movies", icon: Film },
     { href: "/tv", label: "TV Shows", icon: Tv },
     { href: "/discover", label: "Discover", icon: Compass },
+    { href: "/watchlist", label: "Watchlist", icon: Heart },
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -50,10 +51,12 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center glow-shadow">
-              <Film className="w-6 h-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center glow-shadow">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold hidden sm:block">StreamVix</span>
+            <span className="text-xl font-bold hidden sm:block bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
+              Zuniverse
+            </span>
           </Link>
 
           {/* Desktop Navigation */}

@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Play, Star, Clock, Calendar, ArrowLeft } from "lucide-react";
+import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Heart } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
+import WatchlistButton from "@/components/WatchlistButton";
+import TrailerModal from "@/components/TrailerModal";
 import { Button } from "@/components/ui/button";
 import {
   getDetails,
@@ -16,6 +19,7 @@ import {
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const movieId = parseInt(id || "0");
+  const [showTrailer, setShowTrailer] = useState(false);
 
   const { data: movie, isLoading } = useQuery({
     queryKey: ["movie", movieId],
@@ -145,6 +149,16 @@ const MovieDetails = () => {
                     Watch Now
                   </Link>
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="gap-2"
+                  onClick={() => setShowTrailer(true)}
+                >
+                  <PlayCircle className="w-5 h-5" />
+                  Trailer
+                </Button>
+                <WatchlistButton item={movie} mediaType="movie" variant="full" />
               </div>
             </motion.div>
           </div>
@@ -184,6 +198,14 @@ const MovieDetails = () => {
           )}
         </div>
       </div>
+
+      <TrailerModal
+        isOpen={showTrailer}
+        onClose={() => setShowTrailer(false)}
+        mediaType="movie"
+        mediaId={movieId}
+        title={movie.title || ""}
+      />
     </div>
   );
 };

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Play, Star, Calendar, ArrowLeft, Tv } from "lucide-react";
+import { Play, Star, Calendar, ArrowLeft, Tv, PlayCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
+import WatchlistButton from "@/components/WatchlistButton";
+import TrailerModal from "@/components/TrailerModal";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -26,6 +28,7 @@ const TVDetails = () => {
   const { id } = useParams<{ id: string }>();
   const tvId = parseInt(id || "0");
   const [selectedSeason, setSelectedSeason] = useState(1);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   const { data: show, isLoading } = useQuery({
     queryKey: ["tv", tvId],
@@ -160,6 +163,16 @@ const TVDetails = () => {
                     Watch S1 E1
                   </Link>
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="gap-2"
+                  onClick={() => setShowTrailer(true)}
+                >
+                  <PlayCircle className="w-5 h-5" />
+                  Trailer
+                </Button>
+                <WatchlistButton item={show} mediaType="tv" variant="full" />
               </div>
             </motion.div>
           </div>
@@ -269,6 +282,14 @@ const TVDetails = () => {
           )}
         </div>
       </div>
+
+      <TrailerModal
+        isOpen={showTrailer}
+        onClose={() => setShowTrailer(false)}
+        mediaType="tv"
+        mediaId={tvId}
+        title={show.name || ""}
+      />
     </div>
   );
 };
