@@ -274,6 +274,16 @@ export const streamingSources: StreamingSource[] = [
       return `https://111movies.com/movie/${tmdbId}`;
     },
   },
+  {
+    id: "vidrock",
+    name: "VidRock",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidrock.net/tv/${tmdbId}/${season}/${episode}?autoplay=true&autonext=true`;
+      }
+      return `https://vidrock.net/movie/${tmdbId}?autoplay=true`;
+    },
+  },
 ];
 
 interface StreamingSourceSelectorProps {
