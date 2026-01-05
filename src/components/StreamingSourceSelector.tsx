@@ -284,6 +284,268 @@ export const streamingSources: StreamingSource[] = [
       return `https://vidrock.net/movie/${tmdbId}?autoplay=true`;
     },
   },
+  // Greek language support sources (with lang=el parameter)
+  {
+    id: "vidrock-greek",
+    name: "VidRock (Greek)",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidrock.net/tv/${tmdbId}/${season}/${episode}?autoplay=true&autonext=true&lang=el`;
+      }
+      return `https://vidrock.net/movie/${tmdbId}?autoplay=true&lang=el`;
+    },
+  },
+  {
+    id: "vidsrc-greek",
+    name: "VidSrc (Greek)",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.xyz/embed/tv/${tmdbId}/${season}/${episode}?sub_lang=greek`;
+      }
+      return `https://vidsrc.xyz/embed/movie/${tmdbId}?sub_lang=greek`;
+    },
+  },
+  {
+    id: "embedsu-greek",
+    name: "Embed.su (Greek)",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://embed.su/embed/tv/${tmdbId}/${season}/${episode}?lang=el`;
+      }
+      return `https://embed.su/embed/movie/${tmdbId}?lang=el`;
+    },
+  },
+  // Additional streaming sources
+  {
+    id: "warezcdn",
+    name: "WarezCDN",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://embed.warezcdn.link/serie/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://embed.warezcdn.link/filme/${tmdbId}`;
+    },
+  },
+  {
+    id: "filmxy",
+    name: "FilmXY",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://www.filmxy.pw/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://www.filmxy.pw/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "dbgo",
+    name: "DBGO",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://dbgo.fun/imdb.php?id=${tmdbId}&s=${season}&e=${episode}`;
+      }
+      return `https://dbgo.fun/imdb.php?id=${tmdbId}`;
+    },
+  },
+  {
+    id: "showbox",
+    name: "ShowBox",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://showbox.media/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://showbox.media/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "rive",
+    name: "Rive",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://rivestream.live/watch?type=tv&id=${tmdbId}&season=${season}&episode=${episode}`;
+      }
+      return `https://rivestream.live/watch?type=movie&id=${tmdbId}`;
+    },
+  },
+  {
+    id: "flicky",
+    name: "Flicky",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://flicky.host/embed/tv/?id=${tmdbId}&s=${season}&e=${episode}`;
+      }
+      return `https://flicky.host/embed/movie/?id=${tmdbId}`;
+    },
+  },
+  {
+    id: "catflix",
+    name: "Catflix",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://catflix.su/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://catflix.su/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidplay",
+    name: "VidPlay",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidplay.online/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://vidplay.online/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "filemoon",
+    name: "Filemoon",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://filemoon.sx/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://filemoon.sx/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "streamwish",
+    name: "StreamWish",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://streamwish.to/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://streamwish.to/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "doodstream",
+    name: "DoodStream",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://dood.re/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://dood.re/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "mp4upload",
+    name: "MP4Upload",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://www.mp4upload.com/embed-${tmdbId}.html?s=${season}&e=${episode}`;
+      }
+      return `https://www.mp4upload.com/embed-${tmdbId}.html`;
+    },
+  },
+  {
+    id: "upstream",
+    name: "Upstream",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://upstream.to/embed-${tmdbId}.html?s=${season}&e=${episode}`;
+      }
+      return `https://upstream.to/embed-${tmdbId}.html`;
+    },
+  },
+  {
+    id: "mixdrop",
+    name: "MixDrop",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://mixdrop.ag/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://mixdrop.ag/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "voe",
+    name: "VOE",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://voe.sx/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://voe.sx/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "okru",
+    name: "OK.ru",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://ok.ru/videoembed/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://ok.ru/videoembed/${tmdbId}`;
+    },
+  },
+  {
+    id: "dailymotion",
+    name: "Dailymotion",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://geo.dailymotion.com/player.html?video=${tmdbId}&s=${season}&e=${episode}`;
+      }
+      return `https://geo.dailymotion.com/player.html?video=${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcme",
+    name: "VidSrc.me",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
+      }
+      return `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcme-greek",
+    name: "VidSrc.me (Greek)",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}&sub_lang=greek`;
+      }
+      return `https://vidsrc.me/embed/movie?tmdb=${tmdbId}&sub_lang=greek`;
+    },
+  },
+  {
+    id: "streamsb",
+    name: "StreamSB",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://streamsb.net/embed-${tmdbId}.html?s=${season}&e=${episode}`;
+      }
+      return `https://streamsb.net/embed-${tmdbId}.html`;
+    },
+  },
+  {
+    id: "hexload",
+    name: "Hexload",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://hexload.com/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://hexload.com/e/${tmdbId}`;
+    },
+  },
+  {
+    id: "uqload",
+    name: "UQLoad",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://uqload.ws/embed-${tmdbId}.html?s=${season}&e=${episode}`;
+      }
+      return `https://uqload.ws/embed-${tmdbId}.html`;
+    },
+  },
+  {
+    id: "turbovid",
+    name: "TurboVid",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://turbovid.eu/e/${tmdbId}?s=${season}&e=${episode}`;
+      }
+      return `https://turbovid.eu/e/${tmdbId}`;
+    },
+  },
 ];
 
 interface StreamingSourceSelectorProps {
