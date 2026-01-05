@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import MediaRow from "@/components/MediaRow";
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getDetails, getSeasonDetails, getSimilar } from "@/lib/tmdb";
+import { toast } from "sonner";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -65,32 +66,56 @@ const Watch = () => {
     navigate(`/tv/${mediaId}/watch/${s}/1`);
   };
 
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: title,
+          text: `Watch ${title} on Zuniverse`,
+          url: url,
+        });
+      } catch (err) {
+        // User cancelled
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="pt-20 pb-16">
-        <div className="container mx-auto px-4">
-          {/* Back Link */}
-          <Link
-            to={`/${mediaType}/${mediaId}`}
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to details
-          </Link>
+      <div className="pt-16 sm:pt-20 pb-8 sm:pb-16 safe-bottom">
+        <div className="container mx-auto px-3 sm:px-4">
+          {/* Back Link & Share */}
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <Link
+              to={`/${mediaType}/${mediaId}`}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to details</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
+            <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2">
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Share</span>
+            </Button>
+          </div>
 
           {/* Title */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4"
+            className="mb-3 sm:mb-4"
           >
-            <h1 className="text-2xl md:text-3xl font-bold">{title}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold line-clamp-1">{title}</h1>
             {mediaType === "tv" && currentEpisodeData && (
-              <p className="text-muted-foreground mt-1">
-                Season {currentSeason}, Episode {currentEpisode}:{" "}
-                {currentEpisodeData.name}
+              <p className="text-sm text-muted-foreground mt-1">
+                S{currentSeason}:E{currentEpisode} - {currentEpisodeData.name}
               </p>
             )}
           </motion.div>
@@ -119,66 +144,72 @@ const Watch = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="mt-6 flex flex-wrap items-center justify-between gap-4"
+              className="mt-4 sm:mt-6 space-y-4"
             >
               {/* Season/Episode Selectors */}
-              <div className="flex items-center gap-4">
-                <Select
-                  value={currentSeason.toString()}
-                  onValueChange={(v) => goToSeason(parseInt(v))}
-                >
-                  <SelectTrigger className="w-36">
-                    <SelectValue placeholder="Season" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasons.map((s) => (
-                      <SelectItem key={s.season_number} value={s.season_number.toString()}>
-                        Season {s.season_number}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {episodes && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                   <Select
-                    value={currentEpisode.toString()}
-                    onValueChange={(v) => goToEpisode(parseInt(v))}
+                    value={currentSeason.toString()}
+                    onValueChange={(v) => goToSeason(parseInt(v))}
                   >
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Episode" />
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Season" />
                     </SelectTrigger>
                     <SelectContent>
-                      {episodes.map((ep) => (
-                        <SelectItem
-                          key={ep.episode_number}
-                          value={ep.episode_number.toString()}
-                        >
-                          Ep {ep.episode_number}: {ep.name}
+                      {seasons.map((s) => (
+                        <SelectItem key={s.season_number} value={s.season_number.toString()}>
+                          Season {s.season_number}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                )}
-              </div>
 
-              {/* Navigation Buttons */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  disabled={!hasPrevEpisode}
-                  onClick={() => goToEpisode(currentEpisode - 1)}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Previous
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={!hasNextEpisode}
-                  onClick={() => goToEpisode(currentEpisode + 1)}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                  {episodes && (
+                    <Select
+                      value={currentEpisode.toString()}
+                      onValueChange={(v) => goToEpisode(parseInt(v))}
+                    >
+                      <SelectTrigger className="w-full sm:w-44">
+                        <SelectValue placeholder="Episode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {episodes.map((ep) => (
+                          <SelectItem
+                            key={ep.episode_number}
+                            value={ep.episode_number.toString()}
+                          >
+                            Ep {ep.episode_number}: {ep.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!hasPrevEpisode}
+                    onClick={() => goToEpisode(currentEpisode - 1)}
+                    className="flex-1 sm:flex-initial"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Prev
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!hasNextEpisode}
+                    onClick={() => goToEpisode(currentEpisode + 1)}
+                    className="flex-1 sm:flex-initial"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -189,10 +220,10 @@ const Watch = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 p-4 bg-card rounded-lg"
+              className="mt-4 sm:mt-6 p-3 sm:p-4 bg-card rounded-lg"
             >
-              <h3 className="font-medium mb-2">Episode Synopsis</h3>
-              <p className="text-muted-foreground text-sm">
+              <h3 className="font-medium mb-2 text-sm sm:text-base">Episode Synopsis</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 {currentEpisodeData.overview}
               </p>
             </motion.div>
@@ -200,7 +231,7 @@ const Watch = () => {
 
           {/* Similar Content */}
           {similar && similar.length > 0 && (
-            <div className="mt-12">
+            <div className="mt-8 sm:mt-12">
               <MediaRow
                 title={`More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
                 items={similar}

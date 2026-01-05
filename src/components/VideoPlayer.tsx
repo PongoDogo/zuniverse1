@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Loader2, AlertCircle } from "lucide-react";
-import StreamingSourceSelector, {
-  streamingSources,
-  StreamingSource,
-} from "./StreamingSourceSelector";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import StreamingSourceSelector from "./StreamingSourceSelector";
+import { Button } from "@/components/ui/button";
+import { 
+  streamingSources, 
+  StreamingSource, 
+  getPreferredSource 
+} from "@/lib/streamingSources";
 import { updateContinueWatching, ContinueWatchingItem } from "@/lib/watchlist";
 
 interface VideoPlayerProps {
@@ -31,15 +34,18 @@ const VideoPlayer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
   const [currentSource, setCurrentSource] = useState<StreamingSource>(
-    streamingSources[0]
+    getPreferredSource()
   );
+  const [retryCount, setRetryCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const embedUrl = currentSource.buildUrl(tmdbId, mediaType, season, episode);
 
   useEffect(() => {
     setIsLoading(true);
     setError(false);
+    setRetryCount(0);
   }, [tmdbId, season, episode, currentSource]);
 
   // Listen for player events
@@ -91,10 +97,46 @@ const VideoPlayer = ({
     setCurrentSource(source);
   };
 
+  const handleRetry = () => {
+    setRetryCount((prev) => prev + 1);
+    setIsLoading(true);
+    setError(false);
+    
+    // Try next source after 2 retries
+    if (retryCount >= 2) {
+      const currentIndex = streamingSources.findIndex(
+        (s) => s.id === currentSource.id
+      );
+      const nextIndex = (currentIndex + 1) % streamingSources.length;
+      setCurrentSource(streamingSources[nextIndex]);
+    }
+  };
+
+  const handleFullscreen = () => {
+    if (containerRef.current) {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        containerRef.current.requestFullscreen();
+      }
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Source Selector */}
-      <div className="flex justify-end">
+    <div className="space-y-3 sm:space-y-4">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFullscreen}
+            className="h-8 w-8 sm:h-9 sm:w-9"
+            title="Fullscreen"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </Button>
+        </div>
         <StreamingSourceSelector
           currentSource={currentSource}
           onSourceChange={handleSourceChange}
@@ -102,23 +144,34 @@ const VideoPlayer = ({
       </div>
 
       {/* Player */}
-      <div className="relative w-full aspect-video bg-card rounded-lg overflow-hidden">
+      <div 
+        ref={containerRef}
+        className="relative w-full aspect-video bg-card rounded-lg overflow-hidden touch-manipulation"
+      >
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-card">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10">
+            <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading player...</p>
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-card">
-            <AlertCircle className="w-16 h-16 text-muted-foreground" />
-            <p className="text-muted-foreground text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-card z-10 p-4">
+            <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground" />
+            <p className="text-muted-foreground text-center text-sm sm:text-base">
               Failed to load video. Try a different source.
             </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button onClick={handleRetry} variant="secondary" size="sm">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retry
+              </Button>
+            </div>
           </div>
         )}
 
         <motion.iframe
+          key={`${embedUrl}-${retryCount}`}
           ref={iframeRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoading ? 0 : 1 }}
@@ -131,6 +184,11 @@ const VideoPlayer = ({
           onError={handleError}
         />
       </div>
+
+      {/* Quick Tips */}
+      <p className="text-xs text-muted-foreground text-center">
+        💡 Tip: If video doesn't load, try a different source from the dropdown above
+      </p>
     </div>
   );
 };
