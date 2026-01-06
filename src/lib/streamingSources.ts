@@ -18,7 +18,7 @@ export type SourceCategory =
   | "backup";
 
 export const categoryLabels: Record<SourceCategory, string> = {
-  popular: "⭐ Popular",
+  popular: "⭐ Low Ads",
   premium: "💎 Premium Quality",
   greek: "🇬🇷 Greek Language",
   alternative: "🔄 Alternative",
@@ -34,28 +34,27 @@ export const categoryOrder: SourceCategory[] = [
 ];
 
 export const streamingSources: StreamingSource[] = [
-  // POPULAR SOURCES
+  // LOW ADS SOURCES - Prioritized
   {
-    id: "vixsrc",
-    name: "VixSrc",
+    id: "vidsrcwtf",
+    name: "VidSrc.wtf ⭐",
     category: "popular",
     buildUrl: (tmdbId, mediaType, season, episode) => {
-      let url = `https://vixsrc.to/${mediaType}/${tmdbId}`;
       if (mediaType === "tv" && season && episode) {
-        url = `https://vixsrc.to/tv/${tmdbId}/${season}/${episode}`;
+        return `https://www.vidsrc.wtf/embed/tv/${tmdbId}/${season}/${episode}`;
       }
-      return url + "?primaryColor=8B5CF6&secondaryColor=4C1D95&autoplay=true";
+      return `https://www.vidsrc.wtf/embed/movie/${tmdbId}`;
     },
   },
   {
-    id: "vidsrc",
-    name: "VidSrc",
+    id: "superembed-vip",
+    name: "SuperEmbed VIP ⭐",
     category: "popular",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidsrc.xyz/embed/tv/${tmdbId}/${season}/${episode}`;
+        return `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1&s=${season}&e=${episode}`;
       }
-      return `https://vidsrc.xyz/embed/movie/${tmdbId}`;
+      return `https://multiembed.mov/directstream.php?video_id=${tmdbId}&tmdb=1`;
     },
   },
   {
@@ -75,20 +74,20 @@ export const streamingSources: StreamingSource[] = [
     category: "popular",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?autoplay=true`;
+        return `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?autoplay=true&ads=0`;
       }
-      return `https://vidlink.pro/movie/${tmdbId}?autoplay=true`;
+      return `https://vidlink.pro/movie/${tmdbId}?autoplay=true&ads=0`;
     },
   },
   {
-    id: "vidrock",
-    name: "VidRock",
+    id: "autoembed",
+    name: "AutoEmbed",
     category: "popular",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidrock.net/tv/${tmdbId}/${season}/${episode}?autoplay=true&autonext=true`;
+        return `https://player.autoembed.cc/embed/tv/${tmdbId}/${season}/${episode}`;
       }
-      return `https://vidrock.net/movie/${tmdbId}?autoplay=true`;
+      return `https://player.autoembed.cc/embed/movie/${tmdbId}`;
     },
   },
   {
@@ -138,17 +137,6 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
-    id: "autoembed",
-    name: "AutoEmbed",
-    category: "premium",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://player.autoembed.cc/embed/tv/${tmdbId}/${season}/${episode}`;
-      }
-      return `https://player.autoembed.cc/embed/movie/${tmdbId}`;
-    },
-  },
-  {
     id: "smashystream",
     name: "SmashyStream",
     category: "premium",
@@ -172,28 +160,6 @@ export const streamingSources: StreamingSource[] = [
   },
 
   // GREEK LANGUAGE SOURCES
-  {
-    id: "vidrock-greek",
-    name: "VidRock Greek",
-    category: "greek",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://vidrock.net/tv/${tmdbId}/${season}/${episode}?autoplay=true&autonext=true&lang=el`;
-      }
-      return `https://vidrock.net/movie/${tmdbId}?autoplay=true&lang=el`;
-    },
-  },
-  {
-    id: "vidsrc-greek",
-    name: "VidSrc Greek",
-    category: "greek",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://vidsrc.xyz/embed/tv/${tmdbId}/${season}/${episode}?sub_lang=greek`;
-      }
-      return `https://vidsrc.xyz/embed/movie/${tmdbId}?sub_lang=greek`;
-    },
-  },
   {
     id: "embedsu-greek",
     name: "Embed.su Greek",
@@ -274,28 +240,6 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
-    id: "vembed",
-    name: "VEmbed",
-    category: "alternative",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://vembed.stream/play/${tmdbId}?s=${season}&e=${episode}`;
-      }
-      return `https://vembed.stream/play/${tmdbId}`;
-    },
-  },
-  {
-    id: "moviesapi",
-    name: "MoviesAPI",
-    category: "alternative",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://moviesapi.club/tv/${tmdbId}-${season}-${episode}`;
-      }
-      return `https://moviesapi.club/movie/${tmdbId}`;
-    },
-  },
-  {
     id: "catflix",
     name: "Catflix",
     category: "alternative",
@@ -304,17 +248,6 @@ export const streamingSources: StreamingSource[] = [
         return `https://catflix.su/embed/tv/${tmdbId}/${season}/${episode}`;
       }
       return `https://catflix.su/embed/movie/${tmdbId}`;
-    },
-  },
-  {
-    id: "flicky",
-    name: "Flicky",
-    category: "alternative",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://flicky.host/embed/tv/?id=${tmdbId}&s=${season}&e=${episode}`;
-      }
-      return `https://flicky.host/embed/movie/?id=${tmdbId}`;
     },
   },
 
@@ -356,28 +289,6 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
-    id: "moviee",
-    name: "Moviee",
-    category: "backup",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://moviee.tv/embed/tv/${tmdbId}?seasion=${season}&episode=${episode}`;
-      }
-      return `https://moviee.tv/embed/movie/${tmdbId}`;
-    },
-  },
-  {
-    id: "ridoo",
-    name: "Ridoo",
-    category: "backup",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://ridoo.net/tv/${tmdbId}/${season}/${episode}`;
-      }
-      return `https://ridoo.net/movie/${tmdbId}`;
-    },
-  },
-  {
     id: "nunflix",
     name: "NunFlix",
     category: "backup",
@@ -386,28 +297,6 @@ export const streamingSources: StreamingSource[] = [
         return `https://nunflix-embed.vercel.app/api/show/${tmdbId}/${season}/${episode}`;
       }
       return `https://nunflix-embed.vercel.app/api/movie/${tmdbId}`;
-    },
-  },
-  {
-    id: "primewire",
-    name: "PrimeWire",
-    category: "backup",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://www.primewire.tf/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`;
-      }
-      return `https://www.primewire.tf/embed/movie?tmdb=${tmdbId}`;
-    },
-  },
-  {
-    id: "111movies",
-    name: "111Movies",
-    category: "backup",
-    buildUrl: (tmdbId, mediaType, season, episode) => {
-      if (mediaType === "tv" && season && episode) {
-        return `https://111movies.com/tv/${tmdbId}/${season}/${episode}`;
-      }
-      return `https://111movies.com/movie/${tmdbId}`;
     },
   },
   {
