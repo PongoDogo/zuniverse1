@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield, ShieldCheck, ShieldOff } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
-import SafeClickOverlay from "./SafeClickOverlay";
 import { Button } from "@/components/ui/button";
 import { 
   streamingSources, 
@@ -45,7 +44,6 @@ const VideoPlayer = ({
   );
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
-  const [safeClickActive, setSafeClickActive] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const adBlockerInitialized = useRef(false);
@@ -73,11 +71,6 @@ const VideoPlayer = ({
       console.log('[VideoPlayer] Ad blocker systems initialized');
     }
   }, []);
-
-  // Reset safe click when source changes
-  useEffect(() => {
-    setSafeClickActive(true);
-  }, [currentSource, tmdbId, season, episode]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -193,35 +186,6 @@ const VideoPlayer = ({
         ref={containerRef}
         className="relative w-full aspect-video bg-card rounded-lg overflow-hidden touch-manipulation"
       >
-        {/* Safe Click Overlay - Only allows clicks in center zone */}
-        <SafeClickOverlay 
-          iframeRef={iframeRef}
-          isActive={safeClickActive && !isLoading && !error}
-          onDeactivate={() => setSafeClickActive(false)}
-        />
-
-        {/* Toggle protection button */}
-        {!isLoading && !error && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-2 right-2 z-30 bg-black/50 hover:bg-black/70"
-            onClick={() => setSafeClickActive(!safeClickActive)}
-          >
-            {safeClickActive ? (
-              <>
-                <ShieldCheck className="w-4 h-4 mr-1 text-green-500" />
-                <span className="text-xs">Protected</span>
-              </>
-            ) : (
-              <>
-                <ShieldOff className="w-4 h-4 mr-1 text-yellow-500" />
-                <span className="text-xs">Unprotected</span>
-              </>
-            )}
-          </Button>
-        )}
-
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10">
             <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
@@ -251,7 +215,6 @@ const VideoPlayer = ({
           className={`w-full h-full transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
           onLoad={handleLoad}
           onError={handleError}
         />
@@ -259,7 +222,7 @@ const VideoPlayer = ({
 
       {/* Quick Tips */}
       <p className="text-xs text-muted-foreground text-center">
-        💡 Click in the center to play. Edge clicks are blocked to prevent ads.
+        💡 Tip: If video doesn't load, try a different source from the dropdown above
       </p>
     </div>
   );
