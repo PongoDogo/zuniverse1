@@ -1,4 +1,4 @@
-package app.lovable.plugins;
+package app.lovable.zuniverse.plugins;
 
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
