@@ -35,34 +35,29 @@ const ContinueWatchingRow = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="relative group/row">
-      <motion.h2
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        className="text-xl md:text-2xl font-bold mb-4"
-      >
+    <div className="relative group/row overflow-hidden">
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3">
         Continue Watching
-      </motion.h2>
+      </h2>
 
       {/* Scroll Buttons */}
       <button
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:bg-primary"
+        className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:bg-primary hidden md:flex"
       >
-        <ChevronLeft className="w-6 h-6" />
+        <ChevronLeft className="w-5 h-5" />
       </button>
       <button
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:bg-primary"
+        className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:bg-primary hidden md:flex"
       >
-        <ChevronRight className="w-6 h-6" />
+        <ChevronRight className="w-5 h-5" />
       </button>
 
       {/* Scrollable Container */}
       <div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
+        className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {items.map((item) => {
@@ -72,11 +67,9 @@ const ContinueWatchingRow = () => {
               : `/movie/${item.id}/watch`;
 
           return (
-            <motion.div
+            <div
               key={`${item.id}-${item.season}-${item.episode}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex-shrink-0 w-[280px] md:w-[320px] group"
+              className="flex-shrink-0 w-[200px] sm:w-[260px] md:w-[300px] group"
             >
               <Link to={watchUrl} className="block relative">
                 <div className="relative aspect-video rounded-lg overflow-hidden card-shadow">
@@ -84,12 +77,13 @@ const ContinueWatchingRow = () => {
                     src={getImageUrl(item.backdrop_path || item.poster_path, "w500")}
                     alt={item.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
 
                   {/* Play overlay */}
                   <div className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center glow-shadow">
-                      <Play className="w-6 h-6 fill-current ml-1" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center">
+                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
                     </div>
                   </div>
 
@@ -108,27 +102,27 @@ const ContinueWatchingRow = () => {
                       e.stopPropagation();
                       handleRemove(item);
                     }}
-                    className="absolute top-2 right-2 p-1.5 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                    className="absolute top-1.5 right-1.5 p-1 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>
                 </div>
 
-                <div className="mt-2">
-                  <h3 className="font-medium text-sm line-clamp-1">
+                <div className="mt-1.5 overflow-hidden">
+                  <h3 className="font-medium text-xs sm:text-sm truncate">
                     {item.title}
                   </h3>
                   {item.mediaType === "tv" && item.episodeName && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       S{item.season} E{item.episode}: {item.episodeName}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {Math.round((item.duration - item.currentTime) / 60)} min left
                   </p>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           );
         })}
       </div>
