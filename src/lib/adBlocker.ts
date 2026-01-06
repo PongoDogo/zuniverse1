@@ -120,26 +120,6 @@ export const initAdBlocker = (): void => {
     lastUserInteraction = Date.now();
   }, true);
 
-  // Intercept location changes
-  const originalAssign = window.location.assign.bind(window.location);
-  const originalReplace = window.location.replace.bind(window.location);
-
-  (window.location as any).assign = function(url: string) {
-    if (isAdUrl(url)) {
-      console.log('[AdBlocker] Blocked location.assign:', url);
-      return;
-    }
-    return originalAssign(url);
-  };
-
-  (window.location as any).replace = function(url: string) {
-    if (isAdUrl(url)) {
-      console.log('[AdBlocker] Blocked location.replace:', url);
-      return;
-    }
-    return originalReplace(url);
-  };
-
   console.log('[AdBlocker] Initialized successfully');
 };
 
