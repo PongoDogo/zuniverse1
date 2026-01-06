@@ -1,4 +1,4 @@
-package app.lovable;
+package app.lovable.zuniverse;
 
 import android.os.Bundle;
 import android.webkit.WebSettings;
@@ -6,8 +6,8 @@ import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
 
-import app.lovable.plugins.AdBlockerPlugin;
-import app.lovable.plugins.AdBlockerWebViewClient;
+import app.lovable.zuniverse.plugins.AdBlockerPlugin;
+import app.lovable.zuniverse.plugins.AdBlockerWebViewClient;
 
 public class MainActivity extends BridgeActivity {
     

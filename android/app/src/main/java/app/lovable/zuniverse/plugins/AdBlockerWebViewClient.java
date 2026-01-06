@@ -1,4 +1,4 @@
-package app.lovable.plugins;
+package app.lovable.zuniverse.plugins;
 
 import android.graphics.Bitmap;
 import android.net.http.SslError;

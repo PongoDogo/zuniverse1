@@ -6,10 +6,10 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'capacitor.cordova.android.plugins'
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
-        minSdk 22
-        targetSdk 34
+        minSdk 24
+        targetSdk 36
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
