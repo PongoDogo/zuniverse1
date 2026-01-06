@@ -43,17 +43,17 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <Navbar />
 
       {/* Hero Banner */}
-      <div className="min-h-[60vh] sm:min-h-[70vh] md:min-h-[85vh]">
+      <div className="min-h-[55vh] sm:min-h-[65vh] md:min-h-[80vh]">
         {trending && <HeroBanner items={trending} />}
       </div>
 
       {/* Content Rows */}
-      <div className="relative z-10 -mt-16 sm:-mt-20 space-y-6 sm:space-y-8 pb-8 sm:pb-16">
-        <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
+      <div className="relative z-10 -mt-12 sm:-mt-16 space-y-4 sm:space-y-6 pb-6 sm:pb-12">
+        <div className="container mx-auto px-2 sm:px-4 space-y-4 sm:space-y-8">
           {/* Continue Watching */}
           <ContinueWatchingRow />
 

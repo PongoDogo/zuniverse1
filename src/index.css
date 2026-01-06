@@ -105,16 +105,24 @@
     }
   }
 
-  /* Touch-friendly tap targets */
-  button, a, [role="button"] {
+  /* Touch-friendly tap targets - only for interactive buttons */
+  .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Small buttons override */
-  .btn-sm {
-    min-height: 32px;
-    min-width: auto;
+  /* Prevent text overflow */
+  .overflow-safe {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* GPU acceleration for smoother animations */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
   }
 }
 

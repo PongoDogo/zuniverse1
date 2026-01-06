@@ -180,6 +180,8 @@ const VideoPlayer = ({
           className="w-full h-full"
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
+          referrerPolicy="no-referrer"
           onLoad={handleLoad}
           onError={handleError}
         />

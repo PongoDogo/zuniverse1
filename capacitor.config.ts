@@ -5,7 +5,15 @@ const config: CapacitorConfig = {
   appName: 'ZUniverse',
   webDir: 'dist',
   android: {
-    allowMixedContent: true
+    allowMixedContent: true,
+    // Keep all navigation inside the app
+    appendUserAgent: 'ZUniverseApp'
+  },
+  plugins: {
+    // Prevent external browser opens
+    CapacitorHttp: {
+      enabled: true
+    }
   }
 };
 

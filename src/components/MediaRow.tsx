@@ -61,48 +61,43 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
   if (!items?.length) return null;
 
   return (
-    <div className="relative group/row">
-      <motion.h2
-        initial={{ opacity: 0, x: -20 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        className="text-lg sm:text-xl md:text-2xl font-bold mb-3"
-      >
+    <div className="relative group/row overflow-hidden">
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 truncate">
         {title}
-      </motion.h2>
+      </h2>
 
       {/* Scroll Buttons - Hidden on mobile */}
       <button
         onClick={() => scroll("left")}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-label="Scroll left"
       >
-        <ChevronLeft className="w-6 h-6" />
+        <ChevronLeft className="w-5 h-5" />
       </button>
       <button
         onClick={() => scroll("right")}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-label="Scroll right"
       >
-        <ChevronRight className="w-6 h-6" />
+        <ChevronRight className="w-5 h-5" />
       </button>
 
-      {/* Scrollable Container */}
+      {/* Scrollable Container - Optimized for mobile */}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-4 -mx-3 px-3 sm:-mx-4 sm:px-4 snap-x snap-mandatory"
+        className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
       >
-        {items.map((item, index) => (
+        {items.map((item) => (
           <div 
             key={item.id} 
-            className="flex-shrink-0 w-[130px] sm:w-[150px] md:w-[180px] snap-start"
+            className="flex-shrink-0 w-[100px] sm:w-[130px] md:w-[160px]"
           >
-            <MediaCard item={item} index={index} />
+            <MediaCard item={item} />
           </div>
         ))}
       </div>

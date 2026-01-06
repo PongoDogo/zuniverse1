@@ -31,7 +31,7 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
 
   return (
     <>
-      <div className="relative h-[60vh] sm:h-[70vh] md:h-[85vh] w-full overflow-hidden">
+      <div className="relative h-[55vh] sm:h-[65vh] md:h-[80vh] w-full overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={current.id}
@@ -45,64 +45,65 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
               src={getBackdropUrl(current.backdrop_path)}
               alt={title}
               className="w-full h-full object-cover"
+              loading="eager"
             />
           </motion.div>
         </AnimatePresence>
 
         {/* Gradients */}
         <div className="absolute inset-0 hero-gradient" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-48 fade-up-gradient" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 sm:h-40 fade-up-gradient" />
 
         {/* Content */}
-        <div className="absolute inset-0 flex items-end sm:items-center pb-20 sm:pb-0">
-          <div className="container mx-auto px-4">
+        <div className="absolute inset-0 flex items-end sm:items-center pb-16 sm:pb-0">
+          <div className="container mx-auto px-3 sm:px-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={current.id}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -30 }}
-                transition={{ duration: 0.5 }}
-                className="max-w-xl lg:max-w-2xl space-y-3 sm:space-y-4"
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className="max-w-md sm:max-w-lg lg:max-w-xl space-y-2 sm:space-y-3"
               >
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
-                  <span className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-[10px] sm:text-xs font-medium">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                  <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded text-[9px] sm:text-[10px] font-medium">
                     {mediaType === "tv" ? "TV SHOW" : "MOVIE"}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-500" />
+                  <span className="flex items-center gap-0.5">
+                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
                     {current.vote_average.toFixed(1)}
                   </span>
                   <span>{year}</span>
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight line-clamp-2">
+                <h1 className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight line-clamp-2">
                   {title}
                 </h1>
 
-                <p className="text-muted-foreground line-clamp-2 sm:line-clamp-3 text-sm sm:text-base max-w-xl hidden xs:block">
+                <p className="text-muted-foreground line-clamp-2 text-xs sm:text-sm max-w-md hidden xs:block">
                   {current.overview}
                 </p>
 
-                <div className="flex flex-wrap gap-2 sm:gap-3 pt-1 sm:pt-2">
-                  <Button asChild size="default" className="gap-2 glow-shadow text-sm sm:text-base h-10 sm:h-11">
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button asChild size="sm" className="gap-1.5 text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4">
                     <Link to={`/${mediaType}/${current.id}/watch`}>
-                      <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                      <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" />
                       Watch Now
                     </Link>
                   </Button>
                   <Button
                     variant="secondary"
-                    size="default"
-                    className="gap-2 text-sm sm:text-base h-10 sm:h-11"
+                    size="sm"
+                    className="gap-1.5 text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4"
                     onClick={() => setShowTrailer(true)}
                   >
-                    <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <PlayCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Trailer
                   </Button>
-                  <Button asChild variant="outline" size="default" className="gap-2 text-sm sm:text-base h-10 sm:h-11 hidden sm:inline-flex">
+                  <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 sm:h-9 px-3 sm:px-4 hidden sm:inline-flex">
                     <Link to={`/${mediaType}/${current.id}`}>
-                      <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       More Info
                     </Link>
                   </Button>
@@ -113,23 +114,23 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
         </div>
 
         {/* Navigation Arrows & Dots */}
-        <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-4">
+        <div className="absolute bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setCurrentIndex((prev) => (prev - 1 + featuredItems.length) % featuredItems.length)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors"
+            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors"
             aria-label="Previous"
           >
-            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
           {/* Dots */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             {featuredItems.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
-                className={`h-1.5 sm:h-2 rounded-full transition-all ${
-                  i === currentIndex ? "w-6 sm:w-8 bg-primary" : "w-1.5 sm:w-2 bg-foreground/30 hover:bg-foreground/50"
+                className={`h-1 sm:h-1.5 rounded-full transition-all ${
+                  i === currentIndex ? "w-4 sm:w-6 bg-primary" : "w-1 sm:w-1.5 bg-foreground/30 hover:bg-foreground/50"
                 }`}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -138,10 +139,10 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
 
           <button
             onClick={() => setCurrentIndex((prev) => (prev + 1) % featuredItems.length)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors"
+            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-colors"
             aria-label="Next"
           >
-            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
