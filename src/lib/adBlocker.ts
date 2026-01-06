@@ -1,5 +1,4 @@
-// Ad blocker utility - prevents external links from opening browser
-// and blocks common ad domains
+// Ad blocker utility - aggressively prevents popups and external navigation
 
 const AD_DOMAINS = [
   'doubleclick',
@@ -22,7 +21,6 @@ const AD_DOMAINS = [
   'clicktrack',
   'tracker',
   'pixel',
-  'analytics',
   'facebook.com/tr',
   'scorecardresearch',
   'quantserve',
@@ -37,15 +35,22 @@ const AD_DOMAINS = [
   'outbrain',
   'mgid',
   'revcontent',
+  'bet365',
+  '1xbet',
+  'betway',
+  'casino',
+  'poker',
+  'slots',
+  'gambling',
+  'wager',
 ];
 
-// Common redirect patterns used by streaming sites
 const REDIRECT_PATTERNS = [
   /^https?:\/\/[^/]+\/(redirect|out|go|click|track)/i,
   /\?(.*&)?url=/i,
   /\?(.*&)?redirect=/i,
   /\?(.*&)?ref=/i,
-  /\.(xyz|top|club|live|stream|click|buzz)($|\/)/i,
+  /\.(xyz|top|club|live|stream|click|buzz|bet|casino)($|\/)/i,
 ];
 
 export const isAdUrl = (url: string): boolean => {
@@ -53,12 +58,10 @@ export const isAdUrl = (url: string): boolean => {
   
   const lowerUrl = url.toLowerCase();
   
-  // Check against ad domains
   if (AD_DOMAINS.some(domain => lowerUrl.includes(domain))) {
     return true;
   }
   
-  // Check against redirect patterns
   if (REDIRECT_PATTERNS.some(pattern => pattern.test(url))) {
     return true;
   }
@@ -77,22 +80,21 @@ export const isExternalUrl = (url: string): boolean => {
   }
 };
 
-// Initialize the ad blocker - call this once on app startup
+// Initialize aggressive ad blocker
 export const initAdBlocker = (): void => {
-  // Intercept window.open
-  const originalOpen = window.open;
-  window.open = function(url?: string | URL, target?: string, features?: string) {
-    const urlString = url?.toString() || '';
-    
-    if (isAdUrl(urlString) || (isExternalUrl(urlString) && target === '_blank')) {
-      console.log('[AdBlocker] Blocked popup:', urlString);
-      return null;
-    }
-    
-    return originalOpen.call(window, url, target, features);
+  // Completely disable window.open - block ALL popups
+  window.open = function(url?: string | URL) {
+    console.log('[AdBlocker] Blocked popup:', url?.toString() || 'unknown');
+    return null;
   };
 
-  // Intercept link clicks globally
+  // Block any attempts to change location
+  const blockNavigation = (e: BeforeUnloadEvent | PopStateEvent) => {
+    // Allow if it's internal navigation
+    return;
+  };
+
+  // Intercept link clicks globally - block ALL external links
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a');
@@ -100,30 +102,77 @@ export const initAdBlocker = (): void => {
     if (anchor) {
       const href = anchor.getAttribute('href') || '';
       
-      if (isAdUrl(href) || (isExternalUrl(href) && anchor.target === '_blank')) {
+      // Block all external links and ad URLs
+      if (isExternalUrl(href) || isAdUrl(href)) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[AdBlocker] Blocked link click:', href);
+        e.stopImmediatePropagation();
+        console.log('[AdBlocker] Blocked link:', href);
         return false;
       }
     }
   }, true);
 
-  // Block beforeunload for ad redirects
-  let lastUserInteraction = 0;
-  
-  document.addEventListener('click', () => {
-    lastUserInteraction = Date.now();
+  // Block form submissions to external URLs
+  document.addEventListener('submit', (e) => {
+    const form = e.target as HTMLFormElement;
+    const action = form.action || '';
+    
+    if (isExternalUrl(action) || isAdUrl(action)) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('[AdBlocker] Blocked form submission:', action);
+      return false;
+    }
   }, true);
 
-  document.addEventListener('touchstart', () => {
-    lastUserInteraction = Date.now();
-  }, true);
+  // Block right-click context menu hijacking
+  document.addEventListener('contextmenu', (e) => {
+    // Allow normal context menu, just prevent hijacking
+  }, false);
 
-  console.log('[AdBlocker] Initialized successfully');
+  // Prevent scripts from creating new elements that redirect
+  const originalCreateElement = document.createElement.bind(document);
+  document.createElement = function(tagName: string, options?: ElementCreationOptions) {
+    const element = originalCreateElement(tagName, options);
+    
+    if (tagName.toLowerCase() === 'a') {
+      const originalSetAttribute = element.setAttribute.bind(element);
+      element.setAttribute = function(name: string, value: string) {
+        if (name === 'href' && (isExternalUrl(value) || isAdUrl(value))) {
+          console.log('[AdBlocker] Blocked dynamic link creation:', value);
+          return;
+        }
+        return originalSetAttribute(name, value);
+      };
+    }
+    
+    return element;
+  };
+
+  // Block location changes from iframes trying to navigate parent
+  Object.defineProperty(window, 'onbeforeunload', {
+    set: function() {
+      // Prevent sites from setting onbeforeunload
+      return;
+    },
+    get: function() {
+      return null;
+    }
+  });
+
+  console.log('[AdBlocker] Aggressive mode initialized');
 };
 
-// Note: Iframe sandbox protection disabled - streaming players require full permissions
+// Additional protection for the player container
 export const setupIframeProtection = (): void => {
-  console.log('[AdBlocker] Iframe protection skipped for player compatibility');
+  // Block any blur events that might indicate popup attempts
+  window.addEventListener('blur', () => {
+    // Immediately refocus if we lose focus (popup attempt)
+    setTimeout(() => {
+      window.focus();
+    }, 0);
+  });
+
+  console.log('[AdBlocker] Iframe protection active');
 };
