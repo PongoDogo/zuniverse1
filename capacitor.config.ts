@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.71c9d651f97347909891821bce00d9dc',
+  appId: 'com.zuniverse.app',
   appName: 'ZUniverse',
   webDir: 'dist',
   server: {
