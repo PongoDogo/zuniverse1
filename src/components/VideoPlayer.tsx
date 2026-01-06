@@ -4,17 +4,11 @@ import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
   streamingSources, 
-  StreamingSource, 
-  getPreferredSource 
+  getDefaultSource,
+  getPreferredSource,
+  StreamingSource 
 } from "@/lib/streamingSources";
-import { updateContinueWatching, ContinueWatchingItem } from "@/lib/watchlist";
-import { 
-  initAdBlocker, 
-  injectAdBlockerCSS, 
-  setupIframeProtection,
-  setBlockedCallback,
-  getBlockedCount 
-} from "@/lib/adBlocker";
+import { isNativeAndroid, getBlockedCount } from "@/lib/nativeAdBlocker";
 
 interface VideoPlayerProps {
   tmdbId: number;
@@ -27,95 +21,53 @@ interface VideoPlayerProps {
   episodeName?: string;
 }
 
-const VideoPlayer = ({
-  tmdbId,
-  mediaType,
-  season,
+const VideoPlayer = ({ 
+  tmdbId, 
+  mediaType, 
+  season, 
   episode,
-  title = "",
+  title,
   posterPath,
   backdropPath,
-  episodeName,
+  episodeName
 }: VideoPlayerProps) => {
+  const [currentSource, setCurrentSource] = useState<StreamingSource>(getPreferredSource);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [currentSource, setCurrentSource] = useState<StreamingSource>(
-    getPreferredSource()
+  const [embedUrl, setEmbedUrl] = useState(() => 
+    getPreferredSource().buildUrl(tmdbId, mediaType, season, episode)
   );
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const adBlockerInitialized = useRef(false);
 
-  const embedUrl = currentSource.buildUrl(tmdbId, mediaType, season, episode);
-
-  // Initialize ad blocker on mount
+  // Poll native ad blocker for blocked count (only on Android)
   useEffect(() => {
-    if (!adBlockerInitialized.current) {
-      adBlockerInitialized.current = true;
-      
-      // Initialize all ad blocking systems
-      initAdBlocker();
-      injectAdBlockerCSS();
-      setupIframeProtection();
-      
-      // Set callback to update blocked count in UI
-      setBlockedCallback((count) => {
-        setAdsBlocked(count);
-      });
-      
-      // Get initial count
-      setAdsBlocked(getBlockedCount());
-      
-      console.log('[VideoPlayer] Ad blocker systems initialized');
-    }
+    if (!isNativeAndroid()) return;
+    
+    const pollBlockedCount = async () => {
+      const count = await getBlockedCount();
+      setAdsBlocked(count);
+    };
+    
+    // Poll every 2 seconds
+    const interval = setInterval(pollBlockedCount, 2000);
+    pollBlockedCount(); // Initial check
+    
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     setIsLoading(true);
     setError(false);
-    setRetryCount(0);
-  }, [tmdbId, season, episode, currentSource]);
-
-  // Listen for player events
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "PLAYER_EVENT") {
-        const { currentTime, duration } = event.data.data;
-        
-        if (duration > 0 && currentTime > 0) {
-          const progress = Math.round((currentTime / duration) * 100);
-          
-          const item: ContinueWatchingItem = {
-            id: tmdbId,
-            mediaType,
-            title,
-            poster_path: posterPath || null,
-            backdrop_path: backdropPath || null,
-            progress,
-            currentTime,
-            duration,
-            season,
-            episode,
-            episodeName,
-            lastWatched: Date.now(),
-          };
-          
-          // Only save if watched more than 30 seconds and less than 95%
-          if (currentTime > 30 && progress < 95) {
-            updateContinueWatching(item);
-          }
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [tmdbId, mediaType, title, posterPath, backdropPath, season, episode, episodeName]);
+    const url = currentSource.buildUrl(tmdbId, mediaType, season, episode);
+    setEmbedUrl(url);
+  }, [currentSource, tmdbId, mediaType, season, episode, retryCount]);
 
   const handleLoad = () => {
     setIsLoading(false);
+    setError(false);
   };
 
   const handleError = () => {
@@ -125,21 +77,11 @@ const VideoPlayer = ({
 
   const handleSourceChange = (source: StreamingSource) => {
     setCurrentSource(source);
+    setRetryCount(0);
   };
 
   const handleRetry = () => {
-    setRetryCount((prev) => prev + 1);
-    setIsLoading(true);
-    setError(false);
-    
-    // Try next source after 2 retries
-    if (retryCount >= 2) {
-      const currentIndex = streamingSources.findIndex(
-        (s) => s.id === currentSource.id
-      );
-      const nextIndex = (currentIndex + 1) % streamingSources.length;
-      setCurrentSource(streamingSources[nextIndex]);
-    }
+    setRetryCount(prev => prev + 1);
   };
 
   const handleFullscreen = () => {
@@ -155,29 +97,39 @@ const VideoPlayer = ({
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFullscreen}
-            className="h-8 w-8 sm:h-9 sm:w-9"
-            title="Fullscreen"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </Button>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <StreamingSourceSelector
           currentSource={currentSource}
           onSourceChange={handleSourceChange}
         />
+        
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetry}
+            className="text-xs sm:text-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+            Retry
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleFullscreen}
+            className="text-xs sm:text-sm"
+          >
+            <Maximize2 className="w-3.5 h-3.5 mr-1.5" />
+            Fullscreen
+          </Button>
+        </div>
       </div>
 
-      {/* Ads blocked indicator */}
-      {adsBlocked > 0 && (
-        <div className="flex items-center gap-1.5 text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-md">
+      {/* Native ad blocker indicator */}
+      {isNativeAndroid() && adsBlocked > 0 && (
+        <div className="flex items-center gap-1.5 text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-md w-fit">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span><strong>{adsBlocked}</strong> ads/popups blocked</span>
+          <span><strong>{adsBlocked}</strong> ads blocked</span>
         </div>
       )}
 
@@ -194,17 +146,13 @@ const VideoPlayer = ({
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-card z-10 p-4">
-            <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground" />
-            <p className="text-muted-foreground text-center text-sm sm:text-base">
-              Failed to load video. Try a different source.
-            </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button onClick={handleRetry} variant="secondary" size="sm">
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
-            </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10 p-4 text-center">
+            <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-destructive" />
+            <p className="text-sm text-muted-foreground">Failed to load video</p>
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
           </div>
         )}
 
@@ -220,7 +168,7 @@ const VideoPlayer = ({
         />
       </div>
 
-      {/* Quick Tips */}
+      {/* Tips */}
       <p className="text-xs text-muted-foreground text-center">
         💡 Tip: If video doesn't load, try a different source from the dropdown above
       </p>
