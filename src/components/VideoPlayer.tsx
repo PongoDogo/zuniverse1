@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield } from "lucide-react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield, ShieldCheck } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -8,7 +8,13 @@ import {
   getPreferredSource 
 } from "@/lib/streamingSources";
 import { updateContinueWatching, ContinueWatchingItem } from "@/lib/watchlist";
-import { isAdUrl, isExternalUrl } from "@/lib/adBlocker";
+import { 
+  initAdBlocker, 
+  injectAdBlockerCSS, 
+  setupIframeProtection,
+  setBlockedCallback,
+  getBlockedCount 
+} from "@/lib/adBlocker";
 
 interface VideoPlayerProps {
   tmdbId: number;
@@ -40,48 +46,54 @@ const VideoPlayer = ({
   const [adsBlocked, setAdsBlocked] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const adBlockerInitialized = useRef(false);
 
   const embedUrl = currentSource.buildUrl(tmdbId, mediaType, season, episode);
 
-  // Click protection - intercept suspicious clicks
-  const handlePlayerClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    
-    // Allow clicks on the iframe itself
-    if (target === iframeRef.current) return;
-    
-    // Block clicks on suspicious overlays
-    const classes = target.className?.toString?.() || '';
-    const id = target.id || '';
-    
-    if (
-      classes.match(/overlay|popup|ad|banner|click/i) ||
-      id.match(/overlay|popup|ad|banner|click/i) ||
-      target.tagName === 'A'
-    ) {
-      e.preventDefault();
-      e.stopPropagation();
-      setAdsBlocked(prev => prev + 1);
-      console.log('[VideoPlayer] Blocked suspicious click on:', target.tagName);
+  // Initialize ad blocker on mount
+  useEffect(() => {
+    if (!adBlockerInitialized.current) {
+      adBlockerInitialized.current = true;
+      
+      // Initialize all ad blocking systems
+      initAdBlocker();
+      injectAdBlockerCSS();
+      setupIframeProtection();
+      
+      // Set callback to update blocked count in UI
+      setBlockedCallback((count) => {
+        setAdsBlocked(count);
+      });
+      
+      // Get initial count
+      setAdsBlocked(getBlockedCount());
+      
+      console.log('[VideoPlayer] Ad blocker systems initialized');
     }
   }, []);
 
-  // Monitor and block window.open calls during playback
-  useEffect(() => {
-    let blockedCount = 0;
-    const originalOpen = window.open;
+  // Click protection - absorb suspicious clicks on the container
+  const handlePlayerClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
     
-    window.open = function(...args: any[]) {
-      blockedCount++;
-      setAdsBlocked(prev => prev + 1);
-      console.log('[VideoPlayer] Blocked popup:', args[0]);
-      return null;
-    };
-
-    return () => {
-      window.open = originalOpen;
-    };
-  }, [currentSource]);
+    // Allow clicks on the iframe and control buttons
+    if (target === iframeRef.current) return;
+    if (target.closest('button')) return;
+    if (target.closest('.streaming-source-selector')) return;
+    
+    // Block everything else that's not the iframe directly
+    const className = (target.className?.toString?.() || '').toLowerCase();
+    const tagName = target.tagName.toLowerCase();
+    
+    // If it's a div or span between us and the iframe, likely an overlay
+    if (tagName === 'div' || tagName === 'span' || tagName === 'a') {
+      if (target !== containerRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[VideoPlayer] Blocked overlay click:', tagName, className);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -186,9 +198,9 @@ const VideoPlayer = ({
 
       {/* Ads blocked indicator */}
       {adsBlocked > 0 && (
-        <div className="flex items-center gap-1.5 text-xs text-green-500">
-          <Shield className="w-3 h-3" />
-          <span>{adsBlocked} ads blocked</span>
+        <div className="flex items-center gap-1.5 text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-md">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span><strong>{adsBlocked}</strong> ads/popups blocked</span>
         </div>
       )}
 

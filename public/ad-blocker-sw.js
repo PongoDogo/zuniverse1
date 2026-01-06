@@ -1,161 +1,152 @@
-// Service Worker Ad Blocker - Blocks ads at the network level
-// This can block ads even from within iframes!
+// NUCLEAR Service Worker Ad Blocker
+// Intercepts network requests before they reach the page
 
 const AD_DOMAINS = [
   // Major ad networks
   'doubleclick.net', 'googlesyndication.com', 'googleadservices.com',
   'googletagmanager.com', 'google-analytics.com', 'googletagservices.com',
-  'adservice.google', 'pagead2.googlesyndication.com',
+  'adservice.google', 'pagead2.googlesyndication.com', 'adsense',
   
   // Popup/popunder networks
   'popads.net', 'popcash.net', 'propellerads.com', 'propellerads.net',
-  'exoclick.com', 'trafficjunky.com', 'trafficjunky.net',
-  'adsterra.com', 'adsterratools.com',
+  'exoclick.com', 'trafficjunky.com', 'trafficjunky.net', 'adsterra.com',
+  'clickadu.com', 'hilltopads.net', 'admaven.com', 'richads.com',
+  'trafficstars.com', 'popunder.net', 'adcash.com', 'evadav.com',
   
   // Video ad networks
-  'adnxs.com', 'advertising.com', 'bidswitch.net',
-  'pubmatic.com', 'openx.net', 'rubiconproject.com',
-  'casalemedia.com', 'criteo.com', 'criteo.net',
-  'amazon-adsystem.com', 'media.net',
+  'adnxs.com', 'advertising.com', 'bidswitch.net', 'pubmatic.com',
+  'openx.net', 'rubiconproject.com', 'casalemedia.com', 'criteo.com',
+  'criteo.net', 'amazon-adsystem.com', 'media.net', 'outbrain.com',
+  'taboola.com', 'mgid.com', 'revcontent.com', 'zergnet.com',
   
   // Tracking & analytics
   'facebook.com/tr', 'facebook.net/tr', 'scorecardresearch.com',
-  'quantserve.com', 'segment.io', 'amplitude.com',
+  'quantserve.com', 'segment.io', 'amplitude.com', 'mixpanel.com',
+  'hotjar.com', 'fullstory.com', 'mouseflow.com', 'luckyorange.com',
   
-  // Content recommendation ads
-  'taboola.com', 'outbrain.com', 'mgid.com', 'revcontent.com',
-  'zergnet.com', 'newsmax.com/widget',
-  
-  // Gambling/adult/crypto spam
-  'bet365.com', '1xbet.com', 'betway.com', '888casino.com',
-  'williamhill.com', 'bwin.com', 'pokerstars.com',
-  
-  // Malware/scam domains
-  'click.', 'track.', 'tracker.', 'trk.', 'pixel.',
-  
-  // Streaming site specific ad networks
+  // Streaming site ad networks
   'streamtape.com/ad', 'dooood.com/ad', 'mixdrop.co/ad',
-  'vidcloud.co/ad', 'rabbitstream.net/ad',
-  'mcloud.to/ad', 'dokicloud.one/ad',
+  'rabbitstream.net/ad', 'mcloud.to/ad', 'dokicloud.one/ad',
+  'filemoon.sx/ad', 'voe.sx/ad', 'upstream.to/ad',
   
-  // Common ad/tracker paths
-  '/ads/', '/ad.js', '/ad/', 'ads.js',
-  '/pagead/', '/adsense/', '/adserver/',
-  '/tracking/', '/analytics/', '/pixel/',
-  '/popup/', '/popunder/',
+  // Scam/spam
+  'bet365', '1xbet', 'betway', 'casino', 'poker', 'slots', 'gambling',
+  'dating', 'adult', 'xxx', 'porn', 'sex', 'crypto', 'bitcoin', 'forex',
 ];
 
-const AD_URL_PATTERNS = [
-  // Ad-related URL patterns
-  /\/ads?\//i,
-  /\/adserve/i,
-  /\/advert/i,
-  /\/banner/i,
-  /\/popup/i,
-  /\/popunder/i,
-  /\/(click|track|pixel)\./i,
-  /googleads/i,
-  /pagead/i,
-  /adsense/i,
-  /doubleclick/i,
-  
-  // Suspicious TLDs often used by ad/scam sites
-  /\.(xyz|top|club|live|stream|click|buzz|bet|casino|poker|win|loan|work|gq|ml|ga|cf|tk)$/i,
-  
-  // Common redirect patterns
-  /\?(.*&)?(redirect|ref|aff|click|track)=/i,
-  /\/(redirect|out|go|click|track|ad|sponsor)\//i,
+const AD_PATH_PATTERNS = [
+  '/ads/', '/ad/', '/adserve', '/advert', '/banner/', '/popup/', '/popunder/',
+  '/tracking/', '/analytics/', '/pixel/', '/pagead/', '/adsense/', '/sponsor/',
+  '/click/', '/track/', '/redirect/', '/out/', '/go/', '/aff/',
 ];
 
-const BLOCKED_RESOURCE_TYPES = [
-  'beacon',
-  'ping',
+const BLOCKED_EXTENSIONS = [
+  '.xyz', '.top', '.club', '.live', '.click', '.buzz', '.bet',
+  '.casino', '.poker', '.win', '.loan', '.work', '.gq', '.ml', '.ga', '.cf', '.tk'
 ];
 
-// Check if URL is an ad
 function isAdUrl(url) {
   const lowerUrl = url.toLowerCase();
   
-  // Check against ad domains
+  // Check ad domains
   for (const domain of AD_DOMAINS) {
     if (lowerUrl.includes(domain)) {
       return true;
     }
   }
   
-  // Check against URL patterns
-  for (const pattern of AD_URL_PATTERNS) {
-    if (pattern.test(url)) {
+  // Check ad paths
+  for (const path of AD_PATH_PATTERNS) {
+    if (lowerUrl.includes(path)) {
       return true;
     }
+  }
+  
+  // Check suspicious extensions
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    for (const ext of BLOCKED_EXTENSIONS) {
+      if (hostname.endsWith(ext)) {
+        return true;
+      }
+    }
+  } catch (e) {}
+  
+  // Check URL patterns
+  if (/\?(.*&)?(redirect|ref|aff|click|track|url|goto)=/i.test(url)) {
+    return true;
   }
   
   return false;
 }
 
-// Handle fetch events
+// Handle fetch events - intercept ALL network requests
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   const destination = event.request.destination;
   
-  // Block known ad resource types
-  if (BLOCKED_RESOURCE_TYPES.includes(destination)) {
-    console.log('[SW AdBlocker] Blocked beacon/ping:', url);
+  // Always block beacons and pings
+  if (destination === 'beacon' || destination === 'ping') {
+    console.log('[SW] Blocked beacon/ping:', url);
     event.respondWith(new Response('', { status: 200 }));
     return;
   }
   
-  // Check if it's an ad URL
+  // Check if URL matches ad patterns
   if (isAdUrl(url)) {
-    console.log('[SW AdBlocker] Blocked ad request:', url);
+    console.log('[SW] ⛔ Blocked:', url);
     
     // Return appropriate empty response based on resource type
-    if (destination === 'script') {
-      event.respondWith(new Response('', { 
-        status: 200,
-        headers: { 'Content-Type': 'application/javascript' }
-      }));
-    } else if (destination === 'image') {
-      // Return transparent 1x1 pixel
-      const pixel = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-      event.respondWith(new Response(
-        Uint8Array.from(atob(pixel), c => c.charCodeAt(0)),
-        { 
+    switch (destination) {
+      case 'script':
+        event.respondWith(new Response('// blocked', { 
           status: 200,
-          headers: { 'Content-Type': 'image/gif' }
-        }
-      ));
-    } else if (destination === 'style') {
-      event.respondWith(new Response('', { 
-        status: 200,
-        headers: { 'Content-Type': 'text/css' }
-      }));
-    } else if (destination === 'iframe' || destination === 'document') {
-      event.respondWith(new Response(
-        '<!DOCTYPE html><html><body></body></html>', 
-        { 
+          headers: { 'Content-Type': 'application/javascript' }
+        }));
+        break;
+        
+      case 'image':
+        // Return transparent 1x1 GIF
+        const pixel = 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        event.respondWith(new Response(
+          Uint8Array.from(atob(pixel), c => c.charCodeAt(0)),
+          { status: 200, headers: { 'Content-Type': 'image/gif' }}
+        ));
+        break;
+        
+      case 'style':
+        event.respondWith(new Response('/* blocked */', { 
           status: 200,
-          headers: { 'Content-Type': 'text/html' }
-        }
-      ));
-    } else {
-      event.respondWith(new Response('', { status: 200 }));
+          headers: { 'Content-Type': 'text/css' }
+        }));
+        break;
+        
+      case 'iframe':
+      case 'document':
+        event.respondWith(new Response(
+          '<!DOCTYPE html><html><head></head><body></body></html>', 
+          { status: 200, headers: { 'Content-Type': 'text/html' }}
+        ));
+        break;
+        
+      default:
+        event.respondWith(new Response('', { status: 200 }));
     }
     return;
   }
   
-  // For non-ad requests, just pass through
-  // Don't call event.respondWith to let normal fetch happen
+  // Non-ad requests pass through normally
 });
 
-// Install event
+// Install immediately
 self.addEventListener('install', (event) => {
-  console.log('[SW AdBlocker] Installing...');
+  console.log('[SW] Installing ad blocker...');
   self.skipWaiting();
 });
 
-// Activate event
+// Take control immediately
 self.addEventListener('activate', (event) => {
-  console.log('[SW AdBlocker] Activated!');
+  console.log('[SW] ✅ Ad blocker activated!');
   event.waitUntil(clients.claim());
 });
