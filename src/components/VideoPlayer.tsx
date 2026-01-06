@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield, ShieldCheck } from "lucide-react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield, ShieldCheck, MousePointerClick } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -27,6 +27,8 @@ interface VideoPlayerProps {
   episodeName?: string;
 }
 
+const CLICKS_TO_ABSORB = 3; // Number of "ad trigger" clicks to absorb
+
 const VideoPlayer = ({
   tmdbId,
   mediaType,
@@ -44,6 +46,9 @@ const VideoPlayer = ({
   );
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
+  const [clickShieldActive, setClickShieldActive] = useState(true);
+  const [clicksAbsorbed, setClicksAbsorbed] = useState(0);
+  const [shieldMessage, setShieldMessage] = useState("Click to start watching");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const adBlockerInitialized = useRef(false);
@@ -72,27 +77,40 @@ const VideoPlayer = ({
     }
   }, []);
 
-  // Click protection - absorb suspicious clicks on the container
-  const handlePlayerClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
+  // Reset click shield when source changes
+  useEffect(() => {
+    setClickShieldActive(true);
+    setClicksAbsorbed(0);
+    setShieldMessage("Click to start watching");
+  }, [currentSource, tmdbId, season, episode]);
+
+  // Handle click shield - absorb ad-triggering clicks
+  const handleShieldClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    // Allow clicks on the iframe and control buttons
-    if (target === iframeRef.current) return;
-    if (target.closest('button')) return;
-    if (target.closest('.streaming-source-selector')) return;
+    const newCount = clicksAbsorbed + 1;
+    setClicksAbsorbed(newCount);
+    setAdsBlocked(prev => prev + 1); // Count as blocked ad
     
-    // Block everything else that's not the iframe directly
-    const className = (target.className?.toString?.() || '').toLowerCase();
-    const tagName = target.tagName.toLowerCase();
-    
-    // If it's a div or span between us and the iframe, likely an overlay
-    if (tagName === 'div' || tagName === 'span' || tagName === 'a') {
-      if (target !== containerRef.current) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[VideoPlayer] Blocked overlay click:', tagName, className);
-      }
+    if (newCount >= CLICKS_TO_ABSORB) {
+      setShieldMessage("Ad clicks absorbed! Enjoy watching.");
+      setTimeout(() => {
+        setClickShieldActive(false);
+      }, 800);
+    } else {
+      const remaining = CLICKS_TO_ABSORB - newCount;
+      setShieldMessage(`Blocking ads... Click ${remaining} more time${remaining > 1 ? 's' : ''}`);
     }
+    
+    console.log(`[VideoPlayer] Absorbed click ${newCount}/${CLICKS_TO_ABSORB}`);
+  }, [clicksAbsorbed]);
+
+  // Skip shield button
+  const handleSkipShield = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setClickShieldActive(false);
   }, []);
 
   useEffect(() => {
@@ -208,9 +226,52 @@ const VideoPlayer = ({
       <div 
         ref={containerRef}
         className="relative w-full aspect-video bg-card rounded-lg overflow-hidden touch-manipulation"
-        onClick={handlePlayerClick}
-        onMouseDown={handlePlayerClick}
       >
+        {/* Click Shield - Absorbs ad-triggering clicks */}
+        {clickShieldActive && !isLoading && !error && (
+          <div 
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+            onClick={handleShieldClick}
+          >
+            <div className="text-center space-y-4 p-6">
+              <div className="relative">
+                <Shield className="w-16 h-16 text-primary mx-auto animate-pulse" />
+                <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                  {CLICKS_TO_ABSORB - clicksAbsorbed}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-white">{shieldMessage}</h3>
+                <p className="text-sm text-gray-300">
+                  We're absorbing ad clicks so you don't get popups
+                </p>
+              </div>
+              
+              {/* Progress dots */}
+              <div className="flex justify-center gap-2">
+                {Array.from({ length: CLICKS_TO_ABSORB }).map((_, i) => (
+                  <div 
+                    key={i}
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      i < clicksAbsorbed 
+                        ? 'bg-green-500 scale-110' 
+                        : 'bg-gray-600'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <button
+                onClick={handleSkipShield}
+                className="text-xs text-gray-400 hover:text-gray-200 underline mt-4"
+              >
+                Skip protection (not recommended)
+              </button>
+            </div>
+          </div>
+        )}
+
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10">
             <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
@@ -237,9 +298,10 @@ const VideoPlayer = ({
           key={`${embedUrl}-${retryCount}`}
           ref={iframeRef}
           src={embedUrl}
-          className={`w-full h-full transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`w-full h-full transition-opacity duration-300 ${isLoading || clickShieldActive ? 'pointer-events-none' : ''} ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups-to-escape-sandbox"
           onLoad={handleLoad}
           onError={handleError}
         />
