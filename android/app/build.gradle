@@ -21,19 +21,14 @@ android {
     }
     
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
-
-repositories {
-    flatDir {
-        dirs '../capacitor-android/capacitor/build/outputs/aar'
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 }
 
 dependencies {
     implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
     implementation 'androidx.core:core-splashscreen:1.0.1'
