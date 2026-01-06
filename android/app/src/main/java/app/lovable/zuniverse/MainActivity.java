@@ -1,11 +1,13 @@
 package app.lovable.zuniverse;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.MotionEvent;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -30,6 +32,11 @@ public class MainActivity extends BridgeActivity {
     private static final String TAG = "ZUniverseAdBlocker";
     private int blockedAdsCount = 0;
     private Handler mainHandler = new Handler(Looper.getMainLooper());
+    
+    // NUCLEAR: Track touch events to block click-triggered ads
+    private volatile boolean isTouchActive = false;
+    private volatile long lastTouchTime = 0;
+    private static final long TOUCH_BLOCK_WINDOW_MS = 500; // Block intents for 500ms after touch
     
     // ONLY allow these domains - VERY STRICT
     private static final Set<String> ALLOWED_DOMAINS = new HashSet<>(Arrays.asList(
@@ -75,6 +82,33 @@ public class MainActivity extends BridgeActivity {
         setupAggressiveAdBlocking();
     }
     
+    /**
+     * NUCLEAR: Intercept ALL touch events to track when user is touching the screen.
+     * Any Intent that tries to open during/after a touch is an AD and should be blocked.
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                isTouchActive = true;
+                lastTouchTime = System.currentTimeMillis();
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isTouchActive = false;
+                lastTouchTime = System.currentTimeMillis();
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+    
+    /**
+     * Check if we're in the "danger zone" where click-triggered ads happen
+     */
+    private boolean isInTouchBlockWindow() {
+        return isTouchActive || (System.currentTimeMillis() - lastTouchTime < TOUCH_BLOCK_WINDOW_MS);
+    }
+    
     private void setupAggressiveAdBlocking() {
         try {
             Bridge bridge = getBridge();
@@ -89,22 +123,16 @@ public class MainActivity extends BridgeActivity {
                 return;
             }
             
-            // CRITICAL: Custom WebViewClient with HitTestResult checking
+            // CRITICAL: Custom WebViewClient that blocks ALL external navigation
             BridgeWebViewClient customClient = new BridgeWebViewClient(bridge) {
                 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                     String url = request.getUrl().toString();
                     
-                    // KEY INSIGHT: If getHitTestResult() is null or UNKNOWN, 
-                    // the navigation was triggered by JavaScript, not user click
-                    WebView.HitTestResult hitTest = view.getHitTestResult();
-                    boolean isUserInitiated = hitTest != null && 
-                        hitTest.getType() != WebView.HitTestResult.UNKNOWN_TYPE;
-                    
-                    // If NOT user-initiated and NOT to our allowed domains, BLOCK IT
-                    if (!isUserInitiated && !isAllowedDomain(url)) {
-                        android.util.Log.d(TAG, "BLOCKED JS-triggered navigation: " + truncateUrl(url));
+                    // NUCLEAR: If touched recently and URL is external, BLOCK IT
+                    if (isInTouchBlockWindow() && !isAllowedDomain(url)) {
+                        android.util.Log.d(TAG, "BLOCKED touch-triggered navigation: " + truncateUrl(url));
                         blockedAdsCount++;
                         return true;
                     }
@@ -121,12 +149,8 @@ public class MainActivity extends BridgeActivity {
                 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    WebView.HitTestResult hitTest = view.getHitTestResult();
-                    boolean isUserInitiated = hitTest != null && 
-                        hitTest.getType() != WebView.HitTestResult.UNKNOWN_TYPE;
-                    
-                    if (!isUserInitiated && !isAllowedDomain(url)) {
-                        android.util.Log.d(TAG, "BLOCKED JS-triggered (legacy): " + truncateUrl(url));
+                    if (isInTouchBlockWindow() && !isAllowedDomain(url)) {
+                        android.util.Log.d(TAG, "BLOCKED touch-triggered (legacy): " + truncateUrl(url));
                         blockedAdsCount++;
                         return true;
                     }
@@ -151,6 +175,16 @@ public class MainActivity extends BridgeActivity {
                         return createEmptyResponse();
                     }
                     
+                    // Also block requests to non-allowed domains
+                    if (!isAllowedDomain(url) && !url.startsWith("data:") && !url.startsWith("blob:")) {
+                        String host = getHostFromUrl(url);
+                        if (host != null && !host.isEmpty()) {
+                            android.util.Log.d(TAG, "BLOCKED resource from non-allowed domain: " + truncateUrl(url));
+                            blockedAdsCount++;
+                            return createEmptyResponse();
+                        }
+                    }
+                    
                     return super.shouldInterceptRequest(view, request);
                 }
             };
@@ -161,7 +195,7 @@ public class MainActivity extends BridgeActivity {
             webView.setWebChromeClient(new WebChromeClient() {
                 @Override
                 public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
-                    // Even if "user gesture" is true, ads can fake this - BLOCK ALL
+                    // BLOCK ALL - ads fake user gestures
                     android.util.Log.d(TAG, "BLOCKED popup (isUserGesture=" + isUserGesture + ")");
                     blockedAdsCount++;
                     return false;
@@ -170,7 +204,6 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onCloseWindow(WebView window) {}
                 
-                // Block JavaScript alerts/confirms
                 @Override
                 public boolean onJsAlert(WebView view, String url, String message, android.webkit.JsResult result) {
                     result.cancel();
@@ -189,7 +222,6 @@ public class MainActivity extends BridgeActivity {
                     return true;
                 }
                 
-                // Block geolocation requests
                 @Override
                 public void onGeolocationPermissionsShowPrompt(String origin, android.webkit.GeolocationPermissions.Callback callback) {
                     callback.invoke(origin, false, false);
@@ -214,10 +246,19 @@ public class MainActivity extends BridgeActivity {
             injectAdBlocker(webView);
             startContinuousInjection(webView);
             
-            android.util.Log.d(TAG, "Ad blocking setup complete with HitTestResult checking");
+            android.util.Log.d(TAG, "NUCLEAR ad blocking active - touch window tracking enabled");
             
         } catch (Exception e) {
             android.util.Log.e(TAG, "Error setting up ad blocking: " + e.getMessage());
+        }
+    }
+    
+    private String getHostFromUrl(String url) {
+        try {
+            java.net.URL urlObj = new java.net.URL(url);
+            return urlObj.getHost();
+        } catch (Exception e) {
+            return null;
         }
     }
     
@@ -276,15 +317,15 @@ public class MainActivity extends BridgeActivity {
     private void injectAdBlocker(WebView webView) {
         String js = 
             "(function() {" +
-            "  if (window.__ZUNIVERSE_BLOCKER_V2__) return;" +
-            "  window.__ZUNIVERSE_BLOCKER_V2__ = true;" +
+            "  if (window.__ZU_NUCLEAR__) return;" +
+            "  window.__ZU_NUCLEAR__ = true;" +
             "  " +
             "  var allowed = ['lovableproject.com','lovable.dev','localhost'," +
             "    'vidsrc.cc','vidsrc.me','vidsrc.pro','vidsrc.to','vidsrc.xyz','vidsrc.net','vidsrc.icu'," +
             "    'embed.su','embedsu.com','vidlink.pro','moviesapi.club'," +
             "    'vidbinge.dev','vidbinge.com','2embed.org','2embed.cc','2embed.skin'," +
             "    'multiembed.mov','smashy.stream','autoembed.cc','autoembed.co'," +
-            "    'themoviedb.org','tmdb.org'];" +
+            "    'themoviedb.org','tmdb.org','image.tmdb.org'];" +
             "  " +
             "  function ok(u) {" +
             "    if (!u) return true;" +
@@ -294,87 +335,120 @@ public class MainActivity extends BridgeActivity {
             "    } catch(e) { return false; }" +
             "  }" +
             "  " +
-            "  // Kill window.open completely" +
-            "  window.open = function() { return null; };" +
+            "  // KILL window.open" +
+            "  window.open = function() { console.log('[ZU] blocked window.open'); return null; };" +
             "  " +
-            "  // Override location methods" +
-            "  var origAssign = location.assign.bind(location);" +
-            "  var origReplace = location.replace.bind(location);" +
-            "  location.assign = function(u) { if(ok(u)) origAssign(u); };" +
-            "  location.replace = function(u) { if(ok(u)) origReplace(u); };" +
+            "  // KILL location methods" +
+            "  var origAssign = location.assign ? location.assign.bind(location) : function(){};" +
+            "  var origReplace = location.replace ? location.replace.bind(location) : function(){};" +
+            "  location.assign = function(u) { if(ok(u)) origAssign(u); else console.log('[ZU] blocked assign:', u); };" +
+            "  location.replace = function(u) { if(ok(u)) origReplace(u); else console.log('[ZU] blocked replace:', u); };" +
             "  " +
-            "  // Trap location.href changes" +
-            "  var desc = Object.getOwnPropertyDescriptor(window, 'location');" +
-            "  if (desc && desc.configurable) {" +
+            "  // Trap location.href" +
+            "  try {" +
             "    var realLoc = window.location;" +
-            "    Object.defineProperty(window, 'location', {" +
-            "      get: function() { return realLoc; }," +
-            "      set: function(u) { if(ok(u)) realLoc.href = u; }" +
-            "    });" +
-            "  }" +
+            "    var origHref = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href');" +
+            "    if (origHref && origHref.set) {" +
+            "      Object.defineProperty(window.Location.prototype, 'href', {" +
+            "        get: origHref.get," +
+            "        set: function(u) { if(ok(u)) origHref.set.call(this, u); else console.log('[ZU] blocked href:', u); }" +
+            "      });" +
+            "    }" +
+            "  } catch(e) {}" +
             "  " +
-            "  // Block ALL click events on non-allowed links" +
-            "  function blockBadLinks(e) {" +
+            "  // NUCLEAR: Block ALL click events that might lead to ads" +
+            "  function nuclearClickBlock(e) {" +
             "    var el = e.target;" +
-            "    while (el && el !== document) {" +
-            "      if (el.tagName === 'A' && el.href && !ok(el.href)) {" +
-            "        e.preventDefault();" +
-            "        e.stopPropagation();" +
-            "        e.stopImmediatePropagation();" +
-            "        return false;" +
-            "      }" +
-            "      // Also check for onclick handlers that might redirect" +
-            "      if (el.onclick || el.getAttribute('onclick')) {" +
-            "        var onclick = el.getAttribute('onclick') || '';" +
-            "        if (onclick.includes('location') || onclick.includes('window.open') || onclick.includes('href')) {" +
+            "    var maxDepth = 20;" +
+            "    var depth = 0;" +
+            "    while (el && el !== document && depth < maxDepth) {" +
+            "      depth++;" +
+            "      // Check anchor tags" +
+            "      if (el.tagName === 'A') {" +
+            "        var href = el.href || el.getAttribute('href');" +
+            "        if (href && !ok(href)) {" +
             "          e.preventDefault();" +
             "          e.stopPropagation();" +
+            "          e.stopImmediatePropagation();" +
+            "          console.log('[ZU] blocked click on bad link:', href);" +
             "          return false;" +
+            "        }" +
+            "        // Also check target=_blank" +
+            "        if (el.target === '_blank') {" +
+            "          el.target = '_self';" +
+            "          if (!ok(href)) {" +
+            "            e.preventDefault();" +
+            "            e.stopPropagation();" +
+            "            return false;" +
+            "          }" +
+            "        }" +
+            "      }" +
+            "      // Check for invisible/transparent overlays (common ad technique)" +
+            "      var style = window.getComputedStyle(el);" +
+            "      if (style.position === 'fixed' || style.position === 'absolute') {" +
+            "        var opacity = parseFloat(style.opacity);" +
+            "        if (opacity < 0.1 || style.pointerEvents === 'all') {" +
+            "          // Might be an ad overlay - check z-index" +
+            "          var zIndex = parseInt(style.zIndex) || 0;" +
+            "          if (zIndex > 1000) {" +
+            "            e.preventDefault();" +
+            "            e.stopPropagation();" +
+            "            el.style.pointerEvents = 'none';" +
+            "            el.style.display = 'none';" +
+            "            console.log('[ZU] blocked click on suspicious overlay');" +
+            "            return false;" +
+            "          }" +
             "        }" +
             "      }" +
             "      el = el.parentElement;" +
             "    }" +
             "  }" +
             "  " +
-            "  // Capture phase for maximum priority" +
+            "  // Capture ALL click-like events at document level with highest priority" +
             "  ['click','mousedown','mouseup','touchstart','touchend','pointerdown','pointerup'].forEach(function(evt) {" +
-            "    document.addEventListener(evt, blockBadLinks, {capture: true, passive: false});" +
+            "    document.addEventListener(evt, nuclearClickBlock, {capture: true, passive: false});" +
+            "    window.addEventListener(evt, nuclearClickBlock, {capture: true, passive: false});" +
             "  });" +
             "  " +
-            "  // Block form submissions to ad sites" +
-            "  document.addEventListener('submit', function(e) {" +
-            "    var form = e.target;" +
-            "    if (form.action && !ok(form.action)) {" +
-            "      e.preventDefault();" +
-            "      e.stopPropagation();" +
-            "    }" +
-            "  }, true);" +
-            "  " +
-            "  // Remove any invisible overlays that hijack clicks" +
+            "  // Periodically remove ad overlays and iframes" +
             "  setInterval(function() {" +
-            "    var overlays = document.querySelectorAll('div[style*=\"z-index: 99\"], div[style*=\"position: fixed\"], div[style*=\"position:fixed\"], iframe[style*=\"opacity: 0\"], iframe[style*=\"opacity:0\"]');" +
-            "    overlays.forEach(function(el) {" +
-            "      var style = window.getComputedStyle(el);" +
-            "      if (parseFloat(style.opacity) < 0.1 || style.visibility === 'hidden') {" +
-            "        el.remove();" +
-            "      }" +
+            "    // Remove invisible overlays" +
+            "    document.querySelectorAll('div, span, a').forEach(function(el) {" +
+            "      try {" +
+            "        var style = window.getComputedStyle(el);" +
+            "        var isFixed = style.position === 'fixed' || style.position === 'absolute';" +
+            "        var isTransparent = parseFloat(style.opacity) < 0.1;" +
+            "        var isFullScreen = el.offsetWidth > window.innerWidth * 0.8 && el.offsetHeight > window.innerHeight * 0.8;" +
+            "        var hasHighZ = (parseInt(style.zIndex) || 0) > 1000;" +
+            "        if (isFixed && (isTransparent || isFullScreen) && hasHighZ) {" +
+            "          el.style.pointerEvents = 'none';" +
+            "          el.style.display = 'none';" +
+            "        }" +
+            "      } catch(e) {}" +
             "    });" +
-            "    // Also remove suspicious iframes" +
+            "    // Remove bad iframes" +
             "    document.querySelectorAll('iframe').forEach(function(f) {" +
-            "      if (f.src && !ok(f.src) && !f.src.startsWith('about:')) {" +
+            "      if (f.src && !ok(f.src) && !f.src.startsWith('about:') && !f.src.startsWith('blob:')) {" +
             "        f.remove();" +
             "      }" +
             "    });" +
-            "  }, 1000);" +
+            "  }, 500);" +
             "  " +
-            "  console.log('[ZUNIVERSE] Ad blocker v2 active');" +
+            "  // Block alert/confirm/prompt" +
+            "  window.alert = function() {};" +
+            "  window.confirm = function() { return false; };" +
+            "  window.prompt = function() { return null; };" +
+            "  window.onbeforeunload = null;" +
+            "  Object.defineProperty(window, 'onbeforeunload', {get: function(){return null;}, set: function(){}});" +
+            "  " +
+            "  console.log('[ZU] NUCLEAR ad blocker active');" +
             "})();";
         
         webView.evaluateJavascript(js, null);
     }
     
     /**
-     * Re-inject blocker every 2 seconds to catch dynamically loaded content
+     * Re-inject blocker every second to catch dynamically loaded content
      */
     private void startContinuousInjection(WebView webView) {
         mainHandler.postDelayed(new Runnable() {
@@ -384,15 +458,17 @@ public class MainActivity extends BridgeActivity {
                     if (webView != null) {
                         injectAdBlocker(webView);
                     }
-                    mainHandler.postDelayed(this, 2000);
+                    mainHandler.postDelayed(this, 1000); // Every 1 second instead of 2
                 } catch (Exception e) {
                     android.util.Log.e(TAG, "Injection error: " + e.getMessage());
                 }
             }
-        }, 2000);
+        }, 1000);
     }
     
-    // BLOCK ALL intents that would open a browser
+    // ==================== NUCLEAR INTENT BLOCKING ====================
+    // Block ALL intents that would open external apps/browsers
+    
     @Override
     public void startActivity(Intent intent) {
         if (shouldBlockIntent(intent)) {
@@ -433,17 +509,78 @@ public class MainActivity extends BridgeActivity {
         super.startActivityForResult(intent, requestCode, options);
     }
     
+    @Override
+    public boolean startActivityIfNeeded(Intent intent, int requestCode) {
+        if (shouldBlockIntent(intent)) {
+            android.util.Log.d(TAG, "BLOCKED startActivityIfNeeded: " + intent);
+            blockedAdsCount++;
+            return false;
+        }
+        return super.startActivityIfNeeded(intent, requestCode);
+    }
+    
+    @Override
+    public boolean startActivityIfNeeded(Intent intent, int requestCode, Bundle options) {
+        if (shouldBlockIntent(intent)) {
+            android.util.Log.d(TAG, "BLOCKED startActivityIfNeeded+options: " + intent);
+            blockedAdsCount++;
+            return false;
+        }
+        return super.startActivityIfNeeded(intent, requestCode, options);
+    }
+    
+    @Override
+    public boolean startNextMatchingActivity(Intent intent) {
+        if (shouldBlockIntent(intent)) {
+            android.util.Log.d(TAG, "BLOCKED startNextMatchingActivity: " + intent);
+            blockedAdsCount++;
+            return false;
+        }
+        return super.startNextMatchingActivity(intent);
+    }
+    
+    @Override
+    public boolean startNextMatchingActivity(Intent intent, Bundle options) {
+        if (shouldBlockIntent(intent)) {
+            android.util.Log.d(TAG, "BLOCKED startNextMatchingActivity+options: " + intent);
+            blockedAdsCount++;
+            return false;
+        }
+        return super.startNextMatchingActivity(intent, options);
+    }
+    
     private boolean shouldBlockIntent(Intent intent) {
         if (intent == null) return false;
         
+        // NUCLEAR: Block ALL external intents triggered during touch
+        if (isInTouchBlockWindow()) {
+            String action = intent.getAction();
+            Uri data = intent.getData();
+            ComponentName component = intent.getComponent();
+            
+            // Only allow intents to our own app
+            if (component != null && !component.getPackageName().equals(getPackageName())) {
+                android.util.Log.d(TAG, "BLOCKED touch-triggered external intent");
+                return true;
+            }
+            
+            // Block any URL intent
+            if (Intent.ACTION_VIEW.equals(action) && data != null) {
+                String scheme = data.getScheme();
+                if ("http".equals(scheme) || "https".equals(scheme) || "intent".equals(scheme) || "market".equals(scheme)) {
+                    android.util.Log.d(TAG, "BLOCKED touch-triggered URL intent: " + data);
+                    return true;
+                }
+            }
+        }
+        
+        // Normal blocking logic
         String action = intent.getAction();
         Uri data = intent.getData();
         
-        // Block ANY intent with a URL that would open browser
         if (Intent.ACTION_VIEW.equals(action) && data != null) {
             String scheme = data.getScheme();
             
-            // Block ALL URL schemes that could open browser
             if ("http".equals(scheme) || "https".equals(scheme)) {
                 String host = data.getHost();
                 if (host == null || !isHostAllowed(host)) {
@@ -482,7 +619,9 @@ public class MainActivity extends BridgeActivity {
                     pkg.contains("edge") || pkg.contains("samsung") ||
                     pkg.contains("brave") || pkg.contains("webview") ||
                     pkg.contains("uc") || pkg.contains("dolphin") ||
-                    pkg.contains("puffin") || pkg.contains("duckduckgo")) {
+                    pkg.contains("puffin") || pkg.contains("duckduckgo") ||
+                    pkg.contains("vivaldi") || pkg.contains("kiwi") ||
+                    pkg.contains("yandex") || pkg.contains("miui")) {
                     return true;
                 }
             }
