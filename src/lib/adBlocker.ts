@@ -145,19 +145,34 @@ export const initAdBlocker = (): void => {
 
 // Block iframe from navigating parent
 export const setupIframeProtection = (): void => {
-  // Add sandbox attribute dynamically to iframes that load streaming content
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node instanceof HTMLIFrameElement) {
-          // Allow same-origin scripts but prevent top navigation
-          if (!node.hasAttribute('sandbox')) {
-            node.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+  const initObserver = () => {
+    if (!document.body) {
+      // Wait for body to be available
+      requestAnimationFrame(initObserver);
+      return;
+    }
+    
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLIFrameElement) {
+            // Allow same-origin scripts but prevent top navigation
+            if (!node.hasAttribute('sandbox')) {
+              node.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+            }
           }
-        }
+        });
       });
     });
-  });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true });
+    console.log('[AdBlocker] Iframe protection active');
+  };
+  
+  // Start when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initObserver);
+  } else {
+    initObserver();
+  }
 };
