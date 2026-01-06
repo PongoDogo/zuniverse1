@@ -1,16 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.zuniverse.app',
+  appId: 'app.lovable.71c9d651f97347909891821bce00d9dc',
   appName: 'ZUniverse',
   webDir: 'dist',
   android: {
     allowMixedContent: true,
-    // Keep all navigation inside the app
     appendUserAgent: 'ZUniverseApp'
   },
   plugins: {
-    // Prevent external browser opens
     CapacitorHttp: {
       enabled: true
     }
