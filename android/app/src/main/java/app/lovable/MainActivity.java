@@ -46,9 +46,6 @@ public class MainActivity extends BridgeActivity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
     }
     
-    /**
-     * Get the number of blocked ads
-     */
     public int getBlockedAdsCount() {
         if (adBlockerClient != null) {
             return adBlockerClient.getBlockedCount();
