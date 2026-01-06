@@ -230,9 +230,39 @@ public class AdBlockerWebViewClient extends WebViewClient {
         return super.shouldInterceptRequest(view, request);
     }
     
+    // Allowed streaming source domains - player embeds we want to work
+    private static final Set<String> ALLOWED_DOMAINS = new HashSet<>(Arrays.asList(
+        // Our app
+        "lovableproject.com", "lovable.dev", "localhost",
+        // Streaming sources (from the app)
+        "vidsrc.cc", "vidsrc.me", "vidsrc.pro", "vidsrc.to", "vidsrc.xyz", "vidsrc.net",
+        "embed.su", "embedsu.com",
+        "vidlink.pro",
+        "moviesapi.club",
+        "vidbinge.dev", "vidbinge.com",
+        "2embed.org", "2embed.cc", "2embed.skin",
+        "multiembed.mov", "multiembed.org",
+        "player.smashy.stream", "smashy.stream",
+        "autoembed.cc", "autoembed.co",
+        // TMDB for images
+        "themoviedb.org", "tmdb.org", "image.tmdb.org"
+    ));
+    
+    private boolean isAllowedDomain(String host) {
+        if (host == null) return false;
+        String lowerHost = host.toLowerCase();
+        for (String allowed : ALLOWED_DOMAINS) {
+            if (lowerHost.equals(allowed) || lowerHost.endsWith("." + allowed)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
         String url = request.getUrl().toString();
+        String lowerUrl = url.toLowerCase();
         
         // Block navigation to ad URLs
         if (shouldBlockUrl(url)) {
@@ -240,23 +270,26 @@ public class AdBlockerWebViewClient extends WebViewClient {
             return true;
         }
         
-        // Block ALL external navigations that aren't the main streaming sources
-        // This is aggressive but effective against redirect ads
-        String currentUrl = view.getUrl();
-        if (currentUrl != null && !request.isForMainFrame()) {
-            try {
-                String currentHost = new java.net.URL(currentUrl).getHost();
-                String newHost = new java.net.URL(url).getHost();
-                if (!currentHost.equals(newHost)) {
-                    Log.d(TAG, "BLOCKED cross-origin: " + url.substring(0, Math.min(100, url.length())));
-                    return true;
-                }
-            } catch (Exception e) {
-                // Allow if can't parse
+        try {
+            java.net.URL urlObj = new java.net.URL(url);
+            String newHost = urlObj.getHost();
+            
+            // If it's an allowed streaming domain, let it through
+            if (isAllowedDomain(newHost)) {
+                return false;
             }
+            
+            // Block ANY navigation to external sites not in our allowed list
+            // This is the key fix - clicking on player won't open external ad sites
+            Log.d(TAG, "BLOCKED external navigation: " + url.substring(0, Math.min(100, url.length())));
+            blockedCount.incrementAndGet();
+            return true;
+            
+        } catch (Exception e) {
+            // If we can't parse the URL, block it to be safe
+            Log.d(TAG, "BLOCKED unparseable URL: " + url.substring(0, Math.min(50, url.length())));
+            return true;
         }
-        
-        return false;
     }
     
     @Override
