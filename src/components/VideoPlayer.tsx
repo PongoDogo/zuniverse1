@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, Shield } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -8,6 +8,7 @@ import {
   getPreferredSource 
 } from "@/lib/streamingSources";
 import { updateContinueWatching, ContinueWatchingItem } from "@/lib/watchlist";
+import { isAdUrl, isExternalUrl } from "@/lib/adBlocker";
 
 interface VideoPlayerProps {
   tmdbId: number;
@@ -36,10 +37,51 @@ const VideoPlayer = ({
     getPreferredSource()
   );
   const [retryCount, setRetryCount] = useState(0);
+  const [adsBlocked, setAdsBlocked] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const embedUrl = currentSource.buildUrl(tmdbId, mediaType, season, episode);
+
+  // Click protection - intercept suspicious clicks
+  const handlePlayerClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    
+    // Allow clicks on the iframe itself
+    if (target === iframeRef.current) return;
+    
+    // Block clicks on suspicious overlays
+    const classes = target.className?.toString?.() || '';
+    const id = target.id || '';
+    
+    if (
+      classes.match(/overlay|popup|ad|banner|click/i) ||
+      id.match(/overlay|popup|ad|banner|click/i) ||
+      target.tagName === 'A'
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      setAdsBlocked(prev => prev + 1);
+      console.log('[VideoPlayer] Blocked suspicious click on:', target.tagName);
+    }
+  }, []);
+
+  // Monitor and block window.open calls during playback
+  useEffect(() => {
+    let blockedCount = 0;
+    const originalOpen = window.open;
+    
+    window.open = function(...args: any[]) {
+      blockedCount++;
+      setAdsBlocked(prev => prev + 1);
+      console.log('[VideoPlayer] Blocked popup:', args[0]);
+      return null;
+    };
+
+    return () => {
+      window.open = originalOpen;
+    };
+  }, [currentSource]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -142,10 +184,20 @@ const VideoPlayer = ({
         />
       </div>
 
+      {/* Ads blocked indicator */}
+      {adsBlocked > 0 && (
+        <div className="flex items-center gap-1.5 text-xs text-green-500">
+          <Shield className="w-3 h-3" />
+          <span>{adsBlocked} ads blocked</span>
+        </div>
+      )}
+
       {/* Player */}
       <div 
         ref={containerRef}
         className="relative w-full aspect-video bg-card rounded-lg overflow-hidden touch-manipulation"
+        onClick={handlePlayerClick}
+        onMouseDown={handlePlayerClick}
       >
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10">
