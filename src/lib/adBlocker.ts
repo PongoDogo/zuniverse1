@@ -123,36 +123,7 @@ export const initAdBlocker = (): void => {
   console.log('[AdBlocker] Initialized successfully');
 };
 
-// Block iframe from navigating parent
+// Note: Iframe sandbox protection disabled - streaming players require full permissions
 export const setupIframeProtection = (): void => {
-  const initObserver = () => {
-    if (!document.body) {
-      // Wait for body to be available
-      requestAnimationFrame(initObserver);
-      return;
-    }
-    
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node instanceof HTMLIFrameElement) {
-            // Allow same-origin scripts but prevent top navigation
-            if (!node.hasAttribute('sandbox')) {
-              node.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-            }
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-    console.log('[AdBlocker] Iframe protection active');
-  };
-  
-  // Start when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initObserver);
-  } else {
-    initObserver();
-  }
+  console.log('[AdBlocker] Iframe protection skipped for player compatibility');
 };
