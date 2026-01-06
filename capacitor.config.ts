@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.zuniverse.app',
   appName: 'ZUniverse',
   webDir: 'dist',
-  server: {
-    url: 'https://71c9d651-f973-4790-9891-821bce00d9dc.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   android: {
     allowMixedContent: true
   }
