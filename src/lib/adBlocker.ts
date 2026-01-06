@@ -1,4 +1,4 @@
-// Ultra-aggressive ad blocker - blocks ALL external navigation and popups
+// Ultra-aggressive ad blocker with Service Worker support
 
 const AD_DOMAINS = [
   'doubleclick', 'googlesyndication', 'googleadservices', 'adservice', 'adsense',
@@ -36,13 +36,34 @@ export const isExternalUrl = (url: string): boolean => {
   }
 };
 
+// Register the Service Worker ad blocker
+export const registerAdBlockerServiceWorker = async (): Promise<boolean> => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/ad-blocker-sw.js', {
+        scope: '/'
+      });
+      console.log('[AdBlocker] Service Worker registered:', registration.scope);
+      return true;
+    } catch (error) {
+      console.error('[AdBlocker] Service Worker registration failed:', error);
+      return false;
+    }
+  }
+  console.log('[AdBlocker] Service Workers not supported');
+  return false;
+};
+
 // Store original functions before overwriting
 const originalOpen = window.open;
-const originalAssign = window.location.assign;
-const originalReplace = window.location.replace;
+const originalAssign = window.location.assign?.bind(window.location);
+const originalReplace = window.location.replace?.bind(window.location);
 
 export const initAdBlocker = (): void => {
   console.log('[AdBlocker] Initializing ultra-aggressive mode...');
+
+  // Register Service Worker for network-level blocking
+  registerAdBlockerServiceWorker();
 
   // 1. Completely block window.open
   window.open = function(...args: any[]) {
@@ -50,69 +71,67 @@ export const initAdBlocker = (): void => {
     return null;
   };
 
-  // 2. Block location.assign
-  try {
-    Object.defineProperty(window.location, 'assign', {
-      value: function(url: string) {
-        if (isExternalUrl(url) || isAdUrl(url)) {
-          console.log('[AdBlocker] Blocked location.assign:', url);
-          return;
-        }
-        originalAssign.call(window.location, url);
-      },
-      writable: false,
-      configurable: false,
-    });
-  } catch (e) {
-    console.log('[AdBlocker] Could not override location.assign');
-  }
+  // 2. Override XMLHttpRequest to block ad requests
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...rest: any[]) {
+    const urlString = url.toString();
+    if (isAdUrl(urlString)) {
+      console.log('[AdBlocker] Blocked XHR:', urlString);
+      return;
+    }
+    return originalXHROpen.apply(this, [method, url, ...rest] as any);
+  };
 
-  // 3. Block location.replace
-  try {
-    Object.defineProperty(window.location, 'replace', {
-      value: function(url: string) {
-        if (isExternalUrl(url) || isAdUrl(url)) {
-          console.log('[AdBlocker] Blocked location.replace:', url);
-          return;
-        }
-        originalReplace.call(window.location, url);
-      },
-      writable: false,
-      configurable: false,
-    });
-  } catch (e) {
-    console.log('[AdBlocker] Could not override location.replace');
-  }
+  // 3. Override fetch to block ad requests
+  const originalFetch = window.fetch;
+  window.fetch = function(input: RequestInfo | URL, init?: RequestInit) {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    if (isAdUrl(url)) {
+      console.log('[AdBlocker] Blocked fetch:', url);
+      return Promise.resolve(new Response('', { status: 200 }));
+    }
+    return originalFetch.apply(this, [input, init] as any);
+  };
 
-  // 4. Block location.href setter
+  // 4. Block location.assign
   try {
-    const locationDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
-    if (locationDescriptor) {
-      let currentHref = window.location.href;
-      Object.defineProperty(window, 'location', {
-        get: function() {
-          return new Proxy(window.location, {
-            set: function(target, prop, value) {
-              if (prop === 'href' && (isExternalUrl(value as string) || isAdUrl(value as string))) {
-                console.log('[AdBlocker] Blocked location.href:', value);
-                return true;
-              }
-              (target as any)[prop] = value;
-              return true;
-            },
-          });
+    if (originalAssign) {
+      Object.defineProperty(window.location, 'assign', {
+        value: function(url: string) {
+          if (isExternalUrl(url) || isAdUrl(url)) {
+            console.log('[AdBlocker] Blocked location.assign:', url);
+            return;
+          }
+          originalAssign(url);
         },
-        set: function() {
-          console.log('[AdBlocker] Blocked location override');
-        },
+        writable: false,
         configurable: false,
       });
     }
   } catch (e) {
-    console.log('[AdBlocker] Could not proxy location object');
+    console.log('[AdBlocker] Could not override location.assign');
   }
 
-  // 5. Block ALL link clicks that go external
+  // 5. Block location.replace
+  try {
+    if (originalReplace) {
+      Object.defineProperty(window.location, 'replace', {
+        value: function(url: string) {
+          if (isExternalUrl(url) || isAdUrl(url)) {
+            console.log('[AdBlocker] Blocked location.replace:', url);
+            return;
+          }
+          originalReplace(url);
+        },
+        writable: false,
+        configurable: false,
+      });
+    }
+  } catch (e) {
+    console.log('[AdBlocker] Could not override location.replace');
+  }
+
+  // 6. Block ALL link clicks that go external
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     const anchor = target.closest('a');
@@ -121,7 +140,6 @@ export const initAdBlocker = (): void => {
       const href = anchor.getAttribute('href') || '';
       const targetAttr = anchor.getAttribute('target');
       
-      // Block if external, ad URL, or opens new tab
       if (isExternalUrl(href) || isAdUrl(href) || targetAttr === '_blank') {
         e.preventDefault();
         e.stopPropagation();
@@ -131,22 +149,6 @@ export const initAdBlocker = (): void => {
       }
     }
   }, true);
-
-  // 6. Block mousedown/mouseup that might trigger ads
-  ['mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach(eventType => {
-    document.addEventListener(eventType, (e) => {
-      const target = e.target as HTMLElement;
-      
-      // Check if it's an ad overlay or suspicious element
-      if (target.closest('[class*="overlay"]') || 
-          target.closest('[class*="popup"]') ||
-          target.closest('[class*="modal"]') ||
-          target.closest('[id*="ad"]') ||
-          target.closest('[class*="ad-"]')) {
-        // Don't block, but watch for navigation
-      }
-    }, true);
-  });
 
   // 7. Block form submissions to external URLs
   document.addEventListener('submit', (e) => {
@@ -192,6 +194,17 @@ export const initAdBlocker = (): void => {
       };
     }
     
+    if (tagName.toLowerCase() === 'script') {
+      const originalSetAttribute = element.setAttribute.bind(element);
+      element.setAttribute = function(name: string, value: string) {
+        if (name === 'src' && isAdUrl(value)) {
+          console.log('[AdBlocker] Blocked ad script:', value);
+          return;
+        }
+        return originalSetAttribute(name, value);
+      };
+    }
+    
     return element;
   };
 
@@ -199,7 +212,6 @@ export const initAdBlocker = (): void => {
   window.addEventListener('message', (event) => {
     const data = event.data;
     
-    // Check for navigation-related messages
     if (typeof data === 'object' && data !== null) {
       if (data.type === 'navigate' || data.action === 'redirect' || data.url || data.href) {
         const url = data.url || data.href || '';
@@ -212,17 +224,15 @@ export const initAdBlocker = (): void => {
   }, true);
 
   // 10. Block beforeunload manipulation
-  Object.defineProperty(window, 'onbeforeunload', {
-    set: function() { return; },
-    get: function() { return null; },
-    configurable: false,
-  });
+  try {
+    Object.defineProperty(window, 'onbeforeunload', {
+      set: function() { return; },
+      get: function() { return null; },
+      configurable: false,
+    });
+  } catch (e) {}
 
   // 11. Prevent alert/confirm/prompt hijacking
-  const originalAlert = window.alert;
-  const originalConfirm = window.confirm;
-  const originalPrompt = window.prompt;
-  
   window.alert = function(message?: any) {
     console.log('[AdBlocker] Blocked alert:', message);
     return;
@@ -238,71 +248,155 @@ export const initAdBlocker = (): void => {
     return null;
   };
 
+  // 12. Block WebSocket connections to ad servers
+  const OriginalWebSocket = window.WebSocket;
+  window.WebSocket = function(url: string | URL, protocols?: string | string[]) {
+    const urlString = url.toString();
+    if (isAdUrl(urlString)) {
+      console.log('[AdBlocker] Blocked WebSocket:', urlString);
+      throw new Error('Blocked by AdBlocker');
+    }
+    return new OriginalWebSocket(url, protocols);
+  } as any;
+  window.WebSocket.prototype = OriginalWebSocket.prototype;
+
+  // 13. MutationObserver to remove dynamically added ad elements
+  const adObserver = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node instanceof HTMLElement) {
+          // Remove ad iframes
+          if (node.tagName === 'IFRAME') {
+            const src = node.getAttribute('src') || '';
+            if (isAdUrl(src)) {
+              console.log('[AdBlocker] Removed ad iframe:', src);
+              node.remove();
+              continue;
+            }
+          }
+          
+          // Remove ad scripts
+          if (node.tagName === 'SCRIPT') {
+            const src = node.getAttribute('src') || '';
+            if (isAdUrl(src)) {
+              console.log('[AdBlocker] Removed ad script:', src);
+              node.remove();
+              continue;
+            }
+          }
+          
+          // Remove elements with ad-related classes/ids
+          const className = node.className?.toString?.() || '';
+          const id = node.id || '';
+          if (
+            className.match(/\b(ad|ads|advert|banner|popup|popunder|sponsor)\b/i) ||
+            id.match(/\b(ad|ads|advert|banner|popup|popunder|sponsor)\b/i)
+          ) {
+            console.log('[AdBlocker] Removed ad element:', node.tagName);
+            node.remove();
+          }
+        }
+      }
+    }
+  });
+  
+  adObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+
   console.log('[AdBlocker] Ultra-aggressive mode initialized');
 };
 
 // CSS injection to hide common ad elements
 export const injectAdBlockerCSS = (): void => {
   const style = document.createElement('style');
+  style.id = 'lovable-adblock-css';
   style.textContent = `
     /* Hide common ad containers */
     [class*="ad-container"],
     [class*="ad-wrapper"],
     [class*="ad-banner"],
     [class*="advertisement"],
+    [class*="ad-unit"],
+    [class*="ad-slot"],
+    [class*="adsbygoogle"],
     [id*="google_ads"],
     [id*="ad-"],
+    [id*="ad_"],
     [class*="popup-ad"],
     [class*="overlay-ad"],
+    [class*="pop-overlay"],
+    [class*="interstitial"],
     iframe[src*="ads"],
     iframe[src*="doubleclick"],
     iframe[src*="googlesyndication"],
+    iframe[src*="popads"],
+    iframe[src*="popcash"],
     div[data-ad],
-    ins.adsbygoogle {
+    div[data-ads],
+    ins.adsbygoogle,
+    .adsbygoogle,
+    #player-advertising,
+    .video-ads,
+    .ima-ad-container {
       display: none !important;
       visibility: hidden !important;
       height: 0 !important;
       width: 0 !important;
+      max-height: 0 !important;
+      max-width: 0 !important;
       overflow: hidden !important;
       pointer-events: none !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
     }
     
-    /* Prevent overlay clicks */
-    body::after {
-      content: none !important;
+    /* Block overlay clicks */
+    .overlay-container,
+    .click-overlay,
+    [class*="click-capture"],
+    [class*="click-interceptor"] {
+      pointer-events: none !important;
     }
   `;
-  document.head.appendChild(style);
+  
+  if (!document.getElementById('lovable-adblock-css')) {
+    document.head.appendChild(style);
+  }
   console.log('[AdBlocker] CSS injection complete');
 };
 
 // Additional protection for the player container
 export const setupIframeProtection = (): void => {
-  // Immediately refocus if window loses focus (popup attempt)
   let lastFocusTime = Date.now();
   
   window.addEventListener('blur', () => {
     const now = Date.now();
-    // Only refocus if blur happened quickly (likely popup)
     if (now - lastFocusTime < 100) {
       setTimeout(() => window.focus(), 0);
     }
     lastFocusTime = now;
   });
 
-  // Monitor for new windows/tabs being opened
+  // Force focus periodically
   const checkNewWindows = setInterval(() => {
-    // Force focus back to this window periodically
     window.focus();
-  }, 1000);
+  }, 2000);
 
-  // Clean up after 30 seconds
-  setTimeout(() => clearInterval(checkNewWindows), 30000);
+  setTimeout(() => clearInterval(checkNewWindows), 60000);
 
-  // Block touch events that might trigger ads on mobile
+  // Block touch events on overlays
   document.addEventListener('touchstart', (e) => {
     const target = e.target as HTMLElement;
-    if (target.closest('[class*="overlay"]') || target.closest('[id*="ad"]')) {
+    const classes = target.className?.toString?.() || '';
+    const id = target.id || '';
+    
+    if (
+      classes.match(/overlay|popup|ad|banner|interstitial/i) ||
+      id.match(/overlay|popup|ad|banner|interstitial/i)
+    ) {
       e.preventDefault();
       e.stopPropagation();
     }
