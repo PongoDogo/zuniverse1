@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -170,18 +169,13 @@ const VideoPlayer = ({
           </div>
         )}
 
-        <motion.iframe
+        <iframe
           key={`${embedUrl}-${retryCount}`}
           ref={iframeRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isLoading ? 0 : 1 }}
-          transition={{ duration: 0.3 }}
           src={embedUrl}
-          className="w-full h-full"
+          className={`w-full h-full transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"
-          referrerPolicy="no-referrer"
           onLoad={handleLoad}
           onError={handleError}
         />
