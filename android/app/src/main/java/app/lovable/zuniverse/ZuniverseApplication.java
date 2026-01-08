@@ -3,12 +3,16 @@ package app.lovable.zuniverse;
 import android.app.Activity;
 import android.app.Application;
 import android.app.Instrumentation;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.util.Log;
 
 import java.lang.reflect.Field;
@@ -16,30 +20,86 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * NUCLEAR APPLICATION V6
+ * NUCLEAR APPLICATION V7 - SYSTEM-LEVEL BLOCKING
  * 
- * Application-level blocking as a BACKUP layer.
- * The main blocking now happens in MainActivity via plain WebViewClient.
+ * This hooks into Android's Instrumentation at the deepest level to catch
+ * ALL activity launches, including those from WebView's internal Chromium engine.
  * 
- * This hooks into Android's Instrumentation to catch any startActivity 
- * calls that might slip through from the Capacitor Bridge.
+ * This is a BACKUP layer - the main blocking happens in MainActivity.
  */
 public class ZuniverseApplication extends Application {
     
-    private static final String TAG = "ZUNIVERSE_APP_V6";
+    private static final String TAG = "ZUNIVERSE_APP_V7";
     private static int blocked = 0;
+    private static String myPackageName = null;
     
     @Override
     public void onCreate() {
         super.onCreate();
+        myPackageName = getPackageName();
         hookInstrumentation();
-        Log.d(TAG, "=== APPLICATION-LEVEL BLOCKER ACTIVE ===");
+        Log.d(TAG, "=== APPLICATION-LEVEL BLOCKER V7 ACTIVE ===");
     }
     
     @Override
     protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
+        super.attachBaseContext(new BlockingAppContext(base));
         hookInstrumentation();
+    }
+    
+    /**
+     * Application-level blocking context
+     */
+    private static class BlockingAppContext extends ContextWrapper {
+        BlockingAppContext(Context base) {
+            super(base);
+        }
+        
+        @Override
+        public void startActivity(Intent intent) {
+            if (shouldBlock(intent)) {
+                Log.d(TAG, "★ APP CONTEXT BLOCKED: " + intent);
+                return;
+            }
+            super.startActivity(intent);
+        }
+        
+        @Override
+        public void startActivity(Intent intent, Bundle options) {
+            if (shouldBlock(intent)) {
+                Log.d(TAG, "★ APP CONTEXT BLOCKED: " + intent);
+                return;
+            }
+            super.startActivity(intent, options);
+        }
+        
+        @Override
+        public void startActivities(Intent[] intents) {
+            Log.d(TAG, "★ APP CONTEXT BLOCKED BATCH");
+            blocked++;
+        }
+        
+        @Override
+        public void startActivities(Intent[] intents, Bundle options) {
+            Log.d(TAG, "★ APP CONTEXT BLOCKED BATCH");
+            blocked++;
+        }
+        
+        private static boolean shouldBlock(Intent intent) {
+            if (intent == null) return false;
+            
+            // BLOCK ALL ACTION_VIEW
+            if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+                blocked++;
+                Uri data = intent.getData();
+                if (data != null) {
+                    Log.d(TAG, "★ BLOCKED ACTION_VIEW: " + data.toString());
+                }
+                return true;
+            }
+            
+            return false;
+        }
     }
     
     /**
@@ -53,7 +113,7 @@ public class ZuniverseApplication extends Application {
             Object activityThread = currentActivityThread.invoke(null);
             
             if (activityThread == null) {
-                Log.e(TAG, "ActivityThread is null");
+                Log.e(TAG, "ActivityThread is null, will retry");
                 return;
             }
             
@@ -69,16 +129,17 @@ public class ZuniverseApplication extends Application {
             
             instrumentationField.set(activityThread, new NuclearInstrumentation(original, this));
             
-            Log.d(TAG, "Instrumentation hook installed successfully");
+            Log.d(TAG, "★ Instrumentation hook V7 installed successfully");
             
         } catch (Exception e) {
             Log.e(TAG, "Failed to hook instrumentation: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
     @Override
     public void startActivity(Intent intent) {
-        if (shouldBlock(intent)) {
+        if (shouldBlockAppLevel(intent)) {
             Log.d(TAG, "★ APPLICATION blocked: " + intent);
             return;
         }
@@ -87,14 +148,14 @@ public class ZuniverseApplication extends Application {
     
     @Override
     public void startActivity(Intent intent, Bundle options) {
-        if (shouldBlock(intent)) {
-            Log.d(TAG, "★ APPLICATION blocked (options): " + intent);
+        if (shouldBlockAppLevel(intent)) {
+            Log.d(TAG, "★ APPLICATION blocked: " + intent);
             return;
         }
         super.startActivity(intent, options);
     }
     
-    private boolean shouldBlock(Intent intent) {
+    private boolean shouldBlockAppLevel(Intent intent) {
         if (intent == null) return false;
         
         // BLOCK ALL ACTION_VIEW
@@ -109,9 +170,8 @@ public class ZuniverseApplication extends Application {
             List<ResolveInfo> activities = getPackageManager()
                 .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             
-            String myPackage = getPackageName();
             for (ResolveInfo info : activities) {
-                if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
+                if (info.activityInfo != null && !myPackageName.equals(info.activityInfo.packageName)) {
                     Log.d(TAG, "★ BLOCKED EXTERNAL: " + info.activityInfo.packageName);
                     blocked++;
                     return true;
@@ -130,7 +190,8 @@ public class ZuniverseApplication extends Application {
     }
     
     /**
-     * Custom Instrumentation that intercepts ALL activity launches at system level
+     * Custom Instrumentation that intercepts ALL activity launches at system level.
+     * This is the deepest possible interception point in Android.
      */
     private static class NuclearInstrumentation extends Instrumentation {
         
@@ -142,21 +203,23 @@ public class ZuniverseApplication extends Application {
             this.appContext = appContext;
         }
         
+        /**
+         * This is called for ALL activity launches from the current process.
+         */
         @Override
         public ActivityResult execStartActivity(
-                Context who, android.os.IBinder contextThread, android.os.IBinder token,
+                Context who, IBinder contextThread, IBinder token,
                 Activity target, Intent intent, int requestCode, Bundle options) {
             
             if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (Activity): " + intent);
+                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (Activity): " + getIntentInfo(intent));
                 return null; // Return null = activity not started
             }
             
-            // Use reflection to call the original method
             try {
                 Method method = Instrumentation.class.getDeclaredMethod(
                     "execStartActivity",
-                    Context.class, android.os.IBinder.class, android.os.IBinder.class,
+                    Context.class, IBinder.class, IBinder.class,
                     Activity.class, Intent.class, int.class, Bundle.class
                 );
                 method.setAccessible(true);
@@ -167,20 +230,23 @@ public class ZuniverseApplication extends Application {
             }
         }
         
+        /**
+         * Alternative signature for fragment/service launches
+         */
         @Override
         public ActivityResult execStartActivity(
-                Context who, android.os.IBinder contextThread, android.os.IBinder token,
+                Context who, IBinder contextThread, IBinder token,
                 String target, Intent intent, int requestCode, Bundle options) {
             
             if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (String): " + intent);
+                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (String): " + getIntentInfo(intent));
                 return null;
             }
             
             try {
                 Method method = Instrumentation.class.getDeclaredMethod(
                     "execStartActivity",
-                    Context.class, android.os.IBinder.class, android.os.IBinder.class,
+                    Context.class, IBinder.class, IBinder.class,
                     String.class, Intent.class, int.class, Bundle.class
                 );
                 method.setAccessible(true);
@@ -190,30 +256,62 @@ public class ZuniverseApplication extends Application {
             }
         }
         
+        private String getIntentInfo(Intent intent) {
+            if (intent == null) return "null";
+            StringBuilder sb = new StringBuilder();
+            sb.append(intent.getAction());
+            if (intent.getData() != null) {
+                String data = intent.getData().toString();
+                sb.append(" -> ").append(data.substring(0, Math.min(60, data.length())));
+            }
+            return sb.toString();
+        }
+        
         private boolean shouldBlockIntent(Intent intent) {
             if (intent == null) return false;
             
+            String action = intent.getAction();
+            
             // BLOCK ALL ACTION_VIEW - this is the browser opener
-            if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            if (Intent.ACTION_VIEW.equals(action)) {
                 blocked++;
                 return true;
+            }
+            
+            // Block intents targeting external apps
+            ComponentName component = intent.getComponent();
+            if (component != null) {
+                String pkg = component.getPackageName();
+                if (pkg != null && !pkg.equals(myPackageName)) {
+                    // Allow system apps that we need
+                    if (!pkg.startsWith("com.android.") && !pkg.startsWith("com.google.android.packageinstaller")) {
+                        blocked++;
+                        return true;
+                    }
+                }
             }
             
             // Block external apps
             try {
                 PackageManager pm = appContext.getPackageManager();
                 List<ResolveInfo> activities = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                String myPackage = appContext.getPackageName();
                 
                 for (ResolveInfo info : activities) {
-                    if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
-                        blocked++;
-                        return true;
+                    if (info.activityInfo != null) {
+                        String pkg = info.activityInfo.packageName;
+                        if (pkg != null && !pkg.equals(myPackageName)) {
+                            // Check if it's a browser
+                            if (pkg.contains("browser") || pkg.contains("chrome") || 
+                                pkg.contains("firefox") || pkg.contains("opera") ||
+                                pkg.contains("edge") || pkg.contains("samsung")) {
+                                blocked++;
+                                return true;
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
-                blocked++;
-                return true;
+                // If we can't determine, let it through (don't break app functionality)
             }
             
             return false;
@@ -269,8 +367,8 @@ public class ZuniverseApplication extends Application {
         @Override public void callApplicationOnCreate(Application app) { original.callApplicationOnCreate(app); }
         
         @Override
-        public Activity newActivity(Class<?> clazz, Context context, android.os.IBinder token,
-                Application application, Intent intent, android.content.pm.ActivityInfo info,
+        public Activity newActivity(Class<?> clazz, Context context, IBinder token,
+                Application application, Intent intent, ActivityInfo info,
                 CharSequence title, Activity parent, String id,
                 Object lastNonConfigurationInstance) throws InstantiationException, IllegalAccessException {
             return original.newActivity(clazz, context, token, application, intent, info, title, parent, id, lastNonConfigurationInstance);
