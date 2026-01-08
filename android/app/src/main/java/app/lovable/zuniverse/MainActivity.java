@@ -32,25 +32,19 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * AGGRESSIVE AD BLOCKER - ZERO EXTERNAL BROWSER
+ * NETWORK-LEVEL AD BLOCKER - DETERMINISTIC BLOCKING
  * 
- * This version ensures NO external browser can ever open:
- * - Custom WebViewClient that NEVER calls super for navigation
- * - WebChromeClient that captures window.open URLs and loads in same WebView
- * - All startActivity variants blocked for browser intents
- * - Continuous re-application of WebViewClient to prevent Capacitor override
+ * NO hacks, NO delays, NO re-applications.
+ * - shouldInterceptRequest returns HTTP 204 for ALL non-whitelisted requests
+ * - shouldOverrideUrlLoading returns true for ALL navigation
+ * - onCreateWindow ALWAYS returns false
+ * - ZERO popups, ZERO external browser
  */
 public class MainActivity extends BridgeActivity {
     
     private static final String TAG = "ZUNIVERSE_ADBLOCK";
     private static int blockedCount = 0;
-    private Handler handler = new Handler(Looper.getMainLooper());
     private WebView webViewRef;
-    private boolean adBlockerSetup = false;
-    
-    // Preference keys
-    public static final String PREFS_NAME = "ZuniversePrefs";
-    public static final String PREF_WHITELIST_ONLY = "whitelist_only_mode";
     
     // ==================== WHITELIST CONFIGURATION ====================
     private static final Set<String> WHITELIST = new HashSet<>(Arrays.asList(
@@ -113,18 +107,12 @@ public class MainActivity extends BridgeActivity {
         "themoviedb.org", "tmdb.org", "image.tmdb.org"
     ));
     
-    // ==================== AD BLOCKING - EASYLIST STYLE ====================
-    
+    // ==================== AD DOMAINS ====================
     private static final Set<String> AD_DOMAINS = new HashSet<>(Arrays.asList(
-        // Google Ads
         "doubleclick.net", "googlesyndication.com", "googleadservices.com",
         "googletagmanager.com", "google-analytics.com", "googletagservices.com",
         "adservice.google.com", "pagead2.googlesyndication.com",
-        
-        // Facebook/Meta
         "facebook.com", "facebook.net", "connect.facebook.net", "fbcdn.net",
-        
-        // Major popup/popunder networks
         "popads.net", "popcash.net", "propellerads.com", "propellerads.net",
         "exoclick.com", "trafficjunky.com", "trafficjunky.net", "adsterra.com",
         "clickadu.com", "hilltopads.net", "hilltopads.com", "admaven.com",
@@ -132,103 +120,47 @@ public class MainActivity extends BridgeActivity {
         "evadav.com", "juicyads.com", "realsrv.com", "tsyndicate.com",
         "onclickmax.com", "onclickalgo.com", "onclickpredictiv.com",
         "pushame.com", "monetag.com", "a-ads.com", "coinzilla.com", "bitmedia.io",
-        
-        // Video ad networks
         "adnxs.com", "advertising.com", "bidswitch.net", "pubmatic.com",
         "openx.net", "rubiconproject.com", "casalemedia.com", "criteo.com",
         "criteo.net", "amazon-adsystem.com", "media.net", "outbrain.com",
         "taboola.com", "mgid.com", "revcontent.com", "zergnet.com",
         "spotxchange.com", "spotx.tv", "teads.tv", "moatads.com", "adsrvr.org",
         "adroll.com", "quantcast.com",
-        
-        // Tracking/Analytics
         "scorecardresearch.com", "quantserve.com", "segment.io", "segment.com",
         "amplitude.com", "mixpanel.com", "hotjar.com", "fullstory.com",
-        "mouseflow.com", "luckyorange.com", "crazyegg.com", "clicktale.com",
-        
-        // URL shorteners / redirectors
         "bit.ly", "tinyurl.com", "shorte.st", "adf.ly", "bc.vc", "sh.st",
-        "ouo.io", "ouo.press", "shrinkearn.com", "shrinkme.io",
-        
-        // Additional ad domains
-        "serving-sys.com", "2mdn.net", "yieldmanager.com", "brightcove.net",
-        "adtechus.com", "atdmt.com", "eyeviewads.com", "mediaplex.com",
-        "smaato.net", "inmobi.com", "flurry.com", "appsflyer.com",
-        "adjust.com", "branch.io", "kochava.com", "singular.net"
+        "ouo.io", "ouo.press", "shrinkearn.com", "shrinkme.io"
     ));
-    
-    private static final String[] AD_PATH_PATTERNS = {
-        "/ads/", "/ad/", "/adserve", "/advert", "/banner/", "/popup/",
-        "/popunder/", "/tracking/", "/analytics/", "/pixel/", "/pagead/",
-        "/adsense/", "/sponsor/", "/click?", "/track?", "/redirect?",
-        "/out/", "/go/", "/aff/", "/vast/", "/vpaid/", "/prebid/",
-        "/openx/", "/adx/", "/dmp/", "/beacon/"
-    };
-    
-    private static final Pattern AD_PATTERN = Pattern.compile(
-        ".*(doubleclick|googlesyndication|googleadservices|google-analytics|" +
-        "facebook\\.net|analytics|tracker|adservice|adsserver|" +
-        "popads|popunder|popcash|propellerads|exoclick|trafficjunky|" +
-        "clickadu|admaven|adsterra|monetag|hilltopads|" +
-        "mgid|taboola|outbrain|realsrv|onclickmax|pushame|" +
-        "juicyads|adnxs|pubmatic|criteo|" +
-        "bidswitch|openx|rubiconproject|amazon-adsystem|" +
-        "ad\\.doubleclick|ads\\.google|pagead|adserver|" +
-        "/ads?[/\\?]|/ad[/\\?]|/adx[/\\?]|/adv[/\\?]|" +
-        "banner|popup|popunder).*",
-        Pattern.CASE_INSENSITIVE
-    );
     
     // ==================== LIFECYCLE ====================
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        log("=== AGGRESSIVE AD BLOCKER STARTING ===");
-        
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        if (!prefs.contains(PREF_WHITELIST_ONLY)) {
-            prefs.edit().putBoolean(PREF_WHITELIST_ONLY, true).apply();
-        }
+        log("=== NETWORK-LEVEL AD BLOCKER STARTING ===");
     }
     
     @Override
     protected void onStart() {
         super.onStart();
-        applyAdBlockerWithRetry();
+        setupAdBlocker();
     }
     
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Re-apply aggressively - Capacitor might reset it
-        handler.postDelayed(this::applyAdBlockerWithRetry, 100);
-        handler.postDelayed(this::applyAdBlockerWithRetry, 500);
-        handler.postDelayed(this::applyAdBlockerWithRetry, 1000);
-        handler.postDelayed(this::applyAdBlockerWithRetry, 2000);
-    }
-    
-    private void applyAdBlockerWithRetry() {
+    private void setupAdBlocker() {
         try {
             Bridge bridge = getBridge();
-            if (bridge == null) {
-                handler.postDelayed(this::applyAdBlockerWithRetry, 300);
-                return;
-            }
+            if (bridge == null) return;
             
             WebView webView = bridge.getWebView();
-            if (webView == null) {
-                handler.postDelayed(this::applyAdBlockerWithRetry, 300);
-                return;
-            }
+            if (webView == null) return;
             
             webViewRef = webView;
             
-            // CRITICAL: Set our custom clients - ALWAYS replace, never trust existing
-            webView.setWebViewClient(new ZeroExternalWebViewClient());
-            webView.setWebChromeClient(new ZeroExternalWebChromeClient(webView));
+            // Set clients ONCE - no re-application needed
+            webView.setWebViewClient(new NetworkBlockingWebViewClient());
+            webView.setWebChromeClient(new NoPopupWebChromeClient());
             
-            // Block ALL downloads
+            // Block downloads
             webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
                 log("BLOCKED DOWNLOAD: " + truncate(url, 60));
                 blockedCount++;
@@ -236,16 +168,7 @@ public class MainActivity extends BridgeActivity {
             
             configureWebViewSettings(webView);
             
-            // Disable context menu
-            webView.setOnLongClickListener(v -> true);
-            
-            // Start JS injection
-            if (!adBlockerSetup) {
-                startJSInjection(webView);
-                adBlockerSetup = true;
-            }
-            
-            log("=== AD BLOCKER APPLIED ===");
+            log("=== AD BLOCKER READY ===");
             
         } catch (Exception e) {
             log("Setup error: " + e.getMessage());
@@ -258,170 +181,127 @@ public class MainActivity extends BridgeActivity {
         settings.setDomStorageEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         
-        // CRITICAL: Disable all popup/new window features
-        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        // CRITICAL: Kill all popup mechanisms
         settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setGeolocationEnabled(false);
         
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            settings.setSafeBrowsingEnabled(true);
-        }
     }
     
-    // ==================== ZERO EXTERNAL BROWSER WEBVIEWCLIENT ====================
+    // ==================== NETWORK-LEVEL BLOCKING WEBVIEWCLIENT ====================
     
-    private class ZeroExternalWebViewClient extends WebViewClient {
-        
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            String url = request.getUrl().toString();
-            return handleUrlLoading(view, url);
-        }
-        
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            return handleUrlLoading(view, url);
-        }
+    private class NetworkBlockingWebViewClient extends WebViewClient {
         
         /**
-         * CRITICAL: Return TRUE = we handled it (blocked or loaded ourselves)
-         * NEVER return false for external URLs - that would let system handle it
+         * CRITICAL: Intercept ALL requests at network level.
+         * Non-whitelisted = HTTP 204 empty response. NOT null.
          */
-        private boolean handleUrlLoading(WebView view, String url) {
-            if (url == null || url.isEmpty()) {
-                return true; // Block empty
-            }
-            
-            String lowerUrl = url.toLowerCase();
-            
-            // Allow internal schemes
-            if (lowerUrl.startsWith("javascript:") || 
-                lowerUrl.startsWith("data:") || 
-                lowerUrl.startsWith("blob:") ||
-                lowerUrl.startsWith("about:")) {
-                return false; // Let WebView handle these
-            }
-            
-            // BLOCK ALL non-HTTP schemes - intent://, market://, tel://, mailto://, etc.
-            if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
-                log("BLOCKED: Non-HTTP scheme: " + truncate(url, 80));
-                blockedCount++;
-                return true; // BLOCKED - we handled it
-            }
-            
-            // Block ad URLs
-            if (isAdUrl(url)) {
-                log("BLOCKED: Ad URL: " + truncate(url, 60));
-                blockedCount++;
-                return true; // BLOCKED
-            }
-            
-            // Check whitelist mode
-            if (isWhitelistModeEnabled()) {
-                if (isWhitelisted(url)) {
-                    // Whitelisted - load in same WebView
-                    log("ALLOWED: " + truncate(url, 60));
-                    view.loadUrl(url);
-                    return true; // We loaded it ourselves
-                } else {
-                    log("BLOCKED: Not whitelisted: " + truncate(url, 60));
-                    blockedCount++;
-                    return true; // BLOCKED
-                }
-            }
-            
-            // If whitelist mode is off, check if it's an ad, otherwise allow
-            if (!isAdUrl(url)) {
-                view.loadUrl(url);
-            }
-            return true; // We handled it
-        }
-        
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
             
-            // Block ad resources
-            if (isAdUrl(url)) {
-                log("BLOCKED: Ad resource: " + truncate(url, 60));
+            // Always allow data/blob URLs
+            if (url.startsWith("data:") || url.startsWith("blob:")) {
+                return null;
+            }
+            
+            // Block ad domains immediately
+            if (isAdDomain(url)) {
+                log("BLOCKED [AD]: " + truncate(url, 60));
                 blockedCount++;
-                return emptyResponse();
+                return http204Response();
             }
             
-            // Block non-whitelisted iframes
-            String accept = request.getRequestHeaders().get("Accept");
-            if (accept != null && accept.contains("text/html")) {
-                if (isWhitelistModeEnabled() && !isWhitelisted(url)) {
-                    log("BLOCKED: Non-whitelist iframe: " + truncate(url, 60));
-                    blockedCount++;
-                    return emptyHtmlResponse();
-                }
-            }
-            
-            // Block scripts from ad domains
-            if ((url.endsWith(".js") || url.contains(".js?")) && isAdDomain(url)) {
-                log("BLOCKED: Ad script: " + truncate(url, 60));
+            // Check whitelist - if NOT whitelisted, return 204
+            if (!isWhitelisted(url)) {
+                log("BLOCKED [NOT WHITELISTED]: " + truncate(url, 60));
                 blockedCount++;
-                return emptyResponse();
+                return http204Response();
             }
             
-            return null; // Allow
+            // Whitelisted - allow the request
+            return null;
+        }
+        
+        /**
+         * CRITICAL: Return TRUE for ALL navigation to prevent external browser.
+         * We load whitelisted URLs ourselves, block everything else.
+         */
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            return handleNavigation(view, request.getUrl().toString());
+        }
+        
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            return handleNavigation(view, url);
+        }
+        
+        private boolean handleNavigation(WebView view, String url) {
+            if (url == null || url.isEmpty()) {
+                return true; // Block empty
+            }
+            
+            // Allow internal schemes
+            if (url.startsWith("javascript:") || url.startsWith("data:") || url.startsWith("blob:")) {
+                return false;
+            }
+            
+            // Block ALL non-HTTP schemes (intent://, market://, tel://, etc.)
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                log("BLOCKED [SCHEME]: " + truncate(url, 60));
+                blockedCount++;
+                return true;
+            }
+            
+            // Block ad URLs
+            if (isAdDomain(url)) {
+                log("BLOCKED [AD NAV]: " + truncate(url, 60));
+                blockedCount++;
+                return true;
+            }
+            
+            // Check whitelist
+            if (isWhitelisted(url)) {
+                log("ALLOWED: " + truncate(url, 60));
+                view.loadUrl(url);
+                return true; // We handled it
+            }
+            
+            // Not whitelisted - BLOCK
+            log("BLOCKED [NAV]: " + truncate(url, 60));
+            blockedCount++;
+            return true;
         }
         
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-            injectAdBlockerJS(view);
-        }
-        
-        @Override
-        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            if (failingUrl != null && isAdUrl(failingUrl)) {
-                return; // Ignore errors from blocked ads
-            }
-            super.onReceivedError(view, errorCode, description, failingUrl);
+            injectMinimalJS(view);
         }
     }
     
-    // ==================== ZERO EXTERNAL BROWSER WEBCHROMECLIENT ====================
+    // ==================== NO-POPUP WEBCHROMECLIENT ====================
     
-    private class ZeroExternalWebChromeClient extends WebChromeClient {
+    private class NoPopupWebChromeClient extends WebChromeClient {
         
-        private final WebView parentWebView;
-        
-        public ZeroExternalWebChromeClient(WebView webView) {
-            this.parentWebView = webView;
-        }
-        
+        /**
+         * CRITICAL: ALWAYS return false. No exceptions. No URL loading.
+         * This kills ALL popup attempts at the root.
+         */
         @Override
         public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
-            log("BLOCKED: Popup window attempt");
+            log("BLOCKED [POPUP]: Window creation attempt");
             blockedCount++;
-            
-            // Try to capture the URL from the hit result
-            WebView.HitTestResult result = view.getHitTestResult();
-            if (result != null && result.getExtra() != null) {
-                String url = result.getExtra();
-                log("Popup URL was: " + truncate(url, 60));
-                
-                // If whitelisted, load in same webview
-                if (isWhitelisted(url) && !isAdUrl(url)) {
-                    log("Loading popup URL in same WebView: " + truncate(url, 60));
-                    parentWebView.loadUrl(url);
-                }
-            }
-            
-            // NEVER create new window - always return false
-            return false;
+            return false; // ALWAYS false - kill popup
         }
         
         @Override
         public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
-            if (isAdUrl(url)) {
+            if (isAdDomain(url)) {
                 result.cancel();
                 return true;
             }
@@ -430,7 +310,7 @@ public class MainActivity extends BridgeActivity {
         
         @Override
         public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
-            if (isAdUrl(url)) {
+            if (isAdDomain(url)) {
                 result.cancel();
                 return true;
             }
@@ -440,7 +320,7 @@ public class MainActivity extends BridgeActivity {
         @Override
         public boolean onJsPrompt(WebView view, String url, String message, 
                                  String defaultValue, JsPromptResult result) {
-            if (isAdUrl(url)) {
+            if (isAdDomain(url)) {
                 result.cancel();
                 return true;
             }
@@ -454,79 +334,45 @@ public class MainActivity extends BridgeActivity {
         }
     }
     
-    // ==================== BLOCK ALL EXTERNAL ACTIVITY LAUNCHES ====================
+    // ==================== BLOCK EXTERNAL INTENTS ====================
     
     @Override
     public void startActivity(Intent intent) {
-        if (shouldBlockIntent(intent)) {
-            log("BLOCKED: startActivity " + getIntentInfo(intent));
-            return; // Swallow - do nothing
-        }
+        if (isBlockedIntent(intent)) return;
         super.startActivity(intent);
     }
     
     @Override
     public void startActivity(Intent intent, Bundle options) {
-        if (shouldBlockIntent(intent)) {
-            log("BLOCKED: startActivity with options " + getIntentInfo(intent));
-            return;
-        }
+        if (isBlockedIntent(intent)) return;
         super.startActivity(intent, options);
     }
     
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
-        if (shouldBlockIntent(intent)) {
-            log("BLOCKED: startActivityForResult " + getIntentInfo(intent));
-            return;
-        }
+        if (isBlockedIntent(intent)) return;
         super.startActivityForResult(intent, requestCode);
     }
     
     @Override
     public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
-        if (shouldBlockIntent(intent)) {
-            log("BLOCKED: startActivityForResult with options " + getIntentInfo(intent));
-            return;
-        }
+        if (isBlockedIntent(intent)) return;
         super.startActivityForResult(intent, requestCode, options);
     }
     
-    private boolean shouldBlockIntent(Intent intent) {
+    private boolean isBlockedIntent(Intent intent) {
         if (intent == null) return false;
         
-        String action = intent.getAction();
-        
-        // Block ALL ACTION_VIEW intents (browser opens)
-        if (Intent.ACTION_VIEW.equals(action)) {
-            Uri data = intent.getData();
-            if (data != null) {
-                String url = data.toString();
-                String scheme = data.getScheme();
-                
-                // Block all non-whitelisted URLs
-                if (!isWhitelisted(url)) {
-                    log("BLOCKED: ACTION_VIEW to " + truncate(url, 60));
-                    blockedCount++;
-                    return true;
-                }
-                
-                // Block intent:// and market:// schemes
-                if (scheme != null && (scheme.equals("intent") || scheme.equals("market"))) {
-                    log("BLOCKED: Special scheme " + scheme);
-                    blockedCount++;
-                    return true;
-                }
-            }
-            // Block ACTION_VIEW without data too
+        // Block ALL ACTION_VIEW (browser opens)
+        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            log("BLOCKED [INTENT]: " + (intent.getData() != null ? truncate(intent.getData().toString(), 60) : "no data"));
             blockedCount++;
             return true;
         }
         
-        // Block implicit browser intents
-        if (intent.getCategories() != null && 
-            intent.getCategories().contains(Intent.CATEGORY_BROWSABLE)) {
-            log("BLOCKED: CATEGORY_BROWSABLE intent");
+        // Block CATEGORY_BROWSABLE
+        if (intent.getCategories() != null && intent.getCategories().contains(Intent.CATEGORY_BROWSABLE)) {
+            log("BLOCKED [BROWSABLE]: intent");
             blockedCount++;
             return true;
         }
@@ -534,24 +380,7 @@ public class MainActivity extends BridgeActivity {
         return false;
     }
     
-    private String getIntentInfo(Intent intent) {
-        if (intent == null) return "null";
-        Uri data = intent.getData();
-        return intent.getAction() + (data != null ? " -> " + truncate(data.toString(), 60) : "");
-    }
-    
     // ==================== HELPER METHODS ====================
-    
-    private boolean isWhitelistModeEnabled() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        return prefs.getBoolean(PREF_WHITELIST_ONLY, true);
-    }
-    
-    public void setWhitelistMode(boolean enabled) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        prefs.edit().putBoolean(PREF_WHITELIST_ONLY, enabled).apply();
-        log("Whitelist mode: " + (enabled ? "ON" : "OFF"));
-    }
     
     private boolean isWhitelisted(String url) {
         if (url == null) return false;
@@ -573,24 +402,6 @@ public class MainActivity extends BridgeActivity {
         }
         
         return false;
-    }
-    
-    private boolean isAdUrl(String url) {
-        if (url == null) return false;
-        
-        String lowerUrl = url.toLowerCase();
-        
-        if (AD_PATTERN.matcher(lowerUrl).matches()) {
-            return true;
-        }
-        
-        for (String pattern : AD_PATH_PATTERNS) {
-            if (lowerUrl.contains(pattern)) {
-                return true;
-            }
-        }
-        
-        return isAdDomain(url);
     }
     
     private boolean isAdDomain(String url) {
@@ -615,20 +426,18 @@ public class MainActivity extends BridgeActivity {
         return false;
     }
     
-    private WebResourceResponse emptyResponse() {
+    /**
+     * HTTP 204 No Content - deterministic blocking.
+     * WebView gets empty response, no redirects can happen.
+     */
+    private WebResourceResponse http204Response() {
         return new WebResourceResponse(
-            "text/plain", 
-            "UTF-8", 
+            "text/plain",
+            "UTF-8",
+            204,
+            "No Content",
+            null,
             new ByteArrayInputStream(new byte[0])
-        );
-    }
-    
-    private WebResourceResponse emptyHtmlResponse() {
-        String empty = "<!DOCTYPE html><html><head></head><body></body></html>";
-        return new WebResourceResponse(
-            "text/html", 
-            "UTF-8", 
-            new ByteArrayInputStream(empty.getBytes())
         );
     }
     
@@ -637,124 +446,22 @@ public class MainActivity extends BridgeActivity {
         return s.length() > maxLen ? s.substring(0, maxLen) + "..." : s;
     }
     
-    // ==================== JAVASCRIPT INJECTION ====================
-    
-    private void injectAdBlockerJS(WebView webView) {
-        StringBuilder whitelistJS = new StringBuilder();
-        for (String domain : WHITELIST) {
-            if (whitelistJS.length() > 0) whitelistJS.append("','");
-            whitelistJS.append(domain);
-        }
-        
-        String js = "(function() {" +
-            "if(window.__ZU_ADBLOCK_V2) return;" +
-            "window.__ZU_ADBLOCK_V2 = true;" +
-            
-            "var W = ['" + whitelistJS.toString() + "'];" +
-            
-            "function isAllowed(url) {" +
-            "  if(!url) return true;" +
-            "  try {" +
-            "    var h = new URL(url, location.href).hostname.toLowerCase();" +
-            "    return W.some(function(d) { return h === d || h.endsWith('.' + d); });" +
-            "  } catch(e) { return false; }" +
-            "}" +
-            
-            // COMPLETELY disable window.open
-            "window.open = function() { console.log('[ZU] BLOCKED window.open'); return null; };" +
-            "Object.defineProperty(window, 'open', { value: function() { return null; }, writable: false, configurable: false });" +
-            
-            // Block location changes
-            "var _assign = location.assign.bind(location);" +
-            "var _replace = location.replace.bind(location);" +
-            "location.assign = function(url) { if(isAllowed(url)) _assign(url); else console.log('[ZU] BLOCKED location.assign: ' + url); };" +
-            "location.replace = function(url) { if(isAllowed(url)) _replace(url); else console.log('[ZU] BLOCKED location.replace: ' + url); };" +
-            
-            // Block setting location.href
-            "try {" +
-            "  var _href = location.href;" +
-            "  Object.defineProperty(location, 'href', {" +
-            "    get: function() { return _href; }," +
-            "    set: function(url) { if(isAllowed(url)) { _href = url; _assign(url); } else { console.log('[ZU] BLOCKED location.href: ' + url); } }" +
-            "  });" +
-            "} catch(e) {}" +
-            
-            // Block clicks on non-whitelisted links
-            "document.addEventListener('click', function(e) {" +
-            "  var t = e.target;" +
-            "  while(t && t.tagName !== 'A') t = t.parentElement;" +
-            "  if(t && t.href) {" +
-            "    if(!isAllowed(t.href)) {" +
-            "      console.log('[ZU] BLOCKED click: ' + t.href);" +
-            "      e.preventDefault();" +
-            "      e.stopPropagation();" +
-            "      e.stopImmediatePropagation();" +
-            "      return false;" +
-            "    }" +
-            "    // Force same window" +
-            "    if(t.target === '_blank') t.target = '_self';" +
-            "  }" +
-            "}, true);" +
-            
-            // Block touch events
-            "['touchstart','touchend','mousedown','mouseup'].forEach(function(evt) {" +
-            "  document.addEventListener(evt, function(e) {" +
-            "    var t = e.target;" +
-            "    while(t && t.tagName !== 'A') t = t.parentElement;" +
-            "    if(t && t.href && !isAllowed(t.href)) {" +
-            "      e.preventDefault();" +
-            "      e.stopImmediatePropagation();" +
-            "    }" +
-            "  }, true);" +
-            "});" +
-            
-            // Periodic cleanup
-            "setInterval(function() {" +
-            "  // Remove overlay ads (invisible divs with high z-index)" +
-            "  document.querySelectorAll('div,iframe,ins').forEach(function(el) {" +
-            "    try {" +
-            "      var s = getComputedStyle(el);" +
-            "      if((s.position === 'fixed' || s.position === 'absolute') && parseInt(s.zIndex) > 9000) {" +
-            "        if(parseFloat(s.opacity) < 0.15 || el.offsetWidth === 0 || el.offsetHeight === 0) {" +
-            "          el.remove();" +
-            "        }" +
-            "      }" +
-            "    } catch(e) {}" +
-            "  });" +
-            "  // Remove non-whitelisted iframes" +
-            "  document.querySelectorAll('iframe').forEach(function(f) {" +
-            "    if(f.src && !isAllowed(f.src)) { f.remove(); console.log('[ZU] Removed iframe: ' + f.src); }" +
-            "  });" +
-            "  // Force all links to open in same window" +
-            "  document.querySelectorAll('a[target=\"_blank\"]').forEach(function(a) { a.target = '_self'; });" +
-            "}, 500);" +
-            
-            "console.log('[ZUniverse] Ad Blocker V2 active - ZERO external browser');" +
-        "})();";
-        
-        webView.evaluateJavascript(js, null);
-    }
-    
-    private void startJSInjection(WebView webView) {
-        Runnable injector = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (webView != null) {
-                        webView.evaluateJavascript("window.__ZU_ADBLOCK_V2 = false;", null);
-                        injectAdBlockerJS(webView);
-                    }
-                } catch (Exception e) {
-                    // Ignore
-                }
-                handler.postDelayed(this, 2000);
-            }
-        };
-        handler.postDelayed(injector, 1500);
-    }
-    
     private void log(String msg) {
-        Log.i(TAG, "★ " + msg);
+        Log.i(TAG, msg);
+    }
+    
+    /**
+     * Minimal JS - just block window.open, nothing else.
+     */
+    private void injectMinimalJS(WebView webView) {
+        String js = "(function(){" +
+            "if(window.__ZU_NET_BLOCK) return;" +
+            "window.__ZU_NET_BLOCK = true;" +
+            "window.open = function(){return null;};" +
+            "Object.defineProperty(window,'open',{value:function(){return null;},writable:false});" +
+            "console.log('[ZUniverse] Network-level blocker active');" +
+        "})();";
+        webView.evaluateJavascript(js, null);
     }
     
     public static int getBlockedAdsCount() {
