@@ -5,7 +5,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* Dark Theme (Default) */
+  :root,
+  .dark {
     --background: 240 10% 4%;
     --foreground: 0 0% 98%;
 
@@ -44,6 +46,82 @@
     --shadow-glow: 0 0 40px hsl(262 83% 58% / 0.3);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
   }
+
+  /* Light Theme */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    --primary: 262 83% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 10% 10%;
+
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 5% 40%;
+
+    --accent: 262 83% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 85%;
+    --input: 240 5% 85%;
+    --ring: 262 83% 50%;
+
+    --gradient-hero: linear-gradient(to right, hsl(0 0% 100%) 0%, transparent 60%);
+    --gradient-fade-up: linear-gradient(to top, hsl(0 0% 100%) 0%, transparent 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 98%) 0%, hsl(0 0% 96%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(262 83% 50%) 0%, hsl(280 70% 45%) 100%);
+    --shadow-glow: 0 0 40px hsl(262 83% 50% / 0.2);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.1);
+  }
+
+  /* Cinematic Theme */
+  .cinematic {
+    --background: 220 20% 6%;
+    --foreground: 45 30% 95%;
+
+    --card: 220 18% 8%;
+    --card-foreground: 45 30% 95%;
+
+    --popover: 220 18% 8%;
+    --popover-foreground: 45 30% 95%;
+
+    --primary: 35 95% 55%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 45 30% 95%;
+
+    --muted: 220 12% 18%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 35 95% 55%;
+    --accent-foreground: 220 20% 6%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 45 30% 95%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 35 95% 55%;
+
+    --gradient-hero: linear-gradient(to right, hsl(220 20% 6%) 0%, transparent 60%);
+    --gradient-fade-up: linear-gradient(to top, hsl(220 20% 6%) 0%, transparent 100%);
+    --gradient-card: linear-gradient(135deg, hsl(220 18% 10%) 0%, hsl(220 18% 8%) 100%);
+    --gradient-brand: linear-gradient(135deg, hsl(35 95% 55%) 0%, hsl(25 90% 45%) 100%);
+    --shadow-glow: 0 0 40px hsl(35 95% 55% / 0.3);
+    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.6);
+  }
 }
 
 @layer base {
@@ -64,6 +142,7 @@
     overscroll-behavior-y: contain;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* Mobile safe area support */
@@ -82,16 +161,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(240 10% 6%);
+    background: hsl(var(--secondary));
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(240 6% 25%);
+    background: hsl(var(--muted));
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(240 6% 35%);
+    background: hsl(var(--muted-foreground));
   }
 
   /* Hide scrollbar on mobile for smoother touch scroll */
@@ -152,14 +231,72 @@
   }
 
   .glass {
-    background: hsl(240 10% 8% / 0.85);
+    background: hsl(var(--card) / 0.85);
     backdrop-filter: blur(16px);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(262 83% 65%) 0%, hsl(280 70% 60%) 100%);
+    background: var(--gradient-brand);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* Interactive card effects */
+  .media-card-hover {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .media-card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .media-card-hover:active {
+    transform: scale(0.98);
+  }
+
+  /* Hero gradient animation */
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animated-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--secondary)) 0%,
+      hsl(var(--muted)) 50%,
+      hsl(var(--secondary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Press effect for mobile */
+  @media (hover: none) {
+    .media-card-hover:active {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
   }
 }

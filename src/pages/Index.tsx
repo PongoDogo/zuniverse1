@@ -1,8 +1,13 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
 import MediaRow from "@/components/MediaRow";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
+import PinnedFavorites from "@/components/PinnedFavorites";
+import RecommendationRow from "@/components/RecommendationRow";
+import QuickAccessBar from "@/components/QuickAccessBar";
+import AchievementsBadge from "@/components/AchievementsBadge";
 import {
   getTrending,
   getPopular,
@@ -10,8 +15,14 @@ import {
   getNowPlaying,
   getOnTheAir,
 } from "@/lib/tmdb";
+import { applyTheme, getTheme } from "@/lib/userPreferences";
 
 const Index = () => {
+  // Apply saved theme on mount
+  useEffect(() => {
+    applyTheme(getTheme());
+  }, []);
+
   const { data: trending, isLoading: trendingLoading } = useQuery({
     queryKey: ["trending"],
     queryFn: () => getTrending("all", "week"),
@@ -43,7 +54,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
       <Navbar />
 
       {/* Hero Banner */}
@@ -54,8 +65,19 @@ const Index = () => {
       {/* Content Rows */}
       <div className="relative z-10 -mt-12 sm:-mt-16 space-y-4 sm:space-y-6 pb-6 sm:pb-12">
         <div className="container mx-auto px-2 sm:px-4 space-y-4 sm:space-y-8">
+          {/* Achievements Badge */}
+          <div className="flex justify-end">
+            <AchievementsBadge />
+          </div>
+
+          {/* Pinned Favorites */}
+          <PinnedFavorites />
+
           {/* Continue Watching */}
           <ContinueWatchingRow />
+
+          {/* Personalized Recommendations */}
+          <RecommendationRow />
 
           <MediaRow
             title="Trending Now"
@@ -94,6 +116,9 @@ const Index = () => {
           />
         </div>
       </div>
+
+      {/* Quick Access Bar */}
+      <QuickAccessBar />
 
       {/* Footer */}
       <footer className="border-t border-border py-6 sm:py-8 safe-bottom">
