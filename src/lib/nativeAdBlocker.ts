@@ -1,12 +1,4 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
-
-interface AdBlockerPlugin {
-  getBlockedCount(): Promise<{ count: number }>;
-  resetBlockedCount(): Promise<{ success: boolean }>;
-}
-
-// Register the native plugin
-const NativeAdBlocker = registerPlugin<AdBlockerPlugin>('AdBlocker');
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Check if running on native Android
@@ -16,46 +8,33 @@ export const isNativeAndroid = (): boolean => {
 };
 
 /**
- * Get the count of blocked ads from native plugin
+ * Native ad blocking is now handled entirely in MainActivity.java
+ * This file provides utility functions for checking platform status.
+ */
+
+/**
+ * Get blocked ads count (placeholder - actual count is in MainActivity)
  */
 export const getBlockedCount = async (): Promise<number> => {
-  if (!isNativeAndroid()) {
-    return 0;
-  }
-  
-  try {
-    const result = await NativeAdBlocker.getBlockedCount();
-    return result.count;
-  } catch (error) {
-    console.error('[NativeAdBlocker] Error getting blocked count:', error);
-    return 0;
-  }
+  // Blocked count is tracked in MainActivity.java
+  // This is a placeholder for future bridge implementation if needed
+  return 0;
 };
 
 /**
- * Reset the blocked ads counter
+ * Reset blocked ads counter (placeholder)
  */
 export const resetBlockedCount = async (): Promise<boolean> => {
-  if (!isNativeAndroid()) {
-    return false;
-  }
-  
-  try {
-    const result = await NativeAdBlocker.resetBlockedCount();
-    return result.success;
-  } catch (error) {
-    console.error('[NativeAdBlocker] Error resetting count:', error);
-    return false;
-  }
+  return false;
 };
 
 /**
- * Initialize native ad blocker (no-op, plugin auto-initializes)
+ * Initialize native ad blocker (no-op, handled in MainActivity)
  */
 export const initNativeAdBlocker = (): void => {
   if (isNativeAndroid()) {
-    console.log('[NativeAdBlocker] Native Android ad blocker active');
+    console.log('[NativeAdBlocker] Native Android ad blocker active (handled in MainActivity)');
   } else {
-    console.log('[NativeAdBlocker] Not on native Android, ad blocker disabled');
+    console.log('[NativeAdBlocker] Not on native Android');
   }
 };

@@ -1,12 +1,7 @@
 package app.lovable.zuniverse;
 
-import android.content.ActivityNotFoundException;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,39 +21,36 @@ import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
 
 import java.io.ByteArrayInputStream;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * NUCLEAR AD BLOCKER V7 - BRIDGE CONTEXT INJECTION
+ * CLEAN AD BLOCKER - PLAY STORE COMPLIANT
  * 
- * This version fixes the core problem: Capacitor's Bridge holds its own
- * context reference and calls getContext().startActivity() which bypasses
- * our Activity overrides.
+ * This version uses ONLY standard Android APIs:
+ * - Custom WebViewClient with shouldInterceptRequest for ad blocking
+ * - Custom WebChromeClient to block popups
+ * - Activity startActivity() overrides to block external launches
  * 
- * THE FIX: Use reflection to inject our BlockingContext into the Bridge itself.
+ * NO reflection, NO instrumentation hooks, NO system hacks.
  */
 public class MainActivity extends BridgeActivity {
     
-    private static final String TAG = "ZUNIVERSE_V7";
+    private static final String TAG = "ZUNIVERSE_ADBLOCKER";
     private static int blockedCount = 0;
     private Handler handler = new Handler(Looper.getMainLooper());
     private WebView webViewRef;
-    private boolean bridgePatched = false;
     
-    // Preference key for whitelist-only mode
+    // Preference keys
     public static final String PREFS_NAME = "ZuniversePrefs";
     public static final String PREF_WHITELIST_ONLY = "whitelist_only_mode";
     
     // ==================== WHITELIST CONFIGURATION ====================
-    // Only these domains can load when whitelist mode is enabled (default: enabled)
     private static final Set<String> WHITELIST = new HashSet<>(Arrays.asList(
-        // App domains - ESSENTIAL
+        // App domains
         "lovableproject.com", "lovable.dev", "localhost", "127.0.0.1", "10.0.2.2",
         
         // Streaming sources - VidSrc family
@@ -86,7 +78,7 @@ public class MainActivity extends BridgeActivity {
         "flixhq.to",
         "fmovies.to",
         
-        // Video CDNs - ESSENTIAL for playback
+        // Video CDNs
         "googlevideo.com", "googleusercontent.com",
         "gstatic.com", "ggpht.com", "youtube.com", "ytimg.com",
         "akamaihd.net", "akamaized.net", "akamaicdn.net",
@@ -115,26 +107,29 @@ public class MainActivity extends BridgeActivity {
         "themoviedb.org", "tmdb.org", "image.tmdb.org"
     ));
     
-    // ==================== AD BLOCKING PATTERNS ====================
-    // Comprehensive ad domain list (EasyList-style)
+    // ==================== AD BLOCKING - EASYLIST STYLE ====================
+    
+    // Known ad/tracker domains (comprehensive list)
     private static final Set<String> AD_DOMAINS = new HashSet<>(Arrays.asList(
         // Google Ads
         "doubleclick.net", "googlesyndication.com", "googleadservices.com",
         "googletagmanager.com", "google-analytics.com", "googletagservices.com",
         "adservice.google.com", "pagead2.googlesyndication.com",
         
-        // Major ad networks
-        "facebook.com/tr", "facebook.net/tr", "connect.facebook.net",
+        // Facebook/Meta
+        "facebook.com", "facebook.net", "connect.facebook.net", "fbcdn.net",
+        
+        // Twitter/X ads
         "ads.twitter.com", "ads-twitter.com", "analytics.twitter.com",
         
-        // Popup/popunder networks - HIGH PRIORITY TO BLOCK
+        // Major popup/popunder networks
         "popads.net", "popcash.net", "propellerads.com", "propellerads.net",
         "exoclick.com", "trafficjunky.com", "trafficjunky.net", "adsterra.com",
-        "clickadu.com", "hilltopads.net", "hilltopads.com", "admaven.com", "richads.com",
-        "trafficstars.com", "popunder.net", "adcash.com", "evadav.com",
-        "juicyads.com", "realsrv.com", "tsyndicate.com", "onclickmax.com",
-        "onclickalgo.com", "onclickpredictiv.com", "pushame.com", "monetag.com",
-        "a-ads.com", "coinzilla.com", "bitmedia.io",
+        "clickadu.com", "hilltopads.net", "hilltopads.com", "admaven.com",
+        "richads.com", "trafficstars.com", "popunder.net", "adcash.com",
+        "evadav.com", "juicyads.com", "realsrv.com", "tsyndicate.com",
+        "onclickmax.com", "onclickalgo.com", "onclickpredictiv.com",
+        "pushame.com", "monetag.com", "a-ads.com", "coinzilla.com", "bitmedia.io",
         
         // Video ad networks
         "adnxs.com", "advertising.com", "bidswitch.net", "pubmatic.com",
@@ -144,154 +139,52 @@ public class MainActivity extends BridgeActivity {
         "spotxchange.com", "spotx.tv", "teads.tv", "moatads.com", "adsrvr.org",
         "adroll.com", "quantcast.com",
         
-        // Tracking/Analytics to block
+        // Tracking/Analytics
         "scorecardresearch.com", "quantserve.com", "segment.io", "segment.com",
         "amplitude.com", "mixpanel.com", "hotjar.com", "fullstory.com",
         "mouseflow.com", "luckyorange.com", "crazyegg.com", "clicktale.com",
         
-        // Scam redirectors
+        // URL shorteners / redirectors
         "bit.ly", "tinyurl.com", "shorte.st", "adf.ly", "bc.vc", "sh.st",
-        "ouo.io", "ouo.press", "shrinkearn.com", "shrinkme.io"
+        "ouo.io", "ouo.press", "shrinkearn.com", "shrinkme.io",
+        
+        // Additional known ad domains
+        "serving-sys.com", "2mdn.net", "yieldmanager.com", "brightcove.net",
+        "adtechus.com", "atdmt.com", "eyeviewads.com", "mediaplex.com",
+        "smaato.net", "inmobi.com", "flurry.com", "appsflyer.com",
+        "adjust.com", "branch.io", "kochava.com", "singular.net"
     ));
     
-    // URL path patterns that indicate ads
+    // URL path patterns indicating ads
     private static final String[] AD_PATH_PATTERNS = {
         "/ads/", "/ad/", "/adserve", "/advert", "/banner/", "/popup/",
         "/popunder/", "/tracking/", "/analytics/", "/pixel/", "/pagead/",
-        "/adsense/", "/sponsor/", "/click", "/track", "/redirect",
-        "/out/", "/go/", "/aff/", "/vast/", "/vpaid/", "openx", "prebid"
+        "/adsense/", "/sponsor/", "/click?", "/track?", "/redirect?",
+        "/out/", "/go/", "/aff/", "/vast/", "/vpaid/", "/prebid/",
+        "/openx/", "/adx/", "/dmp/", "/beacon/"
     };
     
-    // Regex pattern for ad detection
+    // Regex for comprehensive ad detection
     private static final Pattern AD_PATTERN = Pattern.compile(
         ".*(doubleclick|googlesyndication|googleadservices|google-analytics|" +
-        "facebook\\.com/tr|analytics|tracker|adservice|adsserver|" +
+        "facebook\\.net|analytics|tracker|adservice|adsserver|" +
         "popads|popunder|popcash|propellerads|exoclick|trafficjunky|" +
         "clickadu|admaven|adsterra|monetag|hilltopads|" +
         "mgid|taboola|outbrain|realsrv|onclickmax|pushame|" +
-        "juicyads|adnxs\\.com|pubmatic|criteo|" +
-        "bidswitch|openx\\.net|rubiconproject|amazon-adsystem|" +
-        "ad\\.doubleclick|ads\\.google|pagead|adserver|advert|" +
-        "/ads/|/ad/|/adx/|/adv/|/banner|/popup|/popunder).*",
+        "juicyads|adnxs|pubmatic|criteo|" +
+        "bidswitch|openx|rubiconproject|amazon-adsystem|" +
+        "ad\\.doubleclick|ads\\.google|pagead|adserver|" +
+        "/ads?[/\\?]|/ad[/\\?]|/adx[/\\?]|/adv[/\\?]|" +
+        "banner|popup|popunder).*",
         Pattern.CASE_INSENSITIVE
     );
-    
-    // ==================== CONTEXT BLOCKING ====================
-    
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(new BlockingContext(newBase));
-    }
-    
-    /**
-     * Context wrapper that blocks ALL startActivity calls that would open external apps.
-     * This is injected into the Bridge to intercept its startActivity calls.
-     */
-    private class BlockingContext extends ContextWrapper {
-        BlockingContext(Context base) {
-            super(base);
-        }
-        
-        @Override
-        public void startActivity(Intent intent) {
-            if (shouldBlockIntent(intent)) {
-                log("CONTEXT BLOCKED: " + getIntentInfo(intent));
-                return;
-            }
-            super.startActivity(intent);
-        }
-        
-        @Override
-        public void startActivity(Intent intent, Bundle options) {
-            if (shouldBlockIntent(intent)) {
-                log("CONTEXT BLOCKED (options): " + getIntentInfo(intent));
-                return;
-            }
-            super.startActivity(intent, options);
-        }
-        
-        @Override
-        public void startActivities(Intent[] intents) {
-            log("CONTEXT BLOCKED batch startActivities: " + intents.length + " intents");
-            blockedCount++;
-        }
-        
-        @Override
-        public void startActivities(Intent[] intents, Bundle options) {
-            log("CONTEXT BLOCKED batch startActivities: " + intents.length + " intents");
-            blockedCount++;
-        }
-        
-        @Override
-        public Context getApplicationContext() {
-            Context appContext = super.getApplicationContext();
-            // Wrap the application context too
-            if (appContext != null && !(appContext instanceof BlockingContext)) {
-                return new BlockingContext(appContext);
-            }
-            return appContext;
-        }
-    }
-    
-    private String getIntentInfo(Intent intent) {
-        if (intent == null) return "null";
-        StringBuilder sb = new StringBuilder();
-        sb.append("action=").append(intent.getAction());
-        if (intent.getData() != null) {
-            sb.append(", data=").append(intent.getData().toString().substring(0, 
-                Math.min(80, intent.getData().toString().length())));
-        }
-        return sb.toString();
-    }
-    
-    private boolean shouldBlockIntent(Intent intent) {
-        if (intent == null) return false;
-        
-        String action = intent.getAction();
-        
-        // BLOCK ALL ACTION_VIEW - this is what opens browsers
-        if (Intent.ACTION_VIEW.equals(action)) {
-            blockedCount++;
-            Uri data = intent.getData();
-            if (data != null) {
-                String url = data.toString();
-                // Allow whitelisted domains even for ACTION_VIEW
-                if (isWhitelisted(url)) {
-                    return false; // Don't block whitelisted
-                }
-                log("BLOCKED ACTION_VIEW: " + url.substring(0, Math.min(80, url.length())));
-            }
-            return true;
-        }
-        
-        // Block any intent that would launch an external app
-        try {
-            String myPackage = getPackageName();
-            List<ResolveInfo> activities = getPackageManager()
-                .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            
-            for (ResolveInfo info : activities) {
-                if (info.activityInfo != null && 
-                    !myPackage.equals(info.activityInfo.packageName)) {
-                    log("BLOCKED EXTERNAL APP: " + info.activityInfo.packageName);
-                    blockedCount++;
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            blockedCount++;
-            return true;
-        }
-        
-        return false;
-    }
     
     // ==================== LIFECYCLE ====================
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        log("=== NUCLEAR V7 STARTING ===");
+        log("=== CLEAN AD BLOCKER STARTING ===");
         
         // Initialize whitelist mode to ON by default
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -303,121 +196,57 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        patchBridgeContext();
         setupAdBlocker();
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        // Re-apply patches in case something reset them
-        handler.postDelayed(() -> {
-            patchBridgeContext();
-            setupAdBlocker();
-        }, 200);
-    }
-    
-    /**
-     * CRITICAL: Patch the Bridge's internal context to use our BlockingContext
-     */
-    private void patchBridgeContext() {
-        if (bridgePatched) return;
-        
-        try {
-            Bridge bridge = getBridge();
-            if (bridge == null) {
-                handler.postDelayed(this::patchBridgeContext, 300);
-                return;
-            }
-            
-            // Use reflection to replace the context field in Bridge
-            Class<?> bridgeClass = bridge.getClass();
-            
-            // Try to find and patch the context field
-            Field[] fields = bridgeClass.getDeclaredFields();
-            for (Field field : fields) {
-                if (Context.class.isAssignableFrom(field.getType())) {
-                    field.setAccessible(true);
-                    Object currentContext = field.get(bridge);
-                    if (currentContext != null && !(currentContext instanceof BlockingContext)) {
-                        field.set(bridge, new BlockingContext((Context) currentContext));
-                        log("Patched Bridge context field: " + field.getName());
-                    }
-                }
-            }
-            
-            // Also try parent classes
-            Class<?> parentClass = bridgeClass.getSuperclass();
-            while (parentClass != null && parentClass != Object.class) {
-                for (Field field : parentClass.getDeclaredFields()) {
-                    if (Context.class.isAssignableFrom(field.getType())) {
-                        try {
-                            field.setAccessible(true);
-                            Object currentContext = field.get(bridge);
-                            if (currentContext != null && !(currentContext instanceof BlockingContext)) {
-                                field.set(bridge, new BlockingContext((Context) currentContext));
-                                log("Patched parent context field: " + field.getName());
-                            }
-                        } catch (Exception e) {
-                            // Some fields may be final, ignore
-                        }
-                    }
-                }
-                parentClass = parentClass.getSuperclass();
-            }
-            
-            bridgePatched = true;
-            log("Bridge context patching complete");
-            
-        } catch (Exception e) {
-            log("Bridge patching error: " + e.getMessage());
-        }
+        // Re-apply ad blocker in case Bridge resets it
+        handler.postDelayed(this::setupAdBlocker, 300);
     }
     
     private void setupAdBlocker() {
         try {
             Bridge bridge = getBridge();
             if (bridge == null) {
-                log("Bridge is null, retrying...");
                 handler.postDelayed(this::setupAdBlocker, 500);
                 return;
             }
             
             WebView webView = bridge.getWebView();
             if (webView == null) {
-                log("WebView is null, retrying...");
                 handler.postDelayed(this::setupAdBlocker, 500);
                 return;
             }
             
             webViewRef = webView;
             
-            // Set our custom WebViewClient with ad blocking
+            // Set custom WebViewClient with ad blocking
             webView.setWebViewClient(new AdBlockingWebViewClient());
             
-            // Block popups via WebChromeClient
-            webView.setWebChromeClient(new BlockingWebChromeClient());
+            // Set custom WebChromeClient to block popups
+            webView.setWebChromeClient(new AdBlockingWebChromeClient());
             
-            // Block downloads (ads sometimes trigger fake downloads)
+            // Block downloads (often triggered by ads)
             webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
-                log("BLOCKED DOWNLOAD: " + url.substring(0, Math.min(60, url.length())));
+                log("BLOCKED DOWNLOAD: " + truncate(url, 60));
                 blockedCount++;
             });
             
-            // Aggressive WebView settings
+            // Configure WebView settings
             configureWebViewSettings(webView);
             
-            // Disable context menu (prevents "Open in browser" option)
+            // Disable long-press context menu
             webView.setOnLongClickListener(v -> true);
             
-            // Start continuous JS injection
-            startContinuousJSInjection(webView);
+            // Start JavaScript injection
+            startJSInjection(webView);
             
-            log("=== NUCLEAR V7 ACTIVE ===");
+            log("=== CLEAN AD BLOCKER ACTIVE ===");
             
         } catch (Exception e) {
             log("Setup error: " + e.getMessage());
-            e.printStackTrace();
         }
     }
     
@@ -427,7 +256,7 @@ public class MainActivity extends BridgeActivity {
         settings.setDomStorageEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
         
-        // SECURITY: Disable features that ads abuse
+        // Disable features abused by ads
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
         settings.setAllowFileAccess(false);
@@ -437,7 +266,7 @@ public class MainActivity extends BridgeActivity {
         // Disable third-party cookies
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
         
-        // Enable safe browsing on Android O+
+        // Enable safe browsing
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(true);
         }
@@ -459,49 +288,46 @@ public class MainActivity extends BridgeActivity {
         
         /**
          * Handle URL navigation.
-         * Return TRUE = we handled it (blocked)
-         * Return FALSE = let WebView load it
+         * Return TRUE = blocked (we handled it)
+         * Return FALSE = allow WebView to load
          */
         private boolean handleNavigation(String url, boolean isMainFrame) {
             if (url == null || url.isEmpty()) {
-                return true; // Block empty
+                return true;
             }
             
             String lowerUrl = url.toLowerCase();
             
-            // Allow internal WebView schemes
+            // Allow internal schemes
             if (lowerUrl.startsWith("javascript:") || 
                 lowerUrl.startsWith("data:") || 
                 lowerUrl.startsWith("blob:") ||
                 lowerUrl.startsWith("about:")) {
-                return false; // Let WebView handle
+                return false;
             }
             
-            // BLOCK ALL non-HTTP schemes (intent://, market://, tel://, etc.)
-            // These are often used by ads to open external apps
+            // BLOCK all non-HTTP schemes (intent://, market://, tel://, etc.)
             if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
-                log("BLOCKED SCHEME: " + url.substring(0, Math.min(80, url.length())));
+                log("BLOCKED SCHEME: " + truncate(url, 80));
                 blockedCount++;
                 return true;
             }
             
-            // Check if URL is an ad
+            // Block known ad URLs
             if (isAdUrl(url)) {
-                log("BLOCKED AD NAV: " + url.substring(0, Math.min(60, url.length())));
+                log("BLOCKED AD NAV: " + truncate(url, 60));
                 blockedCount++;
                 return true;
             }
             
             // Check whitelist mode
-            if (isWhitelistModeEnabled()) {
-                if (!isWhitelisted(url)) {
-                    log("BLOCKED NON-WHITELIST: " + url.substring(0, Math.min(60, url.length())));
-                    blockedCount++;
-                    return true;
-                }
+            if (isWhitelistModeEnabled() && !isWhitelisted(url)) {
+                log("BLOCKED NON-WHITELIST: " + truncate(url, 60));
+                blockedCount++;
+                return true;
             }
             
-            // Allow whitelisted URLs to load in WebView
+            // Allow whitelisted URLs
             return false;
         }
         
@@ -509,31 +335,31 @@ public class MainActivity extends BridgeActivity {
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
             String url = request.getUrl().toString();
             
-            // Block known ad patterns at resource level
+            // Block known ad URLs at resource level
             if (isAdUrl(url)) {
-                log("BLOCKED AD RESOURCE: " + url.substring(0, Math.min(60, url.length())));
+                log("BLOCKED AD RESOURCE: " + truncate(url, 60));
                 blockedCount++;
                 return emptyResponse();
             }
             
-            // For HTML requests (potential iframe ads), check whitelist
+            // Block non-whitelisted HTML content (iframes)
             String accept = request.getRequestHeaders().get("Accept");
             if (accept != null && accept.contains("text/html")) {
                 if (isWhitelistModeEnabled() && !isWhitelisted(url)) {
-                    log("BLOCKED IFRAME: " + url.substring(0, Math.min(60, url.length())));
+                    log("BLOCKED IFRAME: " + truncate(url, 60));
                     blockedCount++;
                     return emptyHtmlResponse();
                 }
             }
             
             // Block scripts from ad domains
-            if (url.endsWith(".js") && isAdDomain(url)) {
-                log("BLOCKED AD SCRIPT: " + url.substring(0, Math.min(60, url.length())));
+            if ((url.endsWith(".js") || url.contains(".js?")) && isAdDomain(url)) {
+                log("BLOCKED AD SCRIPT: " + truncate(url, 60));
                 blockedCount++;
                 return emptyResponse();
             }
             
-            return null; // Let it through
+            return null; // Allow request
         }
         
         @Override
@@ -544,28 +370,28 @@ public class MainActivity extends BridgeActivity {
         
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-            // Silently ignore errors from blocked resources
-            if (isAdUrl(failingUrl)) {
+            // Ignore errors from blocked resources
+            if (failingUrl != null && isAdUrl(failingUrl)) {
                 return;
             }
             super.onReceivedError(view, errorCode, description, failingUrl);
         }
     }
     
-    // ==================== BLOCKING WEBCHROMECLIENT ====================
+    // ==================== AD BLOCKING WEBCHROMECLIENT ====================
     
-    private class BlockingWebChromeClient extends WebChromeClient {
+    private class AdBlockingWebChromeClient extends WebChromeClient {
+        
         @Override
         public boolean onCreateWindow(WebView view, boolean isDialog, 
                                       boolean isUserGesture, android.os.Message resultMsg) {
             log("BLOCKED POPUP WINDOW");
             blockedCount++;
-            return false; // Deny all popup windows
+            return false;
         }
         
         @Override
         public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
-            // Block JS alerts (often used by ads)
             if (isAdUrl(url)) {
                 result.cancel();
                 return true;
@@ -594,9 +420,78 @@ public class MainActivity extends BridgeActivity {
         
         @Override
         public boolean onJsBeforeUnload(WebView view, String url, String message, JsResult result) {
-            result.confirm(); // Always allow unload
+            result.confirm();
             return true;
         }
+    }
+    
+    // ==================== ACTIVITY-LEVEL BLOCKING ====================
+    // Override startActivity to prevent external browser launches
+    
+    @Override
+    public void startActivity(Intent intent) {
+        if (shouldBlockIntent(intent)) {
+            log("BLOCKED startActivity: " + getIntentInfo(intent));
+            return;
+        }
+        super.startActivity(intent);
+    }
+    
+    @Override
+    public void startActivity(Intent intent, Bundle options) {
+        if (shouldBlockIntent(intent)) {
+            log("BLOCKED startActivity: " + getIntentInfo(intent));
+            return;
+        }
+        super.startActivity(intent, options);
+    }
+    
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode) {
+        if (shouldBlockIntent(intent)) {
+            log("BLOCKED startActivityForResult: " + getIntentInfo(intent));
+            return;
+        }
+        super.startActivityForResult(intent, requestCode);
+    }
+    
+    @Override
+    public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
+        if (shouldBlockIntent(intent)) {
+            log("BLOCKED startActivityForResult: " + getIntentInfo(intent));
+            return;
+        }
+        super.startActivityForResult(intent, requestCode, options);
+    }
+    
+    private boolean shouldBlockIntent(Intent intent) {
+        if (intent == null) return false;
+        
+        String action = intent.getAction();
+        
+        // Block ACTION_VIEW to external browser
+        if (Intent.ACTION_VIEW.equals(action)) {
+            Uri data = intent.getData();
+            if (data != null) {
+                String url = data.toString();
+                // Allow whitelisted URLs
+                if (isWhitelisted(url)) {
+                    return false;
+                }
+                blockedCount++;
+                return true;
+            }
+            blockedCount++;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private String getIntentInfo(Intent intent) {
+        if (intent == null) return "null";
+        Uri data = intent.getData();
+        return intent.getAction() + (data != null ? " -> " + truncate(data.toString(), 60) : "");
     }
     
     // ==================== HELPER METHODS ====================
@@ -639,19 +534,19 @@ public class MainActivity extends BridgeActivity {
         
         String lowerUrl = url.toLowerCase();
         
-        // Check regex pattern first (catches most)
+        // Check regex pattern
         if (AD_PATTERN.matcher(lowerUrl).matches()) {
             return true;
         }
         
-        // Check ad path patterns
+        // Check path patterns
         for (String pattern : AD_PATH_PATTERNS) {
             if (lowerUrl.contains(pattern)) {
                 return true;
             }
         }
         
-        // Check ad domains
+        // Check domain
         return isAdDomain(url);
     }
     
@@ -666,7 +561,7 @@ public class MainActivity extends BridgeActivity {
             host = host.toLowerCase();
             
             for (String adDomain : AD_DOMAINS) {
-                if (host.equals(adDomain) || host.endsWith("." + adDomain) || host.contains(adDomain)) {
+                if (host.equals(adDomain) || host.endsWith("." + adDomain)) {
                     return true;
                 }
             }
@@ -694,22 +589,27 @@ public class MainActivity extends BridgeActivity {
         );
     }
     
+    private String truncate(String s, int maxLen) {
+        if (s == null) return "";
+        return s.length() > maxLen ? s.substring(0, maxLen) + "..." : s;
+    }
+    
     // ==================== JAVASCRIPT INJECTION ====================
     
     private void injectAdBlockerJS(WebView webView) {
-        StringBuilder whitelist = new StringBuilder();
+        StringBuilder whitelistJS = new StringBuilder();
         for (String domain : WHITELIST) {
-            if (whitelist.length() > 0) whitelist.append("','");
-            whitelist.append(domain);
+            if (whitelistJS.length() > 0) whitelistJS.append("','");
+            whitelistJS.append(domain);
         }
         
         String js = "(function() {" +
-            "if(window.__ZUNIVERSE_V7) return;" +
-            "window.__ZUNIVERSE_V7 = true;" +
+            "if(window.__ZUNIVERSE_CLEAN) return;" +
+            "window.__ZUNIVERSE_CLEAN = true;" +
             
-            "var W = ['" + whitelist.toString() + "'];" +
+            "var W = ['" + whitelistJS.toString() + "'];" +
             
-            "function isOk(url) {" +
+            "function isAllowed(url) {" +
             "  if(!url) return true;" +
             "  try {" +
             "    var h = new URL(url, location.href).hostname.toLowerCase();" +
@@ -717,48 +617,24 @@ public class MainActivity extends BridgeActivity {
             "  } catch(e) { return false; }" +
             "}" +
             
-            // Kill window.open completely
+            // Block window.open
             "window.open = function() { console.log('[ZU] Blocked window.open'); return null; };" +
             
-            // Kill location redirects
+            // Block location changes
             "var origAssign = location.assign.bind(location);" +
             "var origReplace = location.replace.bind(location);" +
+            "location.assign = function(url) { if(isAllowed(url)) origAssign(url); };" +
+            "location.replace = function(url) { if(isAllowed(url)) origReplace(url); };" +
             
-            "location.assign = function(url) { if(isOk(url)) origAssign(url); else console.log('[ZU] Blocked assign:', url); };" +
-            "location.replace = function(url) { if(isOk(url)) origReplace(url); else console.log('[ZU] Blocked replace:', url); };" +
-            
-            // Block href setter
-            "try {" +
-            "  var locDesc = Object.getOwnPropertyDescriptor(window, 'location');" +
-            "  if(locDesc && locDesc.set) {" +
-            "    var origSet = locDesc.set;" +
-            "    Object.defineProperty(window, 'location', {" +
-            "      get: locDesc.get," +
-            "      set: function(v) { if(isOk(v)) origSet.call(window, v); }" +
-            "    });" +
-            "  }" +
-            "} catch(e) {}" +
-            
-            // Block clicks on non-whitelisted links (capture phase)
+            // Block clicks on non-whitelisted links
             "document.addEventListener('click', function(e) {" +
             "  var t = e.target;" +
             "  while(t && t.tagName !== 'A') t = t.parentElement;" +
-            "  if(t && t.href && !isOk(t.href)) {" +
+            "  if(t && t.href && !isAllowed(t.href)) {" +
             "    e.preventDefault();" +
             "    e.stopPropagation();" +
             "    e.stopImmediatePropagation();" +
-            "    console.log('[ZU] Blocked click:', t.href);" +
             "    return false;" +
-            "  }" +
-            "}, true);" +
-            
-            // Also block mousedown to prevent drag redirects
-            "document.addEventListener('mousedown', function(e) {" +
-            "  var t = e.target;" +
-            "  while(t && t.tagName !== 'A') t = t.parentElement;" +
-            "  if(t && t.href && !isOk(t.href)) {" +
-            "    e.preventDefault();" +
-            "    e.stopImmediatePropagation();" +
             "  }" +
             "}, true);" +
             
@@ -767,98 +643,57 @@ public class MainActivity extends BridgeActivity {
             "  document.addEventListener(evt, function(e) {" +
             "    var t = e.target;" +
             "    while(t && t.tagName !== 'A') t = t.parentElement;" +
-            "    if(t && t.href && !isOk(t.href)) {" +
+            "    if(t && t.href && !isAllowed(t.href)) {" +
             "      e.preventDefault();" +
             "      e.stopImmediatePropagation();" +
             "    }" +
             "  }, true);" +
             "});" +
             
-            // Periodic cleanup of ad elements
+            // Periodic cleanup
             "setInterval(function() {" +
-            "  try {" +
-            "    // Remove invisible overlay ads" +
-            "    document.querySelectorAll('*').forEach(function(el) {" +
-            "      try {" +
-            "        var s = getComputedStyle(el);" +
-            "        if((s.position === 'fixed' || s.position === 'absolute') && " +
-            "           parseInt(s.zIndex) > 1000 && " +
-            "           (parseFloat(s.opacity) < 0.1 || el.offsetWidth < 3 || el.offsetHeight < 3)) {" +
-            "          el.remove();" +
-            "        }" +
-            "      } catch(e) {}" +
-            "    });" +
-            "    // Remove non-whitelisted iframes" +
-            "    document.querySelectorAll('iframe').forEach(function(f) {" +
-            "      if(f.src && !isOk(f.src)) f.remove();" +
-            "    });" +
-            "    // Force all links to target _self" +
-            "    document.querySelectorAll('a[target=\"_blank\"]').forEach(function(a) {" +
-            "      a.target = '_self';" +
-            "    });" +
-            "  } catch(e) {}" +
-            "}, 500);" +
+            "  // Remove hidden overlay ads" +
+            "  document.querySelectorAll('div,iframe').forEach(function(el) {" +
+            "    try {" +
+            "      var s = getComputedStyle(el);" +
+            "      if((s.position === 'fixed' || s.position === 'absolute') && " +
+            "         parseInt(s.zIndex) > 9000 && parseFloat(s.opacity) < 0.15) {" +
+            "        el.remove();" +
+            "      }" +
+            "    } catch(e) {}" +
+            "  });" +
+            "  // Remove non-whitelisted iframes" +
+            "  document.querySelectorAll('iframe').forEach(function(f) {" +
+            "    if(f.src && !isAllowed(f.src)) f.remove();" +
+            "  });" +
+            "  // Force links to open in same window" +
+            "  document.querySelectorAll('a[target=\"_blank\"]').forEach(function(a) {" +
+            "    a.target = '_self';" +
+            "  });" +
+            "}, 1000);" +
             
-            "console.log('[ZUniverse] Ad blocker V7 active');" +
+            "console.log('[ZUniverse] Clean Ad Blocker active');" +
         "})();";
         
         webView.evaluateJavascript(js, null);
     }
     
-    private void startContinuousJSInjection(WebView webView) {
+    private void startJSInjection(WebView webView) {
         Runnable injector = new Runnable() {
             @Override
             public void run() {
                 try {
                     if (webView != null) {
-                        webView.evaluateJavascript("window.__ZUNIVERSE_V7 = false;", null);
+                        webView.evaluateJavascript("window.__ZUNIVERSE_CLEAN = false;", null);
                         injectAdBlockerJS(webView);
                     }
                 } catch (Exception e) {
                     // Ignore
                 }
-                handler.postDelayed(this, 2000);
+                handler.postDelayed(this, 3000);
             }
         };
-        handler.postDelayed(injector, 2000);
-    }
-    
-    // ==================== ACTIVITY-LEVEL BLOCKING (final backup) ====================
-    
-    @Override
-    public void startActivity(Intent intent) {
-        if (shouldBlockIntent(intent)) return;
-        super.startActivity(intent);
-    }
-    
-    @Override
-    public void startActivity(Intent intent, Bundle options) {
-        if (shouldBlockIntent(intent)) return;
-        super.startActivity(intent, options);
-    }
-    
-    @Override
-    public void startActivityForResult(Intent intent, int requestCode) {
-        if (shouldBlockIntent(intent)) return;
-        super.startActivityForResult(intent, requestCode);
-    }
-    
-    @Override
-    public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
-        if (shouldBlockIntent(intent)) return;
-        super.startActivityForResult(intent, requestCode, options);
-    }
-    
-    @Override
-    public void startActivities(Intent[] intents) {
-        log("BLOCKED batch startActivities");
-        blockedCount++;
-    }
-    
-    @Override
-    public void startActivities(Intent[] intents, Bundle options) {
-        log("BLOCKED batch startActivities");
-        blockedCount++;
+        handler.postDelayed(injector, 3000);
     }
     
     private void log(String msg) {
