@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -16,23 +15,21 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * NUCLEAR APPLICATION CLASS V4
+ * NUCLEAR APPLICATION V5 - SIMPLIFIED
  * 
- * Multiple layers of protection:
- * 1. Instrumentation hook - intercepts ALL activity launches at system level
- * 2. Application-level startActivity overrides
- * 3. Context wrapping for any component that uses Application context
+ * Hooks into Android's Instrumentation to block ALL external app launches
+ * at the deepest system level possible.
  */
 public class ZuniverseApplication extends Application {
     
-    private static final String TAG = "ZUNIVERSE_APP_V4";
-    private static int blockedCount = 0;
+    private static final String TAG = "ZUNIVERSE_APP";
+    private static int blocked = 0;
     
     @Override
     public void onCreate() {
         super.onCreate();
         hookInstrumentation();
-        Log.d(TAG, "=== NUCLEAR APPLICATION V4 INITIALIZED ===");
+        Log.d(TAG, "=== APPLICATION BLOCKER ACTIVE ===");
     }
     
     @Override
@@ -42,7 +39,7 @@ public class ZuniverseApplication extends Application {
     }
     
     /**
-     * Replace the system Instrumentation with our blocking version.
+     * Replace system Instrumentation with our blocking version
      */
     private void hookInstrumentation() {
         try {
@@ -51,67 +48,58 @@ public class ZuniverseApplication extends Application {
             currentActivityThread.setAccessible(true);
             Object activityThread = currentActivityThread.invoke(null);
             
-            if (activityThread == null) {
-                Log.d(TAG, "ActivityThread is null, will hook later");
-                return;
-            }
+            if (activityThread == null) return;
             
             Field instrumentationField = activityThreadClass.getDeclaredField("mInstrumentation");
             instrumentationField.setAccessible(true);
             
-            Instrumentation originalInstrumentation = (Instrumentation) instrumentationField.get(activityThread);
+            Instrumentation original = (Instrumentation) instrumentationField.get(activityThread);
             
-            if (originalInstrumentation instanceof NuclearInstrumentation) {
-                Log.d(TAG, "Instrumentation already hooked");
-                return;
-            }
+            if (original instanceof BlockingInstrumentation) return;
             
-            NuclearInstrumentation nuclearInstrumentation = new NuclearInstrumentation(originalInstrumentation, this);
-            instrumentationField.set(activityThread, nuclearInstrumentation);
+            instrumentationField.set(activityThread, new BlockingInstrumentation(original, this));
             
-            Log.d(TAG, "=== INSTRUMENTATION HOOKED SUCCESSFULLY ===");
+            Log.d(TAG, "Instrumentation hook installed");
             
         } catch (Exception e) {
-            Log.e(TAG, "Failed to hook Instrumentation: " + e.getMessage());
+            Log.e(TAG, "Hook failed: " + e.getMessage());
         }
     }
     
-    // Application-level startActivity overrides
     @Override
     public void startActivity(Intent intent) {
-        if (shouldBlock(intent, "App.startActivity")) return;
+        if (shouldBlock(intent)) return;
         super.startActivity(intent);
     }
     
     @Override
     public void startActivity(Intent intent, Bundle options) {
-        if (shouldBlock(intent, "App.startActivity+Bundle")) return;
+        if (shouldBlock(intent)) return;
         super.startActivity(intent, options);
     }
     
-    private boolean shouldBlock(Intent intent, String source) {
+    private boolean shouldBlock(Intent intent) {
         if (intent == null) return false;
         
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            Log.d(TAG, "★★★ BLOCKED [" + source + "]: " + intent.getData());
-            blockedCount++;
+            Log.d(TAG, "★ BLOCKED ACTION_VIEW: " + intent.getData());
+            blocked++;
             return true;
         }
         
         try {
             List<ResolveInfo> activities = getPackageManager()
                 .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-            String myPackage = getPackageName();
             
             for (ResolveInfo info : activities) {
-                if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
-                    Log.d(TAG, "★★★ BLOCKED EXTERNAL [" + source + "]: " + info.activityInfo.packageName);
-                    blockedCount++;
+                if (info.activityInfo != null && !getPackageName().equals(info.activityInfo.packageName)) {
+                    Log.d(TAG, "★ BLOCKED EXTERNAL: " + info.activityInfo.packageName);
+                    blocked++;
                     return true;
                 }
             }
         } catch (Exception e) {
-            blockedCount++;
+            blocked++;
             return true;
         }
         
@@ -119,19 +107,18 @@ public class ZuniverseApplication extends Application {
     }
     
     public static int getBlockedCount() {
-        return blockedCount;
+        return blocked;
     }
     
     /**
-     * Custom Instrumentation that intercepts ALL activity launches at the system level.
-     * This is the deepest possible hook point in Android.
+     * Custom Instrumentation that intercepts ALL activity launches
      */
-    public static class NuclearInstrumentation extends Instrumentation {
+    private static class BlockingInstrumentation extends Instrumentation {
         
         private final Instrumentation original;
         private final Context appContext;
         
-        public NuclearInstrumentation(Instrumentation original, Context appContext) {
+        BlockingInstrumentation(Instrumentation original, Context appContext) {
             this.original = original;
             this.appContext = appContext;
         }
@@ -142,12 +129,11 @@ public class ZuniverseApplication extends Application {
                 Activity target, Intent intent, int requestCode, Bundle options) {
             
             if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★★★ INSTRUMENTATION BLOCKED: " + intent);
-                return null; // Returning null cancels the activity launch
+                Log.d(TAG, "★ INSTRUMENTATION BLOCKED: " + intent);
+                return null;
             }
             
             try {
-                // Use reflection to call the original method
                 Method method = Instrumentation.class.getDeclaredMethod(
                     "execStartActivity",
                     Context.class, android.os.IBinder.class, android.os.IBinder.class,
@@ -156,7 +142,6 @@ public class ZuniverseApplication extends Application {
                 method.setAccessible(true);
                 return (ActivityResult) method.invoke(original, who, contextThread, token, target, intent, requestCode, options);
             } catch (Exception e) {
-                Log.e(TAG, "Error in execStartActivity: " + e.getMessage());
                 return null;
             }
         }
@@ -167,7 +152,7 @@ public class ZuniverseApplication extends Application {
                 String target, Intent intent, int requestCode, Bundle options) {
             
             if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★★★ INSTRUMENTATION BLOCKED (String target): " + intent);
+                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (String): " + intent);
                 return null;
             }
             
@@ -180,7 +165,6 @@ public class ZuniverseApplication extends Application {
                 method.setAccessible(true);
                 return (ActivityResult) method.invoke(original, who, contextThread, token, target, intent, requestCode, options);
             } catch (Exception e) {
-                Log.e(TAG, "Error in execStartActivity (String): " + e.getMessage());
                 return null;
             }
         }
@@ -188,213 +172,70 @@ public class ZuniverseApplication extends Application {
         private boolean shouldBlockIntent(Intent intent) {
             if (intent == null) return false;
             
-            String action = intent.getAction();
-            
-            // BLOCK ALL ACTION_VIEW - this is what opens browsers
-            if (Intent.ACTION_VIEW.equals(action)) {
-                blockedCount++;
+            // BLOCK ALL ACTION_VIEW
+            if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+                blocked++;
                 return true;
             }
             
-            // Block intents to external packages
+            // Block external apps
             try {
                 PackageManager pm = appContext.getPackageManager();
                 List<ResolveInfo> activities = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                String myPackage = appContext.getPackageName();
                 
                 for (ResolveInfo info : activities) {
-                    if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
-                        blockedCount++;
+                    if (info.activityInfo != null && !appContext.getPackageName().equals(info.activityInfo.packageName)) {
+                        blocked++;
                         return true;
                     }
                 }
             } catch (Exception e) {
-                blockedCount++;
+                blocked++;
                 return true;
             }
             
             return false;
         }
         
-        // Delegate all other methods to original
-        @Override
-        public void onCreate(Bundle arguments) {
-            original.onCreate(arguments);
-        }
-        
-        @Override
-        public void start() {
-            original.start();
-        }
-        
-        @Override
-        public void onStart() {
-            original.onStart();
-        }
-        
-        @Override
-        public boolean onException(Object obj, Throwable e) {
-            return original.onException(obj, e);
-        }
-        
-        @Override
-        public void sendStatus(int resultCode, Bundle results) {
-            original.sendStatus(resultCode, results);
-        }
-        
-        @Override
-        public void finish(int resultCode, Bundle results) {
-            original.finish(resultCode, results);
-        }
-        
-        @Override
-        public void setAutomaticPerformanceSnapshots() {
-            original.setAutomaticPerformanceSnapshots();
-        }
-        
-        @Override
-        public void startPerformanceSnapshot() {
-            original.startPerformanceSnapshot();
-        }
-        
-        @Override
-        public void endPerformanceSnapshot() {
-            original.endPerformanceSnapshot();
-        }
-        
-        @Override
-        public void onDestroy() {
-            original.onDestroy();
-        }
-        
-        @Override
-        public Context getContext() {
-            return original.getContext();
-        }
-        
-        @Override
-        public Context getTargetContext() {
-            return original.getTargetContext();
-        }
-        
-        @Override
-        public boolean isProfiling() {
-            return original.isProfiling();
-        }
-        
-        @Override
-        public void startProfiling() {
-            original.startProfiling();
-        }
-        
-        @Override
-        public void stopProfiling() {
-            original.stopProfiling();
-        }
-        
-        @Override
-        public void setInTouchMode(boolean inTouch) {
-            original.setInTouchMode(inTouch);
-        }
-        
-        @Override
-        public void waitForIdle(Runnable recipient) {
-            original.waitForIdle(recipient);
-        }
-        
-        @Override
-        public void waitForIdleSync() {
-            original.waitForIdleSync();
-        }
-        
-        @Override
-        public void runOnMainSync(Runnable runner) {
-            original.runOnMainSync(runner);
-        }
+        // Delegate all standard methods to original
+        @Override public void onCreate(Bundle arguments) { original.onCreate(arguments); }
+        @Override public void start() { original.start(); }
+        @Override public void onStart() { original.onStart(); }
+        @Override public boolean onException(Object obj, Throwable e) { return original.onException(obj, e); }
+        @Override public void sendStatus(int resultCode, Bundle results) { original.sendStatus(resultCode, results); }
+        @Override public void finish(int resultCode, Bundle results) { original.finish(resultCode, results); }
+        @Override public void onDestroy() { original.onDestroy(); }
+        @Override public Context getContext() { return original.getContext(); }
+        @Override public Context getTargetContext() { return original.getTargetContext(); }
+        @Override public boolean isProfiling() { return original.isProfiling(); }
+        @Override public void startProfiling() { original.startProfiling(); }
+        @Override public void stopProfiling() { original.stopProfiling(); }
+        @Override public void setInTouchMode(boolean inTouch) { original.setInTouchMode(inTouch); }
+        @Override public void waitForIdle(Runnable recipient) { original.waitForIdle(recipient); }
+        @Override public void waitForIdleSync() { original.waitForIdleSync(); }
+        @Override public void runOnMainSync(Runnable runner) { original.runOnMainSync(runner); }
         
         @Override
         public Activity startActivitySync(Intent intent) {
-            if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★★★ BLOCKED startActivitySync: " + intent);
-                return null;
-            }
+            if (shouldBlockIntent(intent)) return null;
             return original.startActivitySync(intent);
         }
         
-        @Override
-        public void addMonitor(ActivityMonitor monitor) {
-            original.addMonitor(monitor);
-        }
-        
-        @Override
-        public ActivityMonitor addMonitor(android.content.IntentFilter filter, ActivityResult result, boolean block) {
-            return original.addMonitor(filter, result, block);
-        }
-        
-        @Override
-        public ActivityMonitor addMonitor(String cls, ActivityResult result, boolean block) {
-            return original.addMonitor(cls, result, block);
-        }
-        
-        @Override
-        public boolean checkMonitorHit(ActivityMonitor monitor, int minHits) {
-            return original.checkMonitorHit(monitor, minHits);
-        }
-        
-        @Override
-        public Activity waitForMonitor(ActivityMonitor monitor) {
-            return original.waitForMonitor(monitor);
-        }
-        
-        @Override
-        public Activity waitForMonitorWithTimeout(ActivityMonitor monitor, long timeOut) {
-            return original.waitForMonitorWithTimeout(monitor, timeOut);
-        }
-        
-        @Override
-        public void removeMonitor(ActivityMonitor monitor) {
-            original.removeMonitor(monitor);
-        }
-        
-        @Override
-        public boolean invokeMenuActionSync(Activity targetActivity, int id, int flag) {
-            return original.invokeMenuActionSync(targetActivity, id, flag);
-        }
-        
-        @Override
-        public boolean invokeContextMenuAction(Activity targetActivity, int id, int flag) {
-            return original.invokeContextMenuAction(targetActivity, id, flag);
-        }
-        
-        @Override
-        public void sendStringSync(String text) {
-            original.sendStringSync(text);
-        }
-        
-        @Override
-        public void sendKeySync(android.view.KeyEvent event) {
-            original.sendKeySync(event);
-        }
-        
-        @Override
-        public void sendKeyDownUpSync(int key) {
-            original.sendKeyDownUpSync(key);
-        }
-        
-        @Override
-        public void sendCharacterSync(int keyCode) {
-            original.sendCharacterSync(keyCode);
-        }
-        
-        @Override
-        public void sendPointerSync(android.view.MotionEvent event) {
-            original.sendPointerSync(event);
-        }
-        
-        @Override
-        public void sendTrackballEventSync(android.view.MotionEvent event) {
-            original.sendTrackballEventSync(event);
-        }
+        @Override public void addMonitor(ActivityMonitor monitor) { original.addMonitor(monitor); }
+        @Override public ActivityMonitor addMonitor(android.content.IntentFilter filter, ActivityResult result, boolean block) { return original.addMonitor(filter, result, block); }
+        @Override public ActivityMonitor addMonitor(String cls, ActivityResult result, boolean block) { return original.addMonitor(cls, result, block); }
+        @Override public boolean checkMonitorHit(ActivityMonitor monitor, int minHits) { return original.checkMonitorHit(monitor, minHits); }
+        @Override public Activity waitForMonitor(ActivityMonitor monitor) { return original.waitForMonitor(monitor); }
+        @Override public Activity waitForMonitorWithTimeout(ActivityMonitor monitor, long timeOut) { return original.waitForMonitorWithTimeout(monitor, timeOut); }
+        @Override public void removeMonitor(ActivityMonitor monitor) { original.removeMonitor(monitor); }
+        @Override public boolean invokeMenuActionSync(Activity targetActivity, int id, int flag) { return original.invokeMenuActionSync(targetActivity, id, flag); }
+        @Override public boolean invokeContextMenuAction(Activity targetActivity, int id, int flag) { return original.invokeContextMenuAction(targetActivity, id, flag); }
+        @Override public void sendStringSync(String text) { original.sendStringSync(text); }
+        @Override public void sendKeySync(android.view.KeyEvent event) { original.sendKeySync(event); }
+        @Override public void sendKeyDownUpSync(int key) { original.sendKeyDownUpSync(key); }
+        @Override public void sendCharacterSync(int keyCode) { original.sendCharacterSync(keyCode); }
+        @Override public void sendPointerSync(android.view.MotionEvent event) { original.sendPointerSync(event); }
+        @Override public void sendTrackballEventSync(android.view.MotionEvent event) { original.sendTrackballEventSync(event); }
         
         @Override
         public Application newApplication(ClassLoader cl, String className, Context context)
@@ -402,10 +243,7 @@ public class ZuniverseApplication extends Application {
             return original.newApplication(cl, className, context);
         }
         
-        @Override
-        public void callApplicationOnCreate(Application app) {
-            original.callApplicationOnCreate(app);
-        }
+        @Override public void callApplicationOnCreate(Application app) { original.callApplicationOnCreate(app); }
         
         @Override
         public Activity newActivity(Class<?> clazz, Context context, android.os.IBinder token,
@@ -421,64 +259,17 @@ public class ZuniverseApplication extends Application {
             return original.newActivity(cl, className, intent);
         }
         
-        @Override
-        public void callActivityOnCreate(Activity activity, Bundle icicle) {
-            original.callActivityOnCreate(activity, icicle);
-        }
-        
-        @Override
-        public void callActivityOnDestroy(Activity activity) {
-            original.callActivityOnDestroy(activity);
-        }
-        
-        @Override
-        public void callActivityOnRestoreInstanceState(Activity activity, Bundle savedInstanceState) {
-            original.callActivityOnRestoreInstanceState(activity, savedInstanceState);
-        }
-        
-        @Override
-        public void callActivityOnPostCreate(Activity activity, Bundle icicle) {
-            original.callActivityOnPostCreate(activity, icicle);
-        }
-        
-        @Override
-        public void callActivityOnNewIntent(Activity activity, Intent intent) {
-            original.callActivityOnNewIntent(activity, intent);
-        }
-        
-        @Override
-        public void callActivityOnStart(Activity activity) {
-            original.callActivityOnStart(activity);
-        }
-        
-        @Override
-        public void callActivityOnRestart(Activity activity) {
-            original.callActivityOnRestart(activity);
-        }
-        
-        @Override
-        public void callActivityOnResume(Activity activity) {
-            original.callActivityOnResume(activity);
-        }
-        
-        @Override
-        public void callActivityOnStop(Activity activity) {
-            original.callActivityOnStop(activity);
-        }
-        
-        @Override
-        public void callActivityOnSaveInstanceState(Activity activity, Bundle outState) {
-            original.callActivityOnSaveInstanceState(activity, outState);
-        }
-        
-        @Override
-        public void callActivityOnPause(Activity activity) {
-            original.callActivityOnPause(activity);
-        }
-        
-        @Override
-        public void callActivityOnUserLeaving(Activity activity) {
-            original.callActivityOnUserLeaving(activity);
-        }
+        @Override public void callActivityOnCreate(Activity activity, Bundle icicle) { original.callActivityOnCreate(activity, icicle); }
+        @Override public void callActivityOnDestroy(Activity activity) { original.callActivityOnDestroy(activity); }
+        @Override public void callActivityOnRestoreInstanceState(Activity activity, Bundle savedInstanceState) { original.callActivityOnRestoreInstanceState(activity, savedInstanceState); }
+        @Override public void callActivityOnPostCreate(Activity activity, Bundle icicle) { original.callActivityOnPostCreate(activity, icicle); }
+        @Override public void callActivityOnNewIntent(Activity activity, Intent intent) { original.callActivityOnNewIntent(activity, intent); }
+        @Override public void callActivityOnStart(Activity activity) { original.callActivityOnStart(activity); }
+        @Override public void callActivityOnRestart(Activity activity) { original.callActivityOnRestart(activity); }
+        @Override public void callActivityOnResume(Activity activity) { original.callActivityOnResume(activity); }
+        @Override public void callActivityOnStop(Activity activity) { original.callActivityOnStop(activity); }
+        @Override public void callActivityOnSaveInstanceState(Activity activity, Bundle outState) { original.callActivityOnSaveInstanceState(activity, outState); }
+        @Override public void callActivityOnPause(Activity activity) { original.callActivityOnPause(activity); }
+        @Override public void callActivityOnUserLeaving(Activity activity) { original.callActivityOnUserLeaving(activity); }
     }
 }
