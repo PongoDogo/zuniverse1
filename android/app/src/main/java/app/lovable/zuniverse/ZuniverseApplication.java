@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -15,21 +16,24 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 /**
- * NUCLEAR APPLICATION V5 - SIMPLIFIED
+ * NUCLEAR APPLICATION V6
  * 
- * Hooks into Android's Instrumentation to block ALL external app launches
- * at the deepest system level possible.
+ * Application-level blocking as a BACKUP layer.
+ * The main blocking now happens in MainActivity via plain WebViewClient.
+ * 
+ * This hooks into Android's Instrumentation to catch any startActivity 
+ * calls that might slip through from the Capacitor Bridge.
  */
 public class ZuniverseApplication extends Application {
     
-    private static final String TAG = "ZUNIVERSE_APP";
+    private static final String TAG = "ZUNIVERSE_APP_V6";
     private static int blocked = 0;
     
     @Override
     public void onCreate() {
         super.onCreate();
         hookInstrumentation();
-        Log.d(TAG, "=== APPLICATION BLOCKER ACTIVE ===");
+        Log.d(TAG, "=== APPLICATION-LEVEL BLOCKER ACTIVE ===");
     }
     
     @Override
@@ -39,7 +43,7 @@ public class ZuniverseApplication extends Application {
     }
     
     /**
-     * Replace system Instrumentation with our blocking version
+     * Hook into Android's Instrumentation to intercept ALL activity launches
      */
     private void hookInstrumentation() {
         try {
@@ -48,51 +52,66 @@ public class ZuniverseApplication extends Application {
             currentActivityThread.setAccessible(true);
             Object activityThread = currentActivityThread.invoke(null);
             
-            if (activityThread == null) return;
+            if (activityThread == null) {
+                Log.e(TAG, "ActivityThread is null");
+                return;
+            }
             
             Field instrumentationField = activityThreadClass.getDeclaredField("mInstrumentation");
             instrumentationField.setAccessible(true);
             
             Instrumentation original = (Instrumentation) instrumentationField.get(activityThread);
             
-            if (original instanceof BlockingInstrumentation) return;
+            // Don't hook if already hooked
+            if (original instanceof NuclearInstrumentation) {
+                return;
+            }
             
-            instrumentationField.set(activityThread, new BlockingInstrumentation(original, this));
+            instrumentationField.set(activityThread, new NuclearInstrumentation(original, this));
             
-            Log.d(TAG, "Instrumentation hook installed");
+            Log.d(TAG, "Instrumentation hook installed successfully");
             
         } catch (Exception e) {
-            Log.e(TAG, "Hook failed: " + e.getMessage());
+            Log.e(TAG, "Failed to hook instrumentation: " + e.getMessage());
         }
     }
     
     @Override
     public void startActivity(Intent intent) {
-        if (shouldBlock(intent)) return;
+        if (shouldBlock(intent)) {
+            Log.d(TAG, "★ APPLICATION blocked: " + intent);
+            return;
+        }
         super.startActivity(intent);
     }
     
     @Override
     public void startActivity(Intent intent, Bundle options) {
-        if (shouldBlock(intent)) return;
+        if (shouldBlock(intent)) {
+            Log.d(TAG, "★ APPLICATION blocked (options): " + intent);
+            return;
+        }
         super.startActivity(intent, options);
     }
     
     private boolean shouldBlock(Intent intent) {
         if (intent == null) return false;
         
+        // BLOCK ALL ACTION_VIEW
         if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             Log.d(TAG, "★ BLOCKED ACTION_VIEW: " + intent.getData());
             blocked++;
             return true;
         }
         
+        // Block any intent going to external apps
         try {
             List<ResolveInfo> activities = getPackageManager()
                 .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
             
+            String myPackage = getPackageName();
             for (ResolveInfo info : activities) {
-                if (info.activityInfo != null && !getPackageName().equals(info.activityInfo.packageName)) {
+                if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
                     Log.d(TAG, "★ BLOCKED EXTERNAL: " + info.activityInfo.packageName);
                     blocked++;
                     return true;
@@ -111,14 +130,14 @@ public class ZuniverseApplication extends Application {
     }
     
     /**
-     * Custom Instrumentation that intercepts ALL activity launches
+     * Custom Instrumentation that intercepts ALL activity launches at system level
      */
-    private static class BlockingInstrumentation extends Instrumentation {
+    private static class NuclearInstrumentation extends Instrumentation {
         
         private final Instrumentation original;
         private final Context appContext;
         
-        BlockingInstrumentation(Instrumentation original, Context appContext) {
+        NuclearInstrumentation(Instrumentation original, Context appContext) {
             this.original = original;
             this.appContext = appContext;
         }
@@ -129,10 +148,11 @@ public class ZuniverseApplication extends Application {
                 Activity target, Intent intent, int requestCode, Bundle options) {
             
             if (shouldBlockIntent(intent)) {
-                Log.d(TAG, "★ INSTRUMENTATION BLOCKED: " + intent);
-                return null;
+                Log.d(TAG, "★ INSTRUMENTATION BLOCKED (Activity): " + intent);
+                return null; // Return null = activity not started
             }
             
+            // Use reflection to call the original method
             try {
                 Method method = Instrumentation.class.getDeclaredMethod(
                     "execStartActivity",
@@ -142,6 +162,7 @@ public class ZuniverseApplication extends Application {
                 method.setAccessible(true);
                 return (ActivityResult) method.invoke(original, who, contextThread, token, target, intent, requestCode, options);
             } catch (Exception e) {
+                Log.e(TAG, "Reflection error: " + e.getMessage());
                 return null;
             }
         }
@@ -172,7 +193,7 @@ public class ZuniverseApplication extends Application {
         private boolean shouldBlockIntent(Intent intent) {
             if (intent == null) return false;
             
-            // BLOCK ALL ACTION_VIEW
+            // BLOCK ALL ACTION_VIEW - this is the browser opener
             if (Intent.ACTION_VIEW.equals(intent.getAction())) {
                 blocked++;
                 return true;
@@ -182,9 +203,10 @@ public class ZuniverseApplication extends Application {
             try {
                 PackageManager pm = appContext.getPackageManager();
                 List<ResolveInfo> activities = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+                String myPackage = appContext.getPackageName();
                 
                 for (ResolveInfo info : activities) {
-                    if (info.activityInfo != null && !appContext.getPackageName().equals(info.activityInfo.packageName)) {
+                    if (info.activityInfo != null && !myPackage.equals(info.activityInfo.packageName)) {
                         blocked++;
                         return true;
                     }
@@ -197,7 +219,8 @@ public class ZuniverseApplication extends Application {
             return false;
         }
         
-        // Delegate all standard methods to original
+        // ==================== DELEGATE ALL OTHER METHODS TO ORIGINAL ====================
+        
         @Override public void onCreate(Bundle arguments) { original.onCreate(arguments); }
         @Override public void start() { original.start(); }
         @Override public void onStart() { original.onStart(); }
