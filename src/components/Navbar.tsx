@@ -3,6 +3,9 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import ThemeSwitcher from "./ThemeSwitcher";
+import ProfileSwitcher from "./ProfileSwitcher";
+import NotificationCenter from "./NotificationCenter";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,7 +23,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
     setIsSearchOpen(false);
@@ -83,7 +85,7 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* Search & Menu */}
+            {/* Search, Theme, Profile & Menu */}
             <div className="flex items-center gap-1 sm:gap-2">
               <AnimatePresence>
                 {isSearchOpen && (
@@ -106,6 +108,7 @@ const Navbar = () => {
                   </motion.form>
                 )}
               </AnimatePresence>
+              
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="p-2.5 rounded-lg hover:bg-secondary transition-colors"
@@ -113,6 +116,13 @@ const Navbar = () => {
               >
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
+
+              {/* Theme, Notifications, Profile - Hidden on mobile */}
+              <div className="hidden sm:flex items-center gap-1">
+                <ThemeSwitcher />
+                <NotificationCenter />
+                <ProfileSwitcher />
+              </div>
 
               {/* Mobile Menu Button */}
               <button
@@ -142,6 +152,13 @@ const Navbar = () => {
               exit={{ opacity: 0, y: 20 }}
               className="container mx-auto px-4 py-6"
             >
+              {/* Mobile Settings Row */}
+              <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
+                <ThemeSwitcher />
+                <NotificationCenter />
+                <ProfileSwitcher />
+              </div>
+
               <div className="space-y-2">
                 {navLinks.map((link, index) => (
                   <motion.div

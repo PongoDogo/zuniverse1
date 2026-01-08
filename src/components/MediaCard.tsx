@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Play, Star, Heart } from "lucide-react";
+import { Play, Star, Heart, Pin } from "lucide-react";
 import { Movie, getImageUrl } from "@/lib/tmdb";
 import { isInWatchlist, addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { useState, useEffect } from "react";
+import { isPinned, pinItem, unpinItem } from "@/lib/userPreferences";
+import { useState, useEffect, memo } from "react";
 import { toast } from "sonner";
 
 interface MediaCardProps {
@@ -11,14 +12,17 @@ interface MediaCardProps {
   index?: number;
 }
 
-const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
+const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   const title = item.title || item.name || "Unknown";
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const year = (item.release_date || item.first_air_date || "").split("-")[0];
   const [inWatchlist, setInWatchlist] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     setInWatchlist(isInWatchlist(item.id, mediaType));
+    setPinned(isPinned(item.id, mediaType));
   }, [item.id, mediaType]);
 
   const handleWatchlistClick = (e: React.MouseEvent) => {
@@ -35,40 +39,99 @@ const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
     }
   };
 
+  const handlePinClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (pinned) {
+      unpinItem(item.id, mediaType);
+      setPinned(false);
+      toast.success("Removed from pinned");
+    } else {
+      pinItem({
+        id: item.id,
+        mediaType,
+        title,
+        poster_path: item.poster_path,
+        backdrop_path: item.backdrop_path,
+      });
+      setPinned(true);
+      toast.success("Pinned to home");
+    }
+  };
+
   return (
-    <div className="group relative">
+    <motion.div 
+      className="group relative"
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.2 }}
+    >
       <Link to={`/${mediaType}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-shadow">
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover">
+          {/* Shimmer placeholder */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 shimmer" />
+          )}
           <img
             src={getImageUrl(item.poster_path)}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            }`}
             loading="lazy"
             decoding="async"
+            onLoad={() => setImageLoaded(true)}
           />
+          
+          {/* Hover glow effect */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent" />
+          </div>
           
           {/* Overlay - Only on hover for desktop */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           
           {/* Play Button - Only on hover for desktop */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center">
+            <motion.div 
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center glow-shadow"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
               <Play className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground fill-current ml-0.5" />
-            </div>
+            </motion.div>
           </div>
 
-          {/* Watchlist Button */}
-          <button
-            onClick={handleWatchlistClick}
-            className="absolute top-1 left-1 p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all active:scale-95 hover:bg-primary"
-            aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            <Heart
-              className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                inWatchlist ? "fill-primary text-primary" : "text-foreground"
-              }`}
-            />
-          </button>
+          {/* Action Buttons */}
+          <div className="absolute top-1 left-1 flex flex-col gap-1">
+            {/* Watchlist Button */}
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={handleWatchlistClick}
+              className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
+              aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Heart
+                className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${
+                  inWatchlist ? "fill-primary text-primary" : "text-foreground"
+                }`}
+              />
+            </motion.button>
+
+            {/* Pin Button */}
+            <motion.button
+              whileTap={{ scale: 0.85 }}
+              onClick={handlePinClick}
+              className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
+              aria-label={pinned ? "Unpin" : "Pin to home"}
+            >
+              <Pin
+                className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${
+                  pinned ? "fill-primary text-primary" : "text-foreground"
+                }`}
+              />
+            </motion.button>
+          </div>
 
           {/* Rating Badge */}
           {item.vote_average > 0 && (
@@ -89,8 +152,10 @@ const MediaCard = ({ item, index = 0 }: MediaCardProps) => {
           </p>
         </div>
       </Link>
-    </div>
+    </motion.div>
   );
-};
+});
+
+MediaCard.displayName = "MediaCard";
 
 export default MediaCard;
