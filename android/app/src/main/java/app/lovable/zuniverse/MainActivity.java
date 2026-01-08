@@ -334,46 +334,81 @@ public class MainActivity extends BridgeActivity {
         }
     }
     
-    // ==================== BLOCK EXTERNAL INTENTS ====================
+    // ==================== ABSOLUTE INTENT BLOCKING ====================
     
     @Override
     public void startActivity(Intent intent) {
-        if (isBlockedIntent(intent)) return;
+        if (shouldBlockIntent(intent)) {
+            Log.d("INTENT_BLOCK", intent.toString());
+            return;
+        }
         super.startActivity(intent);
     }
     
     @Override
     public void startActivity(Intent intent, Bundle options) {
-        if (isBlockedIntent(intent)) return;
+        if (shouldBlockIntent(intent)) {
+            Log.d("INTENT_BLOCK", intent.toString());
+            return;
+        }
         super.startActivity(intent, options);
     }
     
     @Override
     public void startActivityForResult(Intent intent, int requestCode) {
-        if (isBlockedIntent(intent)) return;
+        if (shouldBlockIntent(intent)) {
+            Log.d("INTENT_BLOCK", intent.toString());
+            return;
+        }
         super.startActivityForResult(intent, requestCode);
     }
     
     @Override
     public void startActivityForResult(Intent intent, int requestCode, Bundle options) {
-        if (isBlockedIntent(intent)) return;
+        if (shouldBlockIntent(intent)) {
+            Log.d("INTENT_BLOCK", intent.toString());
+            return;
+        }
         super.startActivityForResult(intent, requestCode, options);
     }
     
-    private boolean isBlockedIntent(Intent intent) {
+    private boolean shouldBlockIntent(Intent intent) {
         if (intent == null) return false;
         
-        // Block ALL ACTION_VIEW (browser opens)
-        if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            log("BLOCKED [INTENT]: " + (intent.getData() != null ? truncate(intent.getData().toString(), 60) : "no data"));
-            blockedCount++;
+        String action = intent.getAction();
+        Uri data = intent.getData();
+        String targetPackage = intent.getPackage();
+        String myPackage = getPackageName();
+        
+        // Block ALL ACTION_VIEW intents
+        if (Intent.ACTION_VIEW.equals(action)) {
+            Log.d("INTENT_BLOCK", "Blocked ACTION_VIEW: " + intent.toString());
             return true;
+        }
+        
+        // Block dangerous schemes
+        if (data != null) {
+            String scheme = data.getScheme();
+            if (scheme != null) {
+                // Block intent:// and market:// schemes
+                if ("intent".equals(scheme) || "market".equals(scheme)) {
+                    Log.d("INTENT_BLOCK", "Blocked scheme " + scheme + ": " + intent.toString());
+                    return true;
+                }
+                
+                // Block http/https if target package is NOT our app
+                if (("http".equals(scheme) || "https".equals(scheme))) {
+                    if (targetPackage == null || !targetPackage.equals(myPackage)) {
+                        Log.d("INTENT_BLOCK", "Blocked external http/https: " + intent.toString());
+                        return true;
+                    }
+                }
+            }
         }
         
         // Block CATEGORY_BROWSABLE
         if (intent.getCategories() != null && intent.getCategories().contains(Intent.CATEGORY_BROWSABLE)) {
-            log("BLOCKED [BROWSABLE]: intent");
-            blockedCount++;
+            Log.d("INTENT_BLOCK", "Blocked CATEGORY_BROWSABLE: " + intent.toString());
             return true;
         }
         
