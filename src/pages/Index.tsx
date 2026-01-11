@@ -16,8 +16,11 @@ import {
   getOnTheAir,
 } from "@/lib/tmdb";
 import { applyTheme, getTheme } from "@/lib/userPreferences";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Index = () => {
+  const { t } = useLanguage();
+
   // Apply saved theme on mount
   useEffect(() => {
     applyTheme(getTheme());
@@ -80,37 +83,37 @@ const Index = () => {
           <RecommendationRow />
 
           <MediaRow
-            title="Trending Now"
+            title={t("trendingNow")}
             items={trending || []}
             isLoading={trendingLoading}
           />
 
           <MediaRow
-            title="Popular Movies"
+            title={t("popularMovies")}
             items={popularMovies || []}
             isLoading={popularMoviesLoading}
           />
 
           <MediaRow
-            title="Now Playing in Theaters"
+            title={t("nowPlaying")}
             items={nowPlaying || []}
             isLoading={nowPlayingLoading}
           />
 
           <MediaRow
-            title="Popular TV Shows"
+            title={t("popularTVShows")}
             items={popularTV || []}
             isLoading={popularTVLoading}
           />
 
           <MediaRow
-            title="On The Air"
+            title={t("onTheAir")}
             items={onTheAir || []}
             isLoading={onTheAirLoading}
           />
 
           <MediaRow
-            title="Top Rated Movies"
+            title={t("topRated")}
             items={topRatedMovies || []}
             isLoading={topRatedMoviesLoading}
           />
@@ -123,7 +126,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border py-6 sm:py-8 safe-bottom">
         <div className="container mx-auto px-4 text-center text-muted-foreground text-xs sm:text-sm">
-          <p>© 2024 Zuniverse. Powered by TMDB.</p>
+          <p>© 2024 Zuniverse. {t("poweredBy")}</p>
         </div>
       </footer>
     </div>

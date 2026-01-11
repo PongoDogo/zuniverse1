@@ -15,12 +15,13 @@ export interface ContinueWatchingItem {
   poster_path: string | null;
   backdrop_path: string | null;
   progress: number; // percentage 0-100
-  currentTime: number; // seconds
-  duration: number; // seconds
+  currentTime: number; // seconds watched
+  duration: number; // total duration in seconds
   season?: number;
   episode?: number;
   episodeName?: string;
   lastWatched: number;
+  startedAt?: number; // when user started watching this session
 }
 
 // Watchlist functions
@@ -81,14 +82,26 @@ export const updateContinueWatching = (item: ContinueWatchingItem): void => {
   );
 
   if (existingIndex !== -1) {
-    continueWatching[existingIndex] = item;
+    // Preserve startedAt if not provided, merge with existing
+    const existing = continueWatching[existingIndex];
+    continueWatching[existingIndex] = {
+      ...existing,
+      ...item,
+      startedAt: item.startedAt || existing.startedAt,
+    };
   } else {
-    continueWatching.unshift(item);
+    continueWatching.unshift({
+      ...item,
+      startedAt: item.startedAt || Date.now(),
+    });
   }
 
   // Keep only last 20 items
   const trimmed = continueWatching.slice(0, 20);
   localStorage.setItem(CONTINUE_WATCHING_KEY, JSON.stringify(trimmed));
+  
+  // Dispatch event for real-time updates
+  window.dispatchEvent(new CustomEvent("continueWatchingUpdated"));
 };
 
 export const removeContinueWatching = (
@@ -107,8 +120,25 @@ export const removeContinueWatching = (
       )
   );
   localStorage.setItem(CONTINUE_WATCHING_KEY, JSON.stringify(continueWatching));
+  window.dispatchEvent(new CustomEvent("continueWatchingUpdated"));
+};
+
+export const getContinueWatchingItem = (
+  id: number,
+  mediaType: "movie" | "tv",
+  season?: number,
+  episode?: number
+): ContinueWatchingItem | undefined => {
+  return getContinueWatching().find(
+    (c) =>
+      c.id === id &&
+      c.mediaType === mediaType &&
+      c.season === season &&
+      c.episode === episode
+  );
 };
 
 export const clearContinueWatching = (): void => {
   localStorage.removeItem(CONTINUE_WATCHING_KEY);
+  window.dispatchEvent(new CustomEvent("continueWatchingUpdated"));
 };
