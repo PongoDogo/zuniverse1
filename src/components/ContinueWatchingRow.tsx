@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { getImageUrl } from "@/lib/tmdb";
 import {
@@ -8,13 +8,20 @@ import {
   removeContinueWatching,
   ContinueWatchingItem,
 } from "@/lib/watchlist";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const ContinueWatchingRow = () => {
+  const { t } = useLanguage();
   const [items, setItems] = useState<ContinueWatchingItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setItems(getContinueWatching());
+    
+    // Refresh on storage changes
+    const handleStorage = () => setItems(getContinueWatching());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const scroll = (direction: "left" | "right") => {
@@ -32,12 +39,21 @@ const ContinueWatchingRow = () => {
     setItems(getContinueWatching());
   };
 
+  const formatTimeLeft = (item: ContinueWatchingItem) => {
+    const secondsLeft = Math.max(0, item.duration - item.currentTime);
+    const minutesLeft = Math.round(secondsLeft / 60);
+    
+    if (minutesLeft < 1) return "< 1 " + t("minLeft").split(" ")[0];
+    return `${minutesLeft} ${t("minLeft")}`;
+  };
+
   if (items.length === 0) return null;
 
   return (
     <div className="relative group/row overflow-hidden">
-      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3">
-        Continue Watching
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2">
+        <Clock className="w-5 h-5 text-primary" />
+        {t("continueWatching")}
       </h2>
 
       {/* Scroll Buttons */}
@@ -67,8 +83,10 @@ const ContinueWatchingRow = () => {
               : `/movie/${item.id}/watch`;
 
           return (
-            <div
+            <motion.div
               key={`${item.id}-${item.season}-${item.episode}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
               className="flex-shrink-0 w-[200px] sm:w-[260px] md:w-[300px] group"
             >
               <Link to={watchUrl} className="block relative">
@@ -76,23 +94,33 @@ const ContinueWatchingRow = () => {
                   <img
                     src={getImageUrl(item.backdrop_path || item.poster_path, "w500")}
                     alt={item.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
 
                   {/* Play overlay */}
                   <div className="absolute inset-0 flex items-center justify-center bg-background/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center">
+                    <motion.div 
+                      whileHover={{ scale: 1.1 }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center shadow-lg"
+                    >
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                    </div>
+                    </motion.div>
                   </div>
 
                   {/* Progress bar */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
-                    <div
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-muted/80">
+                    <motion.div
                       className="h-full bg-primary"
-                      style={{ width: `${item.progress}%` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${item.progress}%` }}
+                      transition={{ duration: 0.5 }}
                     />
+                  </div>
+
+                  {/* Progress percentage badge */}
+                  <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm text-[10px] font-medium">
+                    {item.progress}%
                   </div>
 
                   {/* Remove button */}
@@ -112,17 +140,17 @@ const ContinueWatchingRow = () => {
                   <h3 className="font-medium text-xs sm:text-sm truncate">
                     {item.title}
                   </h3>
-                  {item.mediaType === "tv" && item.episodeName && (
+                  {item.mediaType === "tv" && (
                     <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                      S{item.season} E{item.episode}: {item.episodeName}
+                      S{item.season} E{item.episode}{item.episodeName ? `: ${item.episodeName}` : ""}
                     </p>
                   )}
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {Math.round((item.duration - item.currentTime) / 60)} min left
+                  <p className="text-[10px] sm:text-xs text-primary font-medium">
+                    {formatTimeLeft(item)}
                   </p>
                 </div>
               </Link>
-            </div>
+            </motion.div>
           );
         })}
       </div>

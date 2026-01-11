@@ -13,7 +13,9 @@ export interface UserProfile {
 export interface Achievement {
   id: string;
   title: string;
+  titleEl?: string;
   description: string;
+  descriptionEl?: string;
   icon: string;
   unlockedAt: number;
   progress?: number;
@@ -183,6 +185,7 @@ export const updateWatchStats = (update: Partial<WatchStats>): void => {
 export const incrementEpisodesWatched = (): void => {
   const stats = getWatchStats();
   stats.episodesWatched += 1;
+  stats.lastUpdated = Date.now();
   localStorage.setItem(WATCH_STATS_KEY, JSON.stringify(stats));
   checkAchievements(stats);
 };
@@ -190,6 +193,23 @@ export const incrementEpisodesWatched = (): void => {
 export const incrementMoviesWatched = (): void => {
   const stats = getWatchStats();
   stats.moviesWatched += 1;
+  stats.lastUpdated = Date.now();
+  localStorage.setItem(WATCH_STATS_KEY, JSON.stringify(stats));
+  checkAchievements(stats);
+};
+
+export const addWatchTime = (minutes: number): void => {
+  const stats = getWatchStats();
+  stats.totalWatchTime += minutes;
+  stats.lastUpdated = Date.now();
+  localStorage.setItem(WATCH_STATS_KEY, JSON.stringify(stats));
+  checkAchievements(stats);
+};
+
+export const incrementSeasonsCompleted = (): void => {
+  const stats = getWatchStats();
+  stats.seasonsCompleted += 1;
+  stats.lastUpdated = Date.now();
   localStorage.setItem(WATCH_STATS_KEY, JSON.stringify(stats));
   checkAchievements(stats);
 };
@@ -211,16 +231,116 @@ export const unlockAchievement = (achievement: Omit<Achievement, "unlockedAt">):
   }
   achievements.push({ ...achievement, unlockedAt: Date.now() });
   localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(achievements));
+  
+  // Dispatch event for UI notification
+  window.dispatchEvent(new CustomEvent("achievementUnlocked", { 
+    detail: { ...achievement, unlockedAt: Date.now() } 
+  }));
+  
   return true;
 };
 
-const ACHIEVEMENT_DEFINITIONS = [
-  { id: "first_watch", title: "First Steps", description: "Watched your first content", icon: "🎬", threshold: 1, stat: "moviesWatched" },
-  { id: "movie_lover", title: "Movie Lover", description: "Watched 10 movies", icon: "🎥", threshold: 10, stat: "moviesWatched" },
-  { id: "binge_watcher", title: "Binge Watcher", description: "Watched 50 episodes", icon: "📺", threshold: 50, stat: "episodesWatched" },
-  { id: "series_master", title: "Series Master", description: "Watched 100 episodes", icon: "🏆", threshold: 100, stat: "episodesWatched" },
-  { id: "season_finisher", title: "Season Finisher", description: "Completed 5 seasons", icon: "🎭", threshold: 5, stat: "seasonsCompleted" },
-  { id: "marathon_runner", title: "Marathon Runner", description: "Watched for 24 hours total", icon: "⏱️", threshold: 1440, stat: "totalWatchTime" },
+export const ACHIEVEMENT_DEFINITIONS = [
+  { 
+    id: "first_watch", 
+    title: "First Steps", 
+    titleEl: "Πρώτα Βήματα",
+    description: "Watched your first content", 
+    descriptionEl: "Είδατε το πρώτο σας περιεχόμενο",
+    icon: "🎬", 
+    threshold: 1, 
+    stat: "moviesWatched" 
+  },
+  { 
+    id: "movie_lover", 
+    title: "Movie Lover", 
+    titleEl: "Λάτρης Ταινιών",
+    description: "Watched 10 movies", 
+    descriptionEl: "Είδατε 10 ταινίες",
+    icon: "🎥", 
+    threshold: 10, 
+    stat: "moviesWatched" 
+  },
+  { 
+    id: "film_buff", 
+    title: "Film Buff", 
+    titleEl: "Κινηματογραφόφιλος",
+    description: "Watched 25 movies", 
+    descriptionEl: "Είδατε 25 ταινίες",
+    icon: "🎞️", 
+    threshold: 25, 
+    stat: "moviesWatched" 
+  },
+  { 
+    id: "binge_watcher", 
+    title: "Binge Watcher", 
+    titleEl: "Binge Watcher",
+    description: "Watched 50 episodes", 
+    descriptionEl: "Είδατε 50 επεισόδια",
+    icon: "📺", 
+    threshold: 50, 
+    stat: "episodesWatched" 
+  },
+  { 
+    id: "series_master", 
+    title: "Series Master", 
+    titleEl: "Μετρ των Σειρών",
+    description: "Watched 100 episodes", 
+    descriptionEl: "Είδατε 100 επεισόδια",
+    icon: "🏆", 
+    threshold: 100, 
+    stat: "episodesWatched" 
+  },
+  { 
+    id: "tv_addict", 
+    title: "TV Addict", 
+    titleEl: "Εθισμένος στην TV",
+    description: "Watched 200 episodes", 
+    descriptionEl: "Είδατε 200 επεισόδια",
+    icon: "📡", 
+    threshold: 200, 
+    stat: "episodesWatched" 
+  },
+  { 
+    id: "season_finisher", 
+    title: "Season Finisher", 
+    titleEl: "Ολοκληρωτής Σεζόν",
+    description: "Completed 5 seasons", 
+    descriptionEl: "Ολοκληρώσατε 5 σεζόν",
+    icon: "🎭", 
+    threshold: 5, 
+    stat: "seasonsCompleted" 
+  },
+  { 
+    id: "marathon_runner", 
+    title: "Marathon Runner", 
+    titleEl: "Μαραθωνοδρόμος",
+    description: "Watched for 24 hours total", 
+    descriptionEl: "Είδατε συνολικά 24 ώρες",
+    icon: "⏱️", 
+    threshold: 1440, 
+    stat: "totalWatchTime" 
+  },
+  { 
+    id: "time_traveler", 
+    title: "Time Traveler", 
+    titleEl: "Ταξιδιώτης του Χρόνου",
+    description: "Watched for 100 hours total", 
+    descriptionEl: "Είδατε συνολικά 100 ώρες",
+    icon: "⌛", 
+    threshold: 6000, 
+    stat: "totalWatchTime" 
+  },
+  { 
+    id: "first_episode", 
+    title: "Episode One", 
+    titleEl: "Επεισόδιο Ένα",
+    description: "Watched your first episode", 
+    descriptionEl: "Είδατε το πρώτο σας επεισόδιο",
+    icon: "🎯", 
+    threshold: 1, 
+    stat: "episodesWatched" 
+  },
 ];
 
 const checkAchievements = (stats: WatchStats): void => {
@@ -230,7 +350,9 @@ const checkAchievements = (stats: WatchStats): void => {
       unlockAchievement({
         id: def.id,
         title: def.title,
+        titleEl: def.titleEl,
         description: def.description,
+        descriptionEl: def.descriptionEl,
         icon: def.icon,
         progress: statValue,
         target: def.threshold,
@@ -239,7 +361,10 @@ const checkAchievements = (stats: WatchStats): void => {
   });
 };
 
-export const getAchievementProgress = (): { unlocked: Achievement[], inProgress: { id: string, title: string, icon: string, progress: number, target: number }[] } => {
+export const getAchievementProgress = (): { 
+  unlocked: Achievement[], 
+  inProgress: { id: string, title: string, titleEl?: string, icon: string, progress: number, target: number }[] 
+} => {
   const achievements = getAchievements();
   const stats = getWatchStats();
   const unlockedIds = new Set(achievements.map(a => a.id));
@@ -249,12 +374,14 @@ export const getAchievementProgress = (): { unlocked: Achievement[], inProgress:
     .map(def => ({
       id: def.id,
       title: def.title,
+      titleEl: def.titleEl,
       icon: def.icon,
-      progress: stats[def.stat as keyof WatchStats] as number || 0,
+      progress: (stats[def.stat as keyof WatchStats] as number) || 0,
       target: def.threshold,
     }))
-    .filter(a => a.progress > 0)
-    .slice(0, 3);
+    .filter(a => a.progress > 0 || a.target <= 1) // Show first-time achievements
+    .sort((a, b) => (b.progress / b.target) - (a.progress / a.target))
+    .slice(0, 4);
   
   return { unlocked: achievements, inProgress };
 };

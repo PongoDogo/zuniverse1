@@ -31,9 +31,9 @@ interface StreamingSourceSelectorProps {
 }
 
 const categoryIcons: Record<SourceCategory, typeof Star> = {
-  popular: Star,
-  premium: Zap,
-  greek: Flag,
+  top: Star,
+  reliable: Zap,
+  good: Flag,
   alternative: Server,
   backup: Archive,
 };
