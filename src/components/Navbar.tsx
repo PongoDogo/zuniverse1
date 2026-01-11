@@ -6,8 +6,11 @@ import { Input } from "@/components/ui/input";
 import ThemeSwitcher from "./ThemeSwitcher";
 import ProfileSwitcher from "./ProfileSwitcher";
 import NotificationCenter from "./NotificationCenter";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Navbar = () => {
+  const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,11 +41,11 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/movies", label: "Movies", icon: Film },
-    { href: "/tv", label: "TV Shows", icon: Tv },
-    { href: "/discover", label: "Discover", icon: Compass },
-    { href: "/watchlist", label: "Watchlist", icon: Heart },
+    { href: "/", labelKey: "home" as const, icon: Home },
+    { href: "/movies", labelKey: "movies" as const, icon: Film },
+    { href: "/tv", labelKey: "tvShows" as const, icon: Tv },
+    { href: "/discover", labelKey: "discover" as const, icon: Compass },
+    { href: "/watchlist", labelKey: "watchlist" as const, icon: Heart },
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -80,12 +83,12 @@ const Navbar = () => {
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                   }`}
                 >
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
             </div>
 
-            {/* Search, Theme, Profile & Menu */}
+            {/* Search, Language, Theme, Profile & Menu */}
             <div className="flex items-center gap-1 sm:gap-2">
               <AnimatePresence>
                 {isSearchOpen && (
@@ -99,7 +102,7 @@ const Navbar = () => {
                   >
                     <Input
                       type="text"
-                      placeholder="Search..."
+                      placeholder={t("searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="bg-secondary border-0 focus-visible:ring-primary h-10"
@@ -117,8 +120,9 @@ const Navbar = () => {
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
-              {/* Theme, Notifications, Profile - Hidden on mobile */}
+              {/* Language, Theme, Notifications, Profile - Hidden on mobile */}
               <div className="hidden sm:flex items-center gap-1">
+                <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
                 <ProfileSwitcher />
@@ -154,6 +158,7 @@ const Navbar = () => {
             >
               {/* Mobile Settings Row */}
               <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
+                <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
                 <ProfileSwitcher />
@@ -176,7 +181,7 @@ const Navbar = () => {
                       }`}
                     >
                       <link.icon className="w-6 h-6" />
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   </motion.div>
                 ))}

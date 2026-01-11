@@ -7,7 +7,11 @@ import {
   StreamingSource 
 } from "@/lib/streamingSources";
 import { isNativeAndroid, getBlockedCount } from "@/lib/nativeAdBlocker";
-import { updateContinueWatching, ContinueWatchingItem } from "@/lib/watchlist";
+import { 
+  updateContinueWatching, 
+  ContinueWatchingItem,
+  getContinueWatchingItem 
+} from "@/lib/watchlist";
 import { 
   incrementEpisodesWatched, 
   incrementMoviesWatched, 
@@ -25,6 +29,10 @@ interface VideoPlayerProps {
   backdropPath?: string | null;
   episodeName?: string;
 }
+
+// Estimated durations (minutes)
+const MOVIE_DURATION = 120;
+const EPISODE_DURATION = 45;
 
 const VideoPlayer = ({ 
   tmdbId, 
@@ -45,26 +53,35 @@ const VideoPlayer = ({
   );
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
-  const [watchStartTime, setWatchStartTime] = useState<number | null>(null);
-  const [hasTrackedView, setHasTrackedView] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const watchTimeRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(Date.now());
+  const lastUpdateRef = useRef<number>(0);
+  const hasTrackedViewRef = useRef(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Estimated durations (since we can't get real video duration from embed)
-  const estimatedDuration = mediaType === "movie" ? 120 * 60 : 45 * 60; // 120 min for movies, 45 min for episodes
+  const estimatedDurationSeconds = (mediaType === "movie" ? MOVIE_DURATION : EPISODE_DURATION) * 60;
 
-  // Track watch progress
-  const updateProgress = useCallback(() => {
-    if (!title || !watchStartTime) return;
+  // Get existing progress for this item
+  const getExistingProgress = useCallback(() => {
+    return getContinueWatchingItem(tmdbId, mediaType, season, episode);
+  }, [tmdbId, mediaType, season, episode]);
+
+  // Save progress to continue watching
+  const saveProgress = useCallback(() => {
+    if (!title) return;
     
-    const elapsedSeconds = Math.floor((Date.now() - watchStartTime) / 1000);
-    watchTimeRef.current = elapsedSeconds;
+    const now = Date.now();
+    const sessionSeconds = Math.floor((now - startTimeRef.current) / 1000);
     
-    // Calculate realistic progress (cap at 95% until explicitly marked complete)
-    const progress = Math.min(95, Math.round((elapsedSeconds / estimatedDuration) * 100));
+    // Get existing item to add to previous time
+    const existing = getExistingProgress();
+    const previousTime = existing?.currentTime || 0;
+    const totalWatchedSeconds = previousTime + sessionSeconds;
+    
+    // Calculate progress percentage (cap at 95% unless explicitly marked complete)
+    const progress = Math.min(95, Math.round((totalWatchedSeconds / estimatedDurationSeconds) * 100));
     
     const item: ContinueWatchingItem = {
       id: tmdbId,
@@ -73,31 +90,30 @@ const VideoPlayer = ({
       poster_path: posterPath || null,
       backdrop_path: backdropPath || null,
       progress,
-      currentTime: elapsedSeconds,
-      duration: estimatedDuration,
+      currentTime: totalWatchedSeconds,
+      duration: estimatedDurationSeconds,
       season,
       episode,
       episodeName,
-      lastWatched: Date.now(),
+      lastWatched: now,
+      startedAt: existing?.startedAt || startTimeRef.current,
     };
     
     updateContinueWatching(item);
+    lastUpdateRef.current = now;
     
-    // Track view after 5 minutes of watching (to count as "watched")
-    if (elapsedSeconds >= 300 && !hasTrackedView) {
-      setHasTrackedView(true);
+    // Track achievement after 5 minutes of watching this session
+    if (sessionSeconds >= 300 && !hasTrackedViewRef.current) {
+      hasTrackedViewRef.current = true;
       if (mediaType === "tv") {
         incrementEpisodesWatched();
       } else {
         incrementMoviesWatched();
       }
-    }
-    
-    // Add watch time to stats every 5 minutes
-    if (elapsedSeconds > 0 && elapsedSeconds % 300 === 0) {
+      // Add 5 minutes of watch time
       addWatchTime(5);
     }
-  }, [tmdbId, mediaType, title, posterPath, backdropPath, season, episode, episodeName, watchStartTime, hasTrackedView, estimatedDuration]);
+  }, [tmdbId, mediaType, title, posterPath, backdropPath, season, episode, episodeName, estimatedDurationSeconds, getExistingProgress]);
 
   // Poll native ad blocker for blocked count (only on Android)
   useEffect(() => {
@@ -118,40 +134,48 @@ const VideoPlayer = ({
   useEffect(() => {
     setIsLoading(true);
     setError(false);
-    setHasTrackedView(false);
+    hasTrackedViewRef.current = false;
+    startTimeRef.current = Date.now();
     const url = currentSource.buildUrl(tmdbId, mediaType, season, episode);
     setEmbedUrl(url);
   }, [currentSource, tmdbId, mediaType, season, episode, retryCount]);
 
-  // Start/stop progress tracking
+  // Start progress tracking when video loads
   useEffect(() => {
     if (!isLoading && !error && title) {
-      setWatchStartTime(Date.now());
+      // Reset start time when video actually loads
+      startTimeRef.current = Date.now();
       
-      // Update progress every 30 seconds
-      progressIntervalRef.current = setInterval(updateProgress, 30000);
+      // Save progress every 15 seconds
+      progressIntervalRef.current = setInterval(() => {
+        saveProgress();
+      }, 15000);
       
-      // Initial update after 10 seconds
-      const initialTimeout = setTimeout(updateProgress, 10000);
+      // Initial save after 5 seconds
+      const initialTimeout = setTimeout(saveProgress, 5000);
       
       return () => {
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
         }
         clearTimeout(initialTimeout);
-        
-        // Final update on unmount
-        if (watchTimeRef.current > 0) {
-          updateProgress();
-          // Add remaining watch time
-          const remainingMinutes = Math.floor(watchTimeRef.current / 60) % 5;
-          if (remainingMinutes > 0) {
-            addWatchTime(remainingMinutes);
-          }
-        }
+        // Final save on unmount
+        saveProgress();
       };
     }
-  }, [isLoading, error, title, updateProgress]);
+  }, [isLoading, error, title, saveProgress]);
+
+  // Save on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (title && !isLoading && !error) {
+        saveProgress();
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [title, isLoading, error, saveProgress]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -164,6 +188,8 @@ const VideoPlayer = ({
   };
 
   const handleSourceChange = (source: StreamingSource) => {
+    // Save progress before switching
+    saveProgress();
     setCurrentSource(source);
     setRetryCount(0);
   };
