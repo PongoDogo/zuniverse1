@@ -142,3 +142,13 @@ export const clearContinueWatching = (): void => {
   localStorage.removeItem(CONTINUE_WATCHING_KEY);
   window.dispatchEvent(new CustomEvent("continueWatchingUpdated"));
 };
+
+// Mark as complete (remove from continue watching)
+export const markAsComplete = (
+  id: number,
+  mediaType: "movie" | "tv",
+  season?: number,
+  episode?: number
+): void => {
+  removeContinueWatching(id, mediaType, season, episode);
+};

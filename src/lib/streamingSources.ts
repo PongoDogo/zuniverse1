@@ -35,7 +35,7 @@ export const categoryOrder: SourceCategory[] = [
 
 export const streamingSources: StreamingSource[] = [
   // ==========================================
-  // 🏆 TOP PICKS - Most Popular & Best Quality
+  // 🏆 TOP PICKS - Most Popular & Best Quality (12 sources)
   // ==========================================
   {
     id: "vidsrcto",
@@ -71,6 +71,28 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
+    id: "vidsrcvip",
+    name: "VidSrc.vip ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.vip/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.vip/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vixsrc",
+    name: "VixSrc.to ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vixsrc.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vixsrc.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
     id: "2embed",
     name: "2Embed ⭐",
     category: "top",
@@ -103,9 +125,53 @@ export const streamingSources: StreamingSource[] = [
       return `https://vidlink.pro/movie/${tmdbId}`;
     },
   },
+  {
+    id: "vidapi",
+    name: "VidAPI ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidapi.xyz/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidapi.xyz/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "primesrc",
+    name: "PrimeSrc ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://primesrc.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://primesrc.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidify",
+    name: "Vidify ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidify.top/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidify.top/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "cinemaos",
+    name: "CinemaOS ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://cinemaos.live/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://cinemaos.live/embed/movie/${tmdbId}`;
+    },
+  },
 
   // ==========================================
-  // ⭐ RELIABLE - Consistently Working
+  // ⭐ RELIABLE - Consistently Working (12 sources)
   // ==========================================
   {
     id: "multiembed",
@@ -184,9 +250,64 @@ export const streamingSources: StreamingSource[] = [
       return `https://player.embed-api.stream/?id=${tmdbId}`;
     },
   },
+  {
+    id: "mapletv",
+    name: "MapleTV",
+    category: "reliable",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://mapletv.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://mapletv.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "movieclub",
+    name: "MovieClub",
+    category: "reliable",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://movieclub.top/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://movieclub.top/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "gdriveplayer",
+    name: "GDrivePlayer",
+    category: "reliable",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://databasegdriveplayer.co/player.php?tmdb=${tmdbId}&type=tv&season=${season}&episode=${episode}`;
+      }
+      return `https://databasegdriveplayer.co/player.php?tmdb=${tmdbId}&type=movie`;
+    },
+  },
+  {
+    id: "godriveplayerapi",
+    name: "GoDrivePlayer API",
+    category: "reliable",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://godriveplayer.api/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://godriveplayer.api/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "spencerdevs",
+    name: "SpencerDevs",
+    category: "reliable",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://spencerdevs.com/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://spencerdevs.com/embed/movie/${tmdbId}`;
+    },
+  },
 
   // ==========================================
-  // ✅ GOOD QUALITY - Works Well
+  // ✅ GOOD QUALITY - Works Well (12 sources)
   // ==========================================
   {
     id: "vidsrccc",
@@ -255,6 +376,17 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
+    id: "vidsrccx",
+    name: "VidSrc.cx",
+    category: "good",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.cx/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.cx/embed/movie/${tmdbId}`;
+    },
+  },
+  {
     id: "embedsoap",
     name: "EmbedSoap",
     category: "good",
@@ -276,9 +408,42 @@ export const streamingSources: StreamingSource[] = [
       return `https://anyembed.xyz/movie/${tmdbId}`;
     },
   },
+  {
+    id: "vidsrcwtfpremium",
+    name: "VidWTF Premium",
+    category: "good",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.wtf/embed/tv/${tmdbId}/${season}/${episode}?premium=1`;
+      }
+      return `https://vidsrc.wtf/embed/movie/${tmdbId}?premium=1`;
+    },
+  },
+  {
+    id: "emberstream",
+    name: "EmberStream",
+    category: "good",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://ember.stream/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://ember.stream/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "superstream",
+    name: "SuperStream",
+    category: "good",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://superstream.live/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://superstream.live/embed/movie/${tmdbId}`;
+    },
+  },
 
   // ==========================================
-  // 🔄 ALTERNATIVE - Additional Options
+  // 🔄 ALTERNATIVE - Additional Options (12 sources)
   // ==========================================
   {
     id: "vidsrcwtf",
@@ -368,9 +533,53 @@ export const streamingSources: StreamingSource[] = [
       return `https://gomo.to/embed/movie/${tmdbId}`;
     },
   },
+  {
+    id: "nontongopremium",
+    name: "Nontongo Premium",
+    category: "alternative",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://nontongo.win/embed/tv/${tmdbId}/${season}/${episode}?premium=1`;
+      }
+      return `https://nontongo.win/embed/movie/${tmdbId}?premium=1`;
+    },
+  },
+  {
+    id: "streamzone",
+    name: "StreamZone",
+    category: "alternative",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://streamzone.live/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://streamzone.live/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "animehiber",
+    name: "AnimeHiber",
+    category: "alternative",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://animehiber.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://animehiber.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "moviecloud",
+    name: "MovieCloud",
+    category: "alternative",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://moviecloud.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://moviecloud.to/embed/movie/${tmdbId}`;
+    },
+  },
 
   // ==========================================
-  // 💾 BACKUP - Last Resort Options
+  // 💾 BACKUP - Last Resort Options (12 sources)
   // ==========================================
   {
     id: "vidsrcembed",
@@ -452,6 +661,61 @@ export const streamingSources: StreamingSource[] = [
       return `https://streamsrc.vip/embed/movie/${tmdbId}`;
     },
   },
+  {
+    id: "embedsito",
+    name: "EmbedSito",
+    category: "backup",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://embedsito.com/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://embedsito.com/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "watchhub",
+    name: "WatchHub",
+    category: "backup",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://watchhub.stream/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://watchhub.stream/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "flixwave",
+    name: "FlixWave",
+    category: "backup",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://flixwave.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://flixwave.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "cinezone",
+    name: "CineZone",
+    category: "backup",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://cinezone.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://cinezone.to/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidwtf",
+    name: "VidWTF",
+    category: "backup",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidwtf.to/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidwtf.to/embed/movie/${tmdbId}`;
+    },
+  },
 ];
 
 // Group sources by category
@@ -488,3 +752,15 @@ export const getPreferredSource = (): StreamingSource => {
   }
   return getDefaultSource();
 };
+
+// Get next source for auto-fallback
+export const getNextSource = (currentSourceId: string): StreamingSource | null => {
+  const currentIndex = streamingSources.findIndex(s => s.id === currentSourceId);
+  if (currentIndex === -1 || currentIndex >= streamingSources.length - 1) {
+    return null;
+  }
+  return streamingSources[currentIndex + 1];
+};
+
+// Get total source count
+export const getSourceCount = (): number => streamingSources.length;
