@@ -1,16 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck } from "lucide-react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck, CheckCircle, Info } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
   getPreferredSource,
-  StreamingSource 
+  StreamingSource,
+  getNextSource 
 } from "@/lib/streamingSources";
 import { isNativeAndroid, getBlockedCount } from "@/lib/nativeAdBlocker";
 import { 
   updateContinueWatching, 
   ContinueWatchingItem,
-  getContinueWatchingItem 
+  getContinueWatchingItem,
+  removeContinueWatching
 } from "@/lib/watchlist";
 import { 
   incrementEpisodesWatched, 
@@ -18,6 +20,13 @@ import {
   addWatchTime 
 } from "@/lib/userPreferences";
 import { useLanguage } from "@/hooks/useLanguage";
+import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface VideoPlayerProps {
   tmdbId: number;
@@ -34,6 +43,10 @@ interface VideoPlayerProps {
 const MOVIE_DURATION = 120;
 const EPISODE_DURATION = 45;
 
+// Tracking thresholds (seconds)
+const TRACKING_THRESHOLD = 120; // 2 minutes for achievement
+const SAVE_INTERVAL = 15000; // 15 seconds
+
 const VideoPlayer = ({ 
   tmdbId, 
   mediaType, 
@@ -44,7 +57,7 @@ const VideoPlayer = ({
   backdropPath,
   episodeName
 }: VideoPlayerProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [currentSource, setCurrentSource] = useState<StreamingSource>(getPreferredSource);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -53,6 +66,7 @@ const VideoPlayer = ({
   );
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
+  const [autoFallback, setAutoFallback] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -60,6 +74,7 @@ const VideoPlayer = ({
   const lastUpdateRef = useRef<number>(0);
   const hasTrackedViewRef = useRef(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionWatchTimeRef = useRef<number>(0);
 
   const estimatedDurationSeconds = (mediaType === "movie" ? MOVIE_DURATION : EPISODE_DURATION) * 60;
 
@@ -74,6 +89,7 @@ const VideoPlayer = ({
     
     const now = Date.now();
     const sessionSeconds = Math.floor((now - startTimeRef.current) / 1000);
+    sessionWatchTimeRef.current = sessionSeconds;
     
     // Get existing item to add to previous time
     const existing = getExistingProgress();
@@ -102,18 +118,27 @@ const VideoPlayer = ({
     updateContinueWatching(item);
     lastUpdateRef.current = now;
     
-    // Track achievement after 5 minutes of watching this session
-    if (sessionSeconds >= 300 && !hasTrackedViewRef.current) {
+    // Track achievement after 2 minutes of watching this session
+    if (sessionSeconds >= TRACKING_THRESHOLD && !hasTrackedViewRef.current) {
       hasTrackedViewRef.current = true;
       if (mediaType === "tv") {
         incrementEpisodesWatched();
       } else {
         incrementMoviesWatched();
       }
-      // Add 5 minutes of watch time
-      addWatchTime(5);
+      // Add watch time in minutes
+      const minutesWatched = Math.floor(sessionSeconds / 60);
+      if (minutesWatched > 0) {
+        addWatchTime(minutesWatched);
+      }
     }
   }, [tmdbId, mediaType, title, posterPath, backdropPath, season, episode, episodeName, estimatedDurationSeconds, getExistingProgress]);
+
+  // Mark as complete
+  const handleMarkAsComplete = useCallback(() => {
+    removeContinueWatching(tmdbId, mediaType, season, episode);
+    toast.success(language === "el" ? "Επισημάνθηκε ως ολοκληρωμένο!" : "Marked as complete!");
+  }, [tmdbId, mediaType, season, episode, language]);
 
   // Poll native ad blocker for blocked count (only on Android)
   useEffect(() => {
@@ -136,6 +161,7 @@ const VideoPlayer = ({
     setError(false);
     hasTrackedViewRef.current = false;
     startTimeRef.current = Date.now();
+    sessionWatchTimeRef.current = 0;
     const url = currentSource.buildUrl(tmdbId, mediaType, season, episode);
     setEmbedUrl(url);
   }, [currentSource, tmdbId, mediaType, season, episode, retryCount]);
@@ -149,7 +175,7 @@ const VideoPlayer = ({
       // Save progress every 15 seconds
       progressIntervalRef.current = setInterval(() => {
         saveProgress();
-      }, 15000);
+      }, SAVE_INTERVAL);
       
       // Initial save after 5 seconds
       const initialTimeout = setTimeout(saveProgress, 5000);
@@ -180,10 +206,27 @@ const VideoPlayer = ({
   const handleLoad = () => {
     setIsLoading(false);
     setError(false);
+    setAutoFallback(false);
   };
 
   const handleError = () => {
     setIsLoading(false);
+    
+    // Try auto-fallback to next source
+    if (!autoFallback) {
+      const nextSource = getNextSource(currentSource.id);
+      if (nextSource) {
+        setAutoFallback(true);
+        toast.info(
+          language === "el" 
+            ? `Αλλαγή σε ${nextSource.name}...` 
+            : `Switching to ${nextSource.name}...`
+        );
+        setCurrentSource(nextSource);
+        return;
+      }
+    }
+    
     setError(true);
   };
 
@@ -192,10 +235,12 @@ const VideoPlayer = ({
     saveProgress();
     setCurrentSource(source);
     setRetryCount(0);
+    setAutoFallback(false);
   };
 
   const handleRetry = () => {
     setRetryCount(prev => prev + 1);
+    setAutoFallback(false);
   };
 
   const handleFullscreen = () => {
@@ -208,6 +253,9 @@ const VideoPlayer = ({
     }
   };
 
+  const existingProgress = getExistingProgress();
+  const showMarkComplete = existingProgress && existingProgress.progress >= 50;
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Controls */}
@@ -218,6 +266,17 @@ const VideoPlayer = ({
         />
         
         <div className="flex items-center gap-2 flex-wrap">
+          {showMarkComplete && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMarkAsComplete}
+              className="text-xs sm:text-sm text-green-500 border-green-500/30 hover:bg-green-500/10"
+            >
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+              {language === "el" ? "Ολοκληρωμένο" : "Mark Complete"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -283,9 +342,27 @@ const VideoPlayer = ({
       </div>
 
       {/* Tips */}
-      <p className="text-xs text-muted-foreground text-center">
-        💡 {t("sourceTip")}
-      </p>
+      <div className="flex items-center justify-center gap-2">
+        <p className="text-xs text-muted-foreground text-center">
+          💡 {t("sourceTip")}
+        </p>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="text-muted-foreground hover:text-foreground transition-colors">
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p className="text-xs">
+                {language === "el" 
+                  ? "💡 Για καλύτερη εμπειρία χωρίς διαφημίσεις, εγκαταστήστε το uBlock Origin extension στον browser σας."
+                  : "💡 For better ad-free experience, install the uBlock Origin extension in your browser."}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 };
