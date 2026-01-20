@@ -27,6 +27,17 @@ export const translations = {
     becauseYouWatched: "Because you watched",
     moreYouMightLike: "More you might like",
     
+    // New Features
+    genres: "Genres",
+    filter: "Filter",
+    randomPick: "Random Pick",
+    findingSomething: "Finding...",
+    scrollToTop: "Scroll to top",
+    trending: "Trending",
+    hot: "Hot",
+    new: "New",
+    statsOverview: "Your Stats",
+    
     // Media details
     watchNow: "Watch Now",
     addToWatchlist: "Add to Watchlist",
@@ -47,6 +58,9 @@ export const translations = {
     tryAgain: "Try Again",
     sourceTip: "Tip: If video doesn't load, try a different source from the dropdown above",
     adsBlocked: "ads blocked",
+    nextEpisode: "Next Episode",
+    prevEpisode: "Previous Episode",
+    autoPlay: "Auto-play next",
     
     // Continue Watching
     minLeft: "min left",
@@ -137,6 +151,17 @@ export const translations = {
     becauseYouWatched: "Επειδή είδατε",
     moreYouMightLike: "Περισσότερα που μπορεί να σας αρέσουν",
     
+    // New Features
+    genres: "Είδη",
+    filter: "Φίλτρο",
+    randomPick: "Τυχαία Επιλογή",
+    findingSomething: "Ψάχνω...",
+    scrollToTop: "Πάνω",
+    trending: "Τάσεις",
+    hot: "Δημοφιλές",
+    new: "Νέο",
+    statsOverview: "Τα Στατιστικά σας",
+    
     // Media details
     watchNow: "Παρακολούθηση",
     addToWatchlist: "Προσθήκη στη Λίστα",
@@ -157,6 +182,9 @@ export const translations = {
     tryAgain: "Δοκιμάστε Ξανά",
     sourceTip: "Συμβουλή: Αν το βίντεο δεν φορτώνει, δοκιμάστε διαφορετική πηγή",
     adsBlocked: "διαφημίσεις μπλοκαρισμένες",
+    nextEpisode: "Επόμενο Επεισόδιο",
+    prevEpisode: "Προηγούμενο Επεισόδιο",
+    autoPlay: "Αυτόματη αναπαραγωγή",
     
     // Continue Watching
     minLeft: "λεπτά απομένουν",

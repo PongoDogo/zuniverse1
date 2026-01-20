@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Download, Volume2, Settings } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import MediaRow from "@/components/MediaRow";
@@ -14,7 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getDetails, getSeasonDetails, getSimilar } from "@/lib/tmdb";
+import { isInWatchlist, addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
+import { isPinned, pinItem, unpinItem } from "@/lib/userPreferences";
 import { toast } from "sonner";
+import { useLanguage } from "@/hooks/useLanguage";
 
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
@@ -24,6 +27,7 @@ const Watch = () => {
     episode?: string;
   }>();
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
 
   const mediaType = type as "movie" | "tv";
   const mediaId = parseInt(id || "0");
@@ -58,6 +62,9 @@ const Watch = () => {
   const hasPrevEpisode = currentEpisode > 1;
   const hasNextEpisode = episodes && currentEpisode < episodes.length;
 
+  const inWatchlist = details ? isInWatchlist(mediaId, mediaType) : false;
+  const itemPinned = details ? isPinned(mediaId, mediaType) : false;
+
   const goToEpisode = (ep: number) => {
     navigate(`/tv/${mediaId}/watch/${currentSeason}/${ep}`);
   };
@@ -80,7 +87,35 @@ const Watch = () => {
       }
     } else {
       await navigator.clipboard.writeText(url);
-      toast.success("Link copied to clipboard!");
+      toast.success(language === "el" ? "Ο σύνδεσμος αντιγράφηκε!" : "Link copied to clipboard!");
+    }
+  };
+
+  const handleWatchlistToggle = () => {
+    if (!details) return;
+    if (inWatchlist) {
+      removeFromWatchlist(mediaId, mediaType);
+      toast.success(language === "el" ? "Αφαιρέθηκε από τη λίστα" : "Removed from watchlist");
+    } else {
+      addToWatchlist(details, mediaType);
+      toast.success(language === "el" ? "Προστέθηκε στη λίστα" : "Added to watchlist");
+    }
+  };
+
+  const handlePinToggle = () => {
+    if (!details) return;
+    if (itemPinned) {
+      unpinItem(mediaId, mediaType);
+      toast.success(language === "el" ? "Ξεκαρφιτσώθηκε" : "Unpinned");
+    } else {
+      pinItem({
+        id: mediaId,
+        mediaType,
+        title,
+        poster_path: details.poster_path,
+        backdrop_path: details.backdrop_path,
+      });
+      toast.success(language === "el" ? "Καρφιτσώθηκε" : "Pinned to home");
     }
   };
 
@@ -90,23 +125,44 @@ const Watch = () => {
 
       <div className="pt-16 sm:pt-20 pb-8 sm:pb-16 safe-bottom">
         <div className="container mx-auto px-3 sm:px-4">
-          {/* Back Link & Share */}
+          {/* Top Bar */}
           <div className="flex items-center justify-between mb-4 sm:mb-6">
             <Link
               to={`/${mediaType}/${mediaId}`}
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Back to details</span>
-              <span className="sm:hidden">Back</span>
+              <span className="hidden sm:inline">{t("backToDetails")}</span>
+              <span className="sm:hidden">{t("back")}</span>
             </Link>
-            <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2">
-              <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
-            </Button>
+            
+            {/* Quick Actions */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleWatchlistToggle}
+                className="gap-1.5"
+              >
+                <Heart className={`w-4 h-4 ${inWatchlist ? "fill-primary text-primary" : ""}`} />
+                <span className="hidden sm:inline">{inWatchlist ? t("removeFromWatchlist").split(" ")[0] : t("addToWatchlist").split(" ")[0]}</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handlePinToggle}
+                className="gap-1.5"
+              >
+                <Pin className={`w-4 h-4 ${itemPinned ? "fill-primary text-primary" : ""}`} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleShare} className="gap-1.5">
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("share")}</span>
+              </Button>
+            </div>
           </div>
 
-          {/* Title */}
+          {/* Title & Episode Info */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -147,19 +203,19 @@ const Watch = () => {
               className="mt-4 sm:mt-6 space-y-4"
             >
               {/* Season/Episode Selectors */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 bg-card rounded-xl">
                 <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
                   <Select
                     value={currentSeason.toString()}
                     onValueChange={(v) => goToSeason(parseInt(v))}
                   >
-                    <SelectTrigger className="w-full sm:w-32">
+                    <SelectTrigger className="w-full sm:w-36">
                       <SelectValue placeholder="Season" />
                     </SelectTrigger>
                     <SelectContent>
                       {seasons.map((s) => (
                         <SelectItem key={s.season_number} value={s.season_number.toString()}>
-                          Season {s.season_number}
+                          {language === "el" ? `Σεζόν ${s.season_number}` : `Season ${s.season_number}`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -170,7 +226,7 @@ const Watch = () => {
                       value={currentEpisode.toString()}
                       onValueChange={(v) => goToEpisode(parseInt(v))}
                     >
-                      <SelectTrigger className="w-full sm:w-44">
+                      <SelectTrigger className="w-full sm:w-52">
                         <SelectValue placeholder="Episode" />
                       </SelectTrigger>
                       <SelectContent>
@@ -179,7 +235,7 @@ const Watch = () => {
                             key={ep.episode_number}
                             value={ep.episode_number.toString()}
                           >
-                            Ep {ep.episode_number}: {ep.name}
+                            {language === "el" ? `Επ. ${ep.episode_number}` : `Ep ${ep.episode_number}`}: {ep.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -191,26 +247,50 @@ const Watch = () => {
                 <div className="flex items-center gap-2">
                   <Button
                     variant="secondary"
-                    size="sm"
+                    size="default"
                     disabled={!hasPrevEpisode}
                     onClick={() => goToEpisode(currentEpisode - 1)}
-                    className="flex-1 sm:flex-initial"
+                    className="flex-1 sm:flex-initial gap-1"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Prev
+                    <ChevronLeft className="w-4 h-4" />
+                    {language === "el" ? "Προηγ." : "Prev"}
                   </Button>
                   <Button
-                    variant="secondary"
-                    size="sm"
+                    variant="default"
+                    size="default"
                     disabled={!hasNextEpisode}
                     onClick={() => goToEpisode(currentEpisode + 1)}
-                    className="flex-1 sm:flex-initial"
+                    className="flex-1 sm:flex-initial gap-1 glow-shadow"
                   >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    {language === "el" ? "Επόμ." : "Next"}
+                    <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
+
+              {/* Episode List Quick View */}
+              {episodes && episodes.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {episodes.slice(0, 12).map((ep) => (
+                    <button
+                      key={ep.episode_number}
+                      onClick={() => goToEpisode(ep.episode_number)}
+                      className={`p-2 rounded-lg text-center text-xs transition-all ${
+                        ep.episode_number === currentEpisode
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary hover:bg-secondary/80"
+                      }`}
+                    >
+                      E{ep.episode_number}
+                    </button>
+                  ))}
+                  {episodes.length > 12 && (
+                    <div className="p-2 text-center text-xs text-muted-foreground">
+                      +{episodes.length - 12} more
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -220,10 +300,12 @@ const Watch = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-4 sm:mt-6 p-3 sm:p-4 bg-card rounded-lg"
+              className="mt-4 sm:mt-6 p-4 sm:p-5 bg-card rounded-xl"
             >
-              <h3 className="font-medium mb-2 text-sm sm:text-base">Episode Synopsis</h3>
-              <p className="text-muted-foreground text-xs sm:text-sm">
+              <h3 className="font-semibold mb-2 text-sm sm:text-base">
+                {language === "el" ? "Περίληψη Επεισοδίου" : "Episode Synopsis"}
+              </h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {currentEpisodeData.overview}
               </p>
             </motion.div>
@@ -233,7 +315,9 @@ const Watch = () => {
           {similar && similar.length > 0 && (
             <div className="mt-8 sm:mt-12">
               <MediaRow
-                title={`More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
+                title={language === "el" 
+                  ? `Παρόμοιες ${mediaType === "tv" ? "Σειρές" : "Ταινίες"}` 
+                  : `More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
                 items={similar}
               />
             </div>

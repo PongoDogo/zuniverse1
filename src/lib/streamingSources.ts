@@ -35,7 +35,7 @@ export const categoryOrder: SourceCategory[] = [
 
 export const streamingSources: StreamingSource[] = [
   // ==========================================
-  // 🏆 TOP PICKS - Most Popular & Best Quality (12 sources)
+  // 🏆 TOP PICKS - Best Quality & Most Reliable (15 sources)
   // ==========================================
   {
     id: "vidsrcto",
@@ -83,7 +83,7 @@ export const streamingSources: StreamingSource[] = [
   },
   {
     id: "vixsrc",
-    name: "VixSrc.to ⭐",
+    name: "VixSrc ⭐",
     category: "top",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
@@ -126,47 +126,80 @@ export const streamingSources: StreamingSource[] = [
     },
   },
   {
-    id: "vidapi",
-    name: "VidAPI ⭐",
+    id: "vidplay",
+    name: "VidPlay ⭐",
     category: "top",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidapi.xyz/embed/tv/${tmdbId}/${season}/${episode}`;
+        return `https://vidplay.online/embed/tv/${tmdbId}/${season}/${episode}`;
       }
-      return `https://vidapi.xyz/embed/movie/${tmdbId}`;
+      return `https://vidplay.online/embed/movie/${tmdbId}`;
     },
   },
   {
-    id: "primesrc",
-    name: "PrimeSrc ⭐",
+    id: "warezcdn",
+    name: "WarezCDN ⭐",
     category: "top",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://primesrc.to/embed/tv/${tmdbId}/${season}/${episode}`;
+        return `https://embed.warezcdn.com/serie/${tmdbId}/${season}/${episode}`;
       }
-      return `https://primesrc.to/embed/movie/${tmdbId}`;
+      return `https://embed.warezcdn.com/filme/${tmdbId}`;
     },
   },
   {
-    id: "vidify",
-    name: "Vidify ⭐",
+    id: "filmxy",
+    name: "FilmXY ⭐",
     category: "top",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://vidify.top/embed/tv/${tmdbId}/${season}/${episode}`;
+        return `https://filmxy.vip/embed/tv/${tmdbId}/${season}/${episode}`;
       }
-      return `https://vidify.top/embed/movie/${tmdbId}`;
+      return `https://filmxy.vip/embed/movie/${tmdbId}`;
     },
   },
   {
-    id: "cinemaos",
-    name: "CinemaOS ⭐",
+    id: "showbox",
+    name: "ShowBox ⭐",
     category: "top",
     buildUrl: (tmdbId, mediaType, season, episode) => {
       if (mediaType === "tv" && season && episode) {
-        return `https://cinemaos.live/embed/tv/${tmdbId}/${season}/${episode}`;
+        return `https://showbox.media/embed/tv/${tmdbId}/${season}/${episode}`;
       }
-      return `https://cinemaos.live/embed/movie/${tmdbId}`;
+      return `https://showbox.media/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "vidsrcprime",
+    name: "VidSrc Prime ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://vidsrc.pm/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://vidsrc.pm/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "hdmovies",
+    name: "HDMovies ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://hdmovie2.sx/embed/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://hdmovie2.sx/embed/movie/${tmdbId}`;
+    },
+  },
+  {
+    id: "movieapi",
+    name: "MovieAPI ⭐",
+    category: "top",
+    buildUrl: (tmdbId, mediaType, season, episode) => {
+      if (mediaType === "tv" && season && episode) {
+        return `https://movieapi.club/tv/${tmdbId}/${season}/${episode}`;
+      }
+      return `https://movieapi.club/movie/${tmdbId}`;
     },
   },
 
