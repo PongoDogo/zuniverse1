@@ -1,19 +1,27 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Heart, Trash2, Film, Tv } from "lucide-react";
+import { Heart, Film, Tv, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaCard from "@/components/MediaCard";
 import { Button } from "@/components/ui/button";
-import { getWatchlist, WatchlistItem } from "@/lib/watchlist";
+import { useUserData } from "@/hooks/useUserData";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Watchlist = () => {
-  const [items, setItems] = useState<WatchlistItem[]>([]);
+  const { getWatchlist, loading, isSignedIn, refetchWatchlist } = useUserData();
   const [filter, setFilter] = useState<"all" | "movie" | "tv">("all");
+  const [items, setItems] = useState<ReturnType<typeof getWatchlist>>([]);
 
   useEffect(() => {
     setItems(getWatchlist());
-  }, []);
+  }, [getWatchlist, loading]);
+
+  // Refetch when component mounts if signed in
+  useEffect(() => {
+    if (isSignedIn && refetchWatchlist) {
+      refetchWatchlist();
+    }
+  }, [isSignedIn, refetchWatchlist]);
 
   const filteredItems =
     filter === "all" ? items : items.filter((item) => item.mediaType === filter);
@@ -34,10 +42,20 @@ const Watchlist = () => {
           >
             <div className="flex items-center gap-3 mb-2">
               <Heart className="w-8 h-8 text-primary fill-primary" />
-              <h1 className="text-3xl md:text-4xl font-bold">My Watchlist</h1>
+              <h1 className="text-3xl md:text-4xl font-bold">My Collection</h1>
             </div>
             <p className="text-muted-foreground">
-              {items.length} {items.length === 1 ? "item" : "items"} saved
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                <>
+                  {items.length} {items.length === 1 ? "item" : "items"} saved
+                  {isSignedIn && " • Synced with CineVault"}
+                </>
+              )}
             </p>
           </motion.div>
 
@@ -58,8 +76,12 @@ const Watchlist = () => {
             </TabsList>
           </Tabs>
 
-          {/* Grid */}
-          {filteredItems.length > 0 ? (
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filteredItems.length > 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -68,7 +90,20 @@ const Watchlist = () => {
               {filteredItems.map((item, index) => (
                 <MediaCard
                   key={`${item.id}-${item.mediaType}`}
-                  item={{ ...item, media_type: item.mediaType }}
+                  item={{
+                    id: item.id,
+                    title: item.title || item.name || "Unknown",
+                    name: item.name || item.title,
+                    poster_path: item.poster_path,
+                    backdrop_path: item.backdrop_path,
+                    overview: item.overview,
+                    vote_average: item.vote_average,
+                    vote_count: item.vote_count,
+                    genre_ids: item.genre_ids,
+                    release_date: item.release_date,
+                    first_air_date: item.first_air_date,
+                    media_type: item.mediaType,
+                  }}
                   index={index}
                 />
               ))}
@@ -80,9 +115,11 @@ const Watchlist = () => {
               className="text-center py-16"
             >
               <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-medium mb-2">Your watchlist is empty</h2>
+              <h2 className="text-xl font-medium mb-2">Your collection is empty</h2>
               <p className="text-muted-foreground mb-6">
-                Start adding movies and TV shows you want to watch!
+                {isSignedIn
+                  ? "Start adding movies and TV shows to sync across CineTorrio and CineVault!"
+                  : "Sign in to sync your collection across devices and with CineVault!"}
               </p>
               <Button asChild>
                 <a href="/discover">Discover Content</a>
