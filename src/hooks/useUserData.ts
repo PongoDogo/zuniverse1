@@ -1,5 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContextSafe } from "@/contexts/AuthContext";
 import {
   getWatchlist as getLocalWatchlist,
   addToWatchlist as addToLocalWatchlist,
@@ -31,19 +30,22 @@ import {
 import { Movie } from "@/lib/tmdb";
 
 export const useUserData = () => {
-  const { isSignedIn } = useUser();
-  const auth = useAuthContext();
+  // Use safe hook that returns null when not within AuthProvider
+  const auth = useAuthContextSafe();
+  
+  // Check if user is signed in (auth context available and user signed in)
+  const isSignedIn = auth?.isSignedIn ?? false;
 
   // Watchlist functions
   const isInWatchlist = (id: number, mediaType: "movie" | "tv"): boolean => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       return auth.isInWatchlist(id, mediaType);
     }
     return isInLocalWatchlist(id, mediaType);
   };
 
   const addToWatchlist = async (item: Movie, mediaType: "movie" | "tv") => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.addToWatchlist({
         mediaId: item.id,
         mediaType,
@@ -58,7 +60,7 @@ export const useUserData = () => {
   };
 
   const removeFromWatchlist = async (id: number, mediaType: "movie" | "tv") => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.removeFromWatchlist(id, mediaType);
     } else {
       removeFromLocalWatchlist(id, mediaType);
@@ -66,7 +68,7 @@ export const useUserData = () => {
   };
 
   const getWatchlist = (): WatchlistItem[] => {
-    if (isSignedIn && auth.userData) {
+    if (isSignedIn && auth?.userData) {
       return auth.userData.watchlist.map(w => ({
         id: w.media_id,
         title: w.title,
@@ -90,14 +92,14 @@ export const useUserData = () => {
 
   // Pinned functions
   const isPinned = (id: number, mediaType: "movie" | "tv"): boolean => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       return auth.isPinned(id, mediaType);
     }
     return isLocalPinned(id, mediaType);
   };
 
   const pinItem = async (item: { id: number; mediaType: "movie" | "tv"; title: string; poster_path: string | null; backdrop_path: string | null }) => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.pinItem({
         mediaId: item.id,
         mediaType: item.mediaType,
@@ -116,7 +118,7 @@ export const useUserData = () => {
   };
 
   const unpinItem = async (id: number, mediaType: "movie" | "tv") => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.unpinItem(id, mediaType);
     } else {
       unpinLocalItem(id, mediaType);
@@ -124,7 +126,7 @@ export const useUserData = () => {
   };
 
   const getPinnedItems = (): PinnedItem[] => {
-    if (isSignedIn && auth.userData) {
+    if (isSignedIn && auth?.userData) {
       return auth.userData.pinned.map(p => ({
         id: p.media_id,
         mediaType: p.media_type,
@@ -139,7 +141,7 @@ export const useUserData = () => {
 
   // Continue Watching functions
   const getContinueWatching = (): ContinueWatchingItem[] => {
-    if (isSignedIn && auth.userData) {
+    if (isSignedIn && auth?.userData) {
       return auth.userData.continueWatching.map(c => ({
         id: c.media_id,
         mediaType: c.media_type,
@@ -159,7 +161,7 @@ export const useUserData = () => {
   };
 
   const updateContinueWatching = async (item: ContinueWatchingItem) => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.updateContinueWatching({
         mediaId: item.id,
         mediaType: item.mediaType,
@@ -178,7 +180,7 @@ export const useUserData = () => {
   };
 
   const removeContinueWatching = async (id: number, mediaType: "movie" | "tv", season?: number, episode?: number) => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.removeContinueWatching(id, mediaType, season, episode);
     } else {
       removeLocalContinueWatching(id, mediaType, season, episode);
@@ -186,7 +188,7 @@ export const useUserData = () => {
   };
 
   const getContinueWatchingItem = (id: number, mediaType: "movie" | "tv", season?: number, episode?: number): ContinueWatchingItem | undefined => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       const item = auth.getContinueWatchingItem(id, mediaType, season, episode);
       if (item) {
         return {
@@ -211,7 +213,7 @@ export const useUserData = () => {
 
   // Stats functions
   const getWatchStats = (): WatchStats => {
-    if (isSignedIn && auth.userData) {
+    if (isSignedIn && auth?.userData) {
       return {
         moviesWatched: auth.userData.watchStats.movies_watched,
         episodesWatched: auth.userData.watchStats.episodes_watched,
@@ -225,7 +227,7 @@ export const useUserData = () => {
   };
 
   const incrementMoviesWatched = async () => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.incrementMoviesWatched();
     } else {
       incrementLocalMoviesWatched();
@@ -233,7 +235,7 @@ export const useUserData = () => {
   };
 
   const incrementEpisodesWatched = async () => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.incrementEpisodesWatched();
     } else {
       incrementLocalEpisodesWatched();
@@ -241,7 +243,7 @@ export const useUserData = () => {
   };
 
   const incrementSeasonsCompleted = async () => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.incrementSeasonsCompleted();
     } else {
       incrementLocalSeasonsCompleted();
@@ -249,7 +251,7 @@ export const useUserData = () => {
   };
 
   const addWatchTime = async (minutes: number) => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.addWatchTime(minutes);
     } else {
       addLocalWatchTime(minutes);
@@ -258,7 +260,7 @@ export const useUserData = () => {
 
   // Achievements
   const getAchievements = (): Achievement[] => {
-    if (isSignedIn && auth.userData) {
+    if (isSignedIn && auth?.userData) {
       return auth.userData.achievements.map(a => ({
         id: a.achievement_id,
         title: a.title,
@@ -271,7 +273,7 @@ export const useUserData = () => {
   };
 
   const unlockAchievement = async (achievement: { id: string; title: string; description?: string; icon?: string }) => {
-    if (isSignedIn) {
+    if (isSignedIn && auth) {
       await auth.unlockAchievement(achievement);
     } else {
       unlockLocalAchievement({
@@ -285,7 +287,7 @@ export const useUserData = () => {
 
   return {
     isSignedIn: isSignedIn || false,
-    syncInProgress: auth.syncInProgress,
+    syncInProgress: auth?.syncInProgress ?? false,
     // Watchlist
     isInWatchlist,
     addToWatchlist,
@@ -311,6 +313,6 @@ export const useUserData = () => {
     getAchievements,
     unlockAchievement,
     // Refresh
-    refreshData: auth.refreshUserData,
+    refreshData: auth?.refreshUserData ?? (() => Promise.resolve()),
   };
 };
