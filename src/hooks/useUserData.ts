@@ -26,7 +26,7 @@ import {
 } from "@/lib/userPreferences";
 import { Movie } from "@/lib/tmdb";
 
-// Interface matching CineVault's user_collection table
+// Interface matching user_collection table
 interface CollectionItemDB {
   id: string;
   user_id: string;
@@ -79,15 +79,16 @@ export const useUserData = () => {
     }
 
     try {
+      console.log("Fetching collection for user:", user.id);
       const { data, error } = await supabase
         .from("user_collection")
         .select("*")
         .eq("user_id", user.id)
-        .not("watched_at", "is", null) // Only get items that have been watched
+        .not("watched_at", "is", null)
         .order("watched_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching collection from CineVault:", error);
+        console.error("Error fetching collection:", error);
         setCollection([]);
       } else {
         const items = (data || []) as CollectionItemDB[];
@@ -126,13 +127,19 @@ export const useUserData = () => {
     return collection.some((c) => c.id === id && c.mediaType === mediaType);
   };
 
-  const markAsWatched = async (item: Movie, mediaType: "movie" | "tv") => {
+  const markAsWatched = async (item: Movie & { genres?: { id: number; name: string }[] }, mediaType: "movie" | "tv") => {
     if (!isSignedIn || !user) {
+      console.log("Mark as watched: user not signed in");
       return; // Watched collection requires sign-in
     }
 
     try {
-      const { error } = await supabase.from("user_collection").upsert(
+      console.log("Marking as watched:", item.id, mediaType, "for user:", user.id);
+      
+      // Handle both genre_ids (from list views) and genres (from detail views)
+      const genreIds = item.genre_ids?.map(String) || item.genres?.map(g => String(g.id)) || null;
+      
+      const { data, error } = await supabase.from("user_collection").upsert(
         {
           user_id: user.id,
           tmdb_id: item.id,
@@ -143,10 +150,10 @@ export const useUserData = () => {
           overview: item.overview || null,
           release_date: item.release_date || item.first_air_date || null,
           vote_average: item.vote_average || null,
-          genres: item.genre_ids?.map(String) || null,
-          watched_at: new Date().toISOString(), // Mark as watched NOW
+          genres: genreIds,
+          watched_at: new Date().toISOString(),
         },
-        { onConflict: "user_id,tmdb_id" }
+        { onConflict: "user_id,tmdb_id,media_type" }
       );
 
       if (error) {
@@ -154,6 +161,7 @@ export const useUserData = () => {
         throw error;
       }
 
+      console.log("Successfully marked as watched:", data);
       await fetchCollection();
     } catch (error) {
       console.error("Error marking as watched:", error);

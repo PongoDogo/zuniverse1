@@ -44,6 +44,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_collection: {
+        Row: {
+          backdrop_path: string | null
+          created_at: string
+          genres: string[] | null
+          id: string
+          media_type: string
+          overview: string | null
+          poster_path: string | null
+          rating: number | null
+          release_date: string | null
+          title: string
+          tmdb_id: number
+          user_id: string
+          vote_average: number | null
+          watched_at: string | null
+        }
+        Insert: {
+          backdrop_path?: string | null
+          created_at?: string
+          genres?: string[] | null
+          id?: string
+          media_type: string
+          overview?: string | null
+          poster_path?: string | null
+          rating?: number | null
+          release_date?: string | null
+          title: string
+          tmdb_id: number
+          user_id: string
+          vote_average?: number | null
+          watched_at?: string | null
+        }
+        Update: {
+          backdrop_path?: string | null
+          created_at?: string
+          genres?: string[] | null
+          id?: string
+          media_type?: string
+          overview?: string | null
+          poster_path?: string | null
+          rating?: number | null
+          release_date?: string | null
+          title?: string
+          tmdb_id?: number
+          user_id?: string
+          vote_average?: number | null
+          watched_at?: string | null
+        }
+        Relationships: []
+      }
       user_continue_watching: {
         Row: {
           clerk_user_id: string
