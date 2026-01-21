@@ -14,7 +14,219 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          clerk_user_id: string
+          description: string | null
+          icon: string | null
+          id: string
+          title: string
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          clerk_user_id: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          title: string
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          clerk_user_id?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          title?: string
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
+      user_continue_watching: {
+        Row: {
+          clerk_user_id: string
+          duration: number
+          episode: number | null
+          episode_title: string | null
+          id: string
+          last_watched: string
+          media_id: number
+          media_type: string
+          playback_time: number
+          poster_path: string | null
+          progress: number
+          season: number | null
+          title: string
+        }
+        Insert: {
+          clerk_user_id: string
+          duration?: number
+          episode?: number | null
+          episode_title?: string | null
+          id?: string
+          last_watched?: string
+          media_id: number
+          media_type: string
+          playback_time?: number
+          poster_path?: string | null
+          progress?: number
+          season?: number | null
+          title: string
+        }
+        Update: {
+          clerk_user_id?: string
+          duration?: number
+          episode?: number | null
+          episode_title?: string | null
+          id?: string
+          last_watched?: string
+          media_id?: number
+          media_type?: string
+          playback_time?: number
+          poster_path?: string | null
+          progress?: number
+          season?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      user_pinned: {
+        Row: {
+          clerk_user_id: string
+          id: string
+          media_id: number
+          media_type: string
+          pinned_at: string
+          poster_path: string | null
+          title: string
+        }
+        Insert: {
+          clerk_user_id: string
+          id?: string
+          media_id: number
+          media_type: string
+          pinned_at?: string
+          poster_path?: string | null
+          title: string
+        }
+        Update: {
+          clerk_user_id?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          pinned_at?: string
+          poster_path?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          avatar_url: string | null
+          clerk_user_id: string
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          language: string | null
+          theme: string | null
+          ui_layout: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          clerk_user_id: string
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          ui_layout?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          clerk_user_id?: string
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          language?: string | null
+          theme?: string | null
+          ui_layout?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_watch_stats: {
+        Row: {
+          clerk_user_id: string
+          episodes_watched: number
+          id: string
+          movies_watched: number
+          seasons_completed: number
+          total_watch_time: number
+          updated_at: string
+        }
+        Insert: {
+          clerk_user_id: string
+          episodes_watched?: number
+          id?: string
+          movies_watched?: number
+          seasons_completed?: number
+          total_watch_time?: number
+          updated_at?: string
+        }
+        Update: {
+          clerk_user_id?: string
+          episodes_watched?: number
+          id?: string
+          movies_watched?: number
+          seasons_completed?: number
+          total_watch_time?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_watchlist: {
+        Row: {
+          added_at: string
+          clerk_user_id: string
+          id: string
+          media_id: number
+          media_type: string
+          poster_path: string | null
+          release_date: string | null
+          title: string
+          vote_average: number | null
+        }
+        Insert: {
+          added_at?: string
+          clerk_user_id: string
+          id?: string
+          media_id: number
+          media_type: string
+          poster_path?: string | null
+          release_date?: string | null
+          title: string
+          vote_average?: number | null
+        }
+        Update: {
+          added_at?: string
+          clerk_user_id?: string
+          id?: string
+          media_id?: number
+          media_type?: string
+          poster_path?: string | null
+          release_date?: string | null
+          title?: string
+          vote_average?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

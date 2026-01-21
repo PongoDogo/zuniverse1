@@ -2,9 +2,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Play, Star, Heart, Pin } from "lucide-react";
 import { Movie, getImageUrl } from "@/lib/tmdb";
-import { isInWatchlist, addToWatchlist, removeFromWatchlist } from "@/lib/watchlist";
-import { isPinned, pinItem, unpinItem } from "@/lib/userPreferences";
-import { useState, useEffect, memo } from "react";
+import { useUserData } from "@/hooks/useUserData";
+import { useState, memo } from "react";
 import { toast } from "sonner";
 
 interface MediaCardProps {
@@ -16,45 +15,38 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   const title = item.title || item.name || "Unknown";
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const year = (item.release_date || item.first_air_date || "").split("-")[0];
-  const [inWatchlist, setInWatchlist] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist, isPinned, pinItem, unpinItem } = useUserData();
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  useEffect(() => {
-    setInWatchlist(isInWatchlist(item.id, mediaType));
-    setPinned(isPinned(item.id, mediaType));
-  }, [item.id, mediaType]);
+  const inWatchlist = isInWatchlist(item.id, mediaType);
+  const pinned = isPinned(item.id, mediaType);
 
-  const handleWatchlistClick = (e: React.MouseEvent) => {
+  const handleWatchlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (inWatchlist) {
-      removeFromWatchlist(item.id, mediaType);
-      setInWatchlist(false);
+      await removeFromWatchlist(item.id, mediaType);
       toast.success("Removed from watchlist");
     } else {
-      addToWatchlist(item, mediaType);
-      setInWatchlist(true);
+      await addToWatchlist(item, mediaType);
       toast.success("Added to watchlist");
     }
   };
 
-  const handlePinClick = (e: React.MouseEvent) => {
+  const handlePinClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (pinned) {
-      unpinItem(item.id, mediaType);
-      setPinned(false);
+      await unpinItem(item.id, mediaType);
       toast.success("Removed from pinned");
     } else {
-      pinItem({
+      await pinItem({
         id: item.id,
         mediaType,
         title,
         poster_path: item.poster_path,
         backdrop_path: item.backdrop_path,
       });
-      setPinned(true);
       toast.success("Pinned to home");
     }
   };

@@ -1,14 +1,9 @@
-import { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Movie } from "@/lib/tmdb";
-import {
-  isInWatchlist,
-  addToWatchlist,
-  removeFromWatchlist,
-} from "@/lib/watchlist";
+import { useUserData } from "@/hooks/useUserData";
 
 interface WatchlistButtonProps {
   item: Movie;
@@ -23,23 +18,18 @@ const WatchlistButton = ({
   variant = "icon",
   className = "",
 }: WatchlistButtonProps) => {
-  const [inWatchlist, setInWatchlist] = useState(false);
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useUserData();
+  const inWatchlist = isInWatchlist(item.id, mediaType);
 
-  useEffect(() => {
-    setInWatchlist(isInWatchlist(item.id, mediaType));
-  }, [item.id, mediaType]);
-
-  const toggleWatchlist = (e: React.MouseEvent) => {
+  const toggleWatchlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (inWatchlist) {
-      removeFromWatchlist(item.id, mediaType);
-      setInWatchlist(false);
+      await removeFromWatchlist(item.id, mediaType);
       toast.success("Removed from watchlist");
     } else {
-      addToWatchlist(item, mediaType);
-      setInWatchlist(true);
+      await addToWatchlist(item, mediaType);
       toast.success("Added to watchlist");
     }
   };

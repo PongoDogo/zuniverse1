@@ -15,6 +15,15 @@ export const translations = {
     searchPlaceholder: "Search movies, TV shows...",
     watchlist: "Watchlist",
     
+    // Auth
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    signOut: "Sign Out",
+    profile: "Profile",
+    account: "Account",
+    syncedToCloud: "Synced to Cloud",
+    localOnly: "Local Only",
+    
     // Homepage
     continueWatching: "Continue Watching",
     trendingNow: "Trending Now",
@@ -138,6 +147,15 @@ export const translations = {
     search: "Αναζήτηση",
     searchPlaceholder: "Αναζήτηση ταινιών, σειρών...",
     watchlist: "Λίστα Παρακολούθησης",
+    
+    // Auth
+    signIn: "Σύνδεση",
+    signUp: "Εγγραφή",
+    signOut: "Αποσύνδεση",
+    profile: "Προφίλ",
+    account: "Λογαριασμός",
+    syncedToCloud: "Συγχρονισμένο",
+    localOnly: "Μόνο Τοπικά",
     
     // Homepage
     continueWatching: "Συνέχεια Παρακολούθησης",
