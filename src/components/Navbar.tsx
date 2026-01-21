@@ -4,10 +4,11 @@ import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles, Star, Moon, 
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import ThemeSwitcher from "./ThemeSwitcher";
-import ProfileSwitcher from "./ProfileSwitcher";
 import NotificationCenter from "./NotificationCenter";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UILayoutSwitcher from "./UILayoutSwitcher";
+import AuthButton from "./AuthButton";
+import SyncStatus from "./SyncStatus";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUILayout } from "@/hooks/useUILayout";
 
@@ -159,13 +160,14 @@ const Navbar = () => {
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
-              {/* UI Layout, Language, Theme, Notifications, Profile - Hidden on mobile */}
+              {/* UI Layout, Language, Theme, Notifications, Auth - Hidden on mobile */}
               <div className="hidden sm:flex items-center gap-1">
+                <SyncStatus />
                 <UILayoutSwitcher />
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
-                <ProfileSwitcher />
+                <AuthButton />
               </div>
 
               {/* Mobile Menu Button */}
@@ -198,11 +200,12 @@ const Navbar = () => {
             >
               {/* Mobile Settings Row */}
               <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
+                <SyncStatus />
                 <UILayoutSwitcher />
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
-                <ProfileSwitcher />
+                <AuthButton />
               </div>
 
               <div className="space-y-2">
