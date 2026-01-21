@@ -5,11 +5,6 @@ import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import PinnedFavorites from "@/components/PinnedFavorites";
-import RecommendationRow from "@/components/RecommendationRow";
-import QuickAccessBar from "@/components/QuickAccessBar";
-import AchievementsBadge from "@/components/AchievementsBadge";
-import StatsWidget from "@/components/StatsWidget";
-import RandomPicker from "@/components/RandomPicker";
 import ScrollToTop from "@/components/ScrollToTop";
 import {
   getTrending,
@@ -21,12 +16,9 @@ import {
 import { applyTheme, getTheme } from "@/lib/userPreferences";
 import { applyUILayout, getUILayout } from "@/lib/uiLayout";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useUILayout } from "@/hooks/useUILayout";
-import { getSourceCount } from "@/lib/streamingSources";
 
 const Index = () => {
   const { t } = useLanguage();
-  const { layout, config } = useUILayout();
 
   // Apply saved theme and layout on mount
   useEffect(() => {
@@ -64,44 +56,24 @@ const Index = () => {
     queryFn: getOnTheAir,
   });
 
-  const sourceCount = getSourceCount();
-
   return (
     <div className="min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
       <Navbar />
 
-      {/* Hero Banner - Layout Aware */}
-      <div className="min-h-[45vh] sm:min-h-[55vh] md:min-h-[70vh]">
+      {/* Hero Banner */}
+      <div className="min-h-[50vh] sm:min-h-[60vh] md:min-h-[75vh]">
         {trending && <LayoutHeroBanner items={trending} />}
       </div>
 
       {/* Content Rows */}
-      <div className="relative z-10 -mt-12 sm:-mt-16 space-y-4 sm:space-y-6 pb-6 sm:pb-12">
-        <div className="container mx-auto px-2 sm:px-4 space-y-4 sm:space-y-8">
-          {/* Top Action Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <AchievementsBadge />
-              <RandomPicker />
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="px-2 py-1 bg-secondary rounded-full">
-                📺 {sourceCount} streaming sources
-              </span>
-            </div>
-          </div>
-
-          {/* Stats Widget */}
-          <StatsWidget />
-
-          {/* Pinned Favorites */}
+      <div className="relative z-10 -mt-16 sm:-mt-20 space-y-6 sm:space-y-8 pb-8 sm:pb-16">
+        <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
+          
+          {/* Pinned Favorites - Only show if user has pinned items */}
           <PinnedFavorites />
 
           {/* Continue Watching */}
           <ContinueWatchingRow />
-
-          {/* Personalized Recommendations */}
-          <RecommendationRow />
 
           <MediaRow
             title={t("trendingNow")}
@@ -141,20 +113,15 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Quick Access Bar */}
-      <QuickAccessBar />
-      
       {/* Scroll To Top */}
       <ScrollToTop />
 
       {/* Footer */}
-      <footer className="border-t border-border py-6 sm:py-8 safe-bottom">
+      <footer className="border-t border-border py-8 sm:py-10 safe-bottom bg-card/50">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-muted-foreground text-xs sm:text-sm">
-            <p>© 2024 Zuniverse. {t("poweredBy")}</p>
-            <span className="hidden sm:inline">•</span>
-            <p className="text-primary">{sourceCount} streaming sources available</p>
-          </div>
+          <p className="text-muted-foreground text-sm">
+            © 2024 Zuniverse. {t("poweredBy")}
+          </p>
         </div>
       </footer>
     </div>
