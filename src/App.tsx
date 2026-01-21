@@ -29,33 +29,46 @@ const queryClient = new QueryClient({
 // Get Clerk publishable key from environment
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+// Wrapper component to conditionally use ClerkProvider
+const AppContent = ({ children }: { children: React.ReactNode }) => {
+  if (clerkPubKey) {
+    return (
+      <ClerkProvider publishableKey={clerkPubKey}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </ClerkProvider>
+    );
+  }
+  // If no Clerk key, render without auth (fallback mode)
+  return <>{children}</>;
+};
+
 const App = () => (
-  <ClerkProvider publishableKey={clerkPubKey}>
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/movies" element={<Movies />} />
-              <Route path="/tv" element={<TVShows />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/movie/:id" element={<MovieDetails />} />
-              <Route path="/tv/:id" element={<TVDetails />} />
-              <Route path="/:type/:id/watch" element={<Watch />} />
-              <Route path="/:type/:id/watch/:season/:episode" element={<Watch />} />
-              <Route path="/install" element={<Install />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </AuthProvider>
-  </ClerkProvider>
+  <AppContent>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/movies" element={<Movies />} />
+            <Route path="/tv" element={<TVShows />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/movie/:id" element={<MovieDetails />} />
+            <Route path="/tv/:id" element={<TVDetails />} />
+            <Route path="/:type/:id/watch" element={<Watch />} />
+            <Route path="/:type/:id/watch/:season/:episode" element={<Watch />} />
+            <Route path="/install" element={<Install />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </AppContent>
 );
 
 export default App;
