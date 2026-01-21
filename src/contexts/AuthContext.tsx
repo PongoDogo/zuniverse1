@@ -483,3 +483,8 @@ export const useAuthContext = () => {
   }
   return context;
 };
+
+// Safe hook that returns null if not within AuthProvider (for fallback mode)
+export const useAuthContextSafe = () => {
+  return useContext(AuthContext);
+};
