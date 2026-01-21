@@ -2,12 +2,12 @@ import { Check, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Movie } from "@/lib/tmdb";
+import { Movie, MovieDetails } from "@/lib/tmdb";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/hooks/useLanguage";
 
 interface MarkAsWatchedButtonProps {
-  item: Movie;
+  item: Movie | MovieDetails;
   mediaType: "movie" | "tv";
   variant?: "icon" | "full";
   className?: string;
@@ -19,13 +19,18 @@ const MarkAsWatchedButton = ({
   variant = "icon",
   className = "",
 }: MarkAsWatchedButtonProps) => {
-  const { isWatched, markAsWatched, unmarkAsWatched } = useUserData();
+  const { isWatched, markAsWatched, unmarkAsWatched, isSignedIn } = useUserData();
   const { t } = useLanguage();
   const watched = isWatched(item.id, mediaType);
 
   const toggleWatched = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isSignedIn) {
+      toast.error(t("signInToSync"));
+      return;
+    }
 
     if (watched) {
       await unmarkAsWatched(item.id, mediaType);
