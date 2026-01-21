@@ -1,11 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=Bebas+Neue&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* Dark Theme (Default) */
+  /* CSS Variables for UI Layouts */
+  :root {
+    --layout-primary-hue: 262;
+    --layout-accent-hue: 280;
+    --layout-font: 'Inter', sans-serif;
+    --layout-radius: 0.75rem;
+  }
+
+  /* Dark Theme (Default) - Zuniverse Base */
   :root,
   .dark {
     --background: 240 10% 4%;
@@ -121,6 +129,69 @@
     --gradient-brand: linear-gradient(135deg, hsl(35 95% 55%) 0%, hsl(25 90% 45%) 100%);
     --shadow-glow: 0 0 40px hsl(35 95% 55% / 0.3);
     --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.6);
+  }
+
+  /* ============================================
+     UI LAYOUT THEMES - Visual Interface Styles
+     ============================================ */
+
+  /* GALAXIA - Netflix-inspired Bold Red Theme */
+  .layout-galaxia {
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 350 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 0 85% 50%;
+    --gradient-brand: linear-gradient(135deg, hsl(0 85% 50%) 0%, hsl(350 80% 45%) 100%);
+    --shadow-glow: 0 0 30px hsl(0 85% 50% / 0.4);
+    --radius: 0.25rem;
+  }
+
+  .layout-galaxia .card,
+  .layout-galaxia [class*="rounded"] {
+    border-radius: 0.25rem !important;
+  }
+
+  /* COSMOS - Disney+ Magical Blue Theme */
+  .layout-cosmos {
+    --primary: 210 100% 55%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 190 90% 50%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 210 100% 55%;
+    --gradient-brand: linear-gradient(135deg, hsl(210 100% 55%) 0%, hsl(190 90% 50%) 100%);
+    --shadow-glow: 0 0 50px hsl(210 100% 55% / 0.35);
+    --radius: 1.5rem;
+    --background: 230 25% 5%;
+    --card: 230 20% 8%;
+    --secondary: 230 15% 15%;
+    --muted: 230 10% 20%;
+  }
+
+  .layout-cosmos .card,
+  .layout-cosmos [class*="rounded-lg"] {
+    border-radius: 1.5rem !important;
+  }
+
+  /* PLANITOR - Prime Video Clean Teal Theme */
+  .layout-planitor {
+    --primary: 180 70% 45%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 160 60% 50%;
+    --accent-foreground: 0 0% 100%;
+    --ring: 180 70% 45%;
+    --gradient-brand: linear-gradient(135deg, hsl(180 70% 45%) 0%, hsl(160 60% 50%) 100%);
+    --shadow-glow: none;
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.3);
+    --radius: 0.5rem;
+    --background: 200 15% 6%;
+    --card: 200 12% 9%;
+    --secondary: 200 10% 14%;
+    --border: 200 10% 20%;
+  }
+
+  .layout-planitor .glow-shadow {
+    box-shadow: none !important;
   }
 }
 
