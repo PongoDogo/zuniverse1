@@ -2,7 +2,7 @@
 
 export type Language = "en" | "el";
 
-const LANGUAGE_KEY = "zuniverse_language";
+const LANGUAGE_KEY = "cinetorrio_language";
 
 export const translations = {
   en: {

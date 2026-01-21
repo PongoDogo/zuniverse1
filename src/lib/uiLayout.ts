@@ -1,6 +1,6 @@
 // UI Layout System - 4 distinct visual themes inspired by major streaming services
 
-export type UILayout = "zuniverse" | "galaxia" | "cosmos" | "planitor";
+export type UILayout = "cinetorrio" | "galaxia" | "cosmos" | "planitor";
 
 export interface LayoutConfig {
   id: UILayout;
@@ -33,9 +33,9 @@ export interface LayoutConfig {
 }
 
 export const UI_LAYOUTS: Record<UILayout, LayoutConfig> = {
-  zuniverse: {
-    id: "zuniverse",
-    name: "Zuniverse",
+  cinetorrio: {
+    id: "cinetorrio",
+    name: "CineTorrio",
     description: "Modern & Premium",
     icon: "✨",
     navStyle: "floating",
@@ -123,7 +123,7 @@ export const UI_LAYOUTS: Record<UILayout, LayoutConfig> = {
   },
 };
 
-const UI_LAYOUT_KEY = "zuniverse_ui_layout";
+const UI_LAYOUT_KEY = "cinetorrio_ui_layout";
 
 export const getUILayout = (): UILayout => {
   try {
@@ -132,7 +132,7 @@ export const getUILayout = (): UILayout => {
       return saved as UILayout;
     }
   } catch {}
-  return "zuniverse";
+  return "cinetorrio";
 };
 
 export const setUILayout = (layout: UILayout): void => {
@@ -147,7 +147,7 @@ export const applyUILayout = (layout: UILayout): void => {
   const root = document.documentElement;
   
   // Remove all layout classes
-  root.classList.remove("layout-zuniverse", "layout-galaxia", "layout-cosmos", "layout-planitor");
+  root.classList.remove("layout-cinetorrio", "layout-galaxia", "layout-cosmos", "layout-planitor");
   
   // Add current layout class
   root.classList.add(`layout-${layout}`);

@@ -40,7 +40,7 @@ export const useUILayout = () => {
   }, []);
 
   const cycleLayout = useCallback(() => {
-    const layouts: UILayout[] = ["zuniverse", "galaxia", "cosmos", "planitor"];
+    const layouts: UILayout[] = ["cinetorrio", "galaxia", "cosmos", "planitor"];
     const currentIndex = layouts.indexOf(layout);
     const nextLayout = layouts[(currentIndex + 1) % layouts.length];
     setLayout(nextLayout);

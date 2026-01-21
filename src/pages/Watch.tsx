@@ -80,7 +80,7 @@ const Watch = () => {
       try {
         await navigator.share({
           title: title,
-          text: `Watch ${title} on Zuniverse`,
+          text: `Watch ${title} on CineTorrio`,
           url: url,
         });
       } catch (err) {

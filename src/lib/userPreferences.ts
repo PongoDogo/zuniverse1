@@ -41,13 +41,13 @@ export interface Notification {
   createdAt: number;
 }
 
-const PREFERENCES_KEY = "zuniverse_preferences";
-const PROFILES_KEY = "zuniverse_profiles";
-const ACTIVE_PROFILE_KEY = "zuniverse_active_profile";
-const ACHIEVEMENTS_KEY = "zuniverse_achievements";
-const PINNED_KEY = "zuniverse_pinned";
-const NOTIFICATIONS_KEY = "zuniverse_notifications";
-const WATCH_STATS_KEY = "zuniverse_watch_stats";
+const PREFERENCES_KEY = "cinetorrio_preferences";
+const PROFILES_KEY = "cinetorrio_profiles";
+const ACTIVE_PROFILE_KEY = "cinetorrio_active_profile";
+const ACHIEVEMENTS_KEY = "cinetorrio_achievements";
+const PINNED_KEY = "cinetorrio_pinned";
+const NOTIFICATIONS_KEY = "cinetorrio_notifications";
+const WATCH_STATS_KEY = "cinetorrio_watch_stats";
 
 const DEFAULT_AVATARS = [
   "🎬", "🎭", "🎪", "🎯", "🎲", "🎮", "🎸", "🎤", "🎧", "🎹",

@@ -50,7 +50,7 @@ const MovieDetails = () => {
       try {
         await navigator.share({
           title: movie?.title || "Movie",
-          text: `Check out ${movie?.title} on Zuniverse`,
+          text: `Check out ${movie?.title} on CineTorrio`,
           url: url,
         });
       } catch (err) {

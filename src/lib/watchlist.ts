@@ -1,7 +1,7 @@
 import { Movie } from "./tmdb";
 
-const WATCHLIST_KEY = "zuniverse_watchlist";
-const CONTINUE_WATCHING_KEY = "zuniverse_continue_watching";
+const WATCHLIST_KEY = "cinetorrio_watchlist";
+const CONTINUE_WATCHING_KEY = "cinetorrio_continue_watching";
 
 export interface WatchlistItem extends Movie {
   addedAt: number;
