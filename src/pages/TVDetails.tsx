@@ -9,6 +9,7 @@ import WatchlistButton from "@/components/WatchlistButton";
 import MarkAsWatchedButton from "@/components/MarkAsWatchedButton";
 import PinButton from "@/components/PinButton";
 import TrailerModal from "@/components/TrailerModal";
+import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +29,7 @@ import {
 } from "@/lib/tmdb";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUserData } from "@/hooks/useUserData";
 
 const TVDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +37,23 @@ const TVDetails = () => {
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [showTrailer, setShowTrailer] = useState(false);
   const { t, language } = useLanguage();
+  const { isWatched, getUserRating, updateRating, isSignedIn } = useUserData();
+
+  const watched = isWatched(tvId, "tv");
+  const userRating = getUserRating(tvId, "tv");
+
+  const handleRatingChange = async (rating: number) => {
+    if (!isSignedIn) {
+      toast.error(t("signInToSync"));
+      return;
+    }
+    if (!watched) {
+      toast.error(t("markAsWatchedFirst"));
+      return;
+    }
+    await updateRating(tvId, "tv", rating);
+    toast.success(t("ratingUpdated"));
+  };
 
   const { data: show, isLoading } = useQuery({
     queryKey: ["tv", tvId],
@@ -246,6 +265,19 @@ const TVDetails = () => {
                   <Share2 className="w-5 h-5" />
                 </Button>
               </div>
+
+              {/* User Rating Section - Only show when watched */}
+              {watched && (
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground mb-2">{t("yourRating")}</p>
+                  <StarRating
+                    value={userRating}
+                    onChange={handleRatingChange}
+                    maxStars={10}
+                    size="lg"
+                  />
+                </div>
+              )}
             </motion.div>
           </div>
 
