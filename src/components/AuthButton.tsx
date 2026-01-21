@@ -4,8 +4,9 @@ import { LogIn, UserPlus, Loader2, CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 
-// Check if Clerk is available
-const clerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Clerk publishable key (safe to include in frontend code)
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_YWxpdmUtaHVtcGJhY2stMC5jbGVyay5hY2NvdW50cy5kZXYk";
+const clerkAvailable = !!clerkPubKey;
 
 // Component for when Clerk is not available
 const AuthButtonDisabled = () => {
