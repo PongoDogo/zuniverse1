@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">zuniverse</string>
-    <string name="title_activity_main">zuniverse</string>
+    <string name="app_name">CineTorrio</string>
+    <string name="title_activity_main">CineTorrio</string>
     <string name="package_name">app.lovable.71c9d651f97347909891821bce00d9dc</string>
     <string name="custom_url_scheme">app.lovable.71c9d651f97347909891821bce00d9dc</string>
 </resources>

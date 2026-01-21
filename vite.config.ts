@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "robots.txt"],
       manifest: {
-        name: "ZUniverse - Stream Movies & TV",
-        short_name: "ZUniverse",
+        name: "CineTorrio - Stream Movies & TV",
+        short_name: "CineTorrio",
         description: "Stream your favorite movies and TV shows",
         theme_color: "#0f0f0f",
         background_color: "#0f0f0f",

@@ -13,14 +13,14 @@ import {
 import { useLanguage } from "@/hooks/useLanguage";
 
 const layoutIcons: Record<UILayout, React.ReactNode> = {
-  zuniverse: <Sparkles className="w-4 h-4" />,
+  cinetorrio: <Sparkles className="w-4 h-4" />,
   galaxia: <Star className="w-4 h-4" />,
   cosmos: <Moon className="w-4 h-4" />,
   planitor: <Orbit className="w-4 h-4" />,
 };
 
 const layoutColors: Record<UILayout, string> = {
-  zuniverse: "from-violet-500 to-purple-600",
+  cinetorrio: "from-violet-500 to-purple-600",
   galaxia: "from-red-500 to-rose-600",
   cosmos: "from-blue-500 to-cyan-500",
   planitor: "from-teal-500 to-emerald-500",
@@ -31,7 +31,7 @@ const UILayoutSwitcher = () => {
   const { language } = useLanguage();
 
   const descriptions: Record<UILayout, { en: string; el: string }> = {
-    zuniverse: { en: "Modern & Premium", el: "Μοντέρνο & Premium" },
+    cinetorrio: { en: "Modern & Premium", el: "Μοντέρνο & Premium" },
     galaxia: { en: "Netflix-style Bold", el: "Έντονο στυλ Netflix" },
     cosmos: { en: "Disney+ Magical", el: "Μαγικό Disney+" },
     planitor: { en: "Prime Video Clean", el: "Καθαρό Prime Video" },

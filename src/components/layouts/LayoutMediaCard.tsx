@@ -243,7 +243,7 @@ const LayoutMediaCard = memo(({ item, index = 0 }: LayoutMediaCardProps) => {
     );
   }
 
-  // Default: Zuniverse - Premium modern cards
+  // Default: CineTorrio - Premium modern cards
   return (
     <motion.div 
       className="group relative"

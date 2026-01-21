@@ -68,7 +68,7 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
 
   // Layout-specific heights
   const heightClasses = {
-    zuniverse: "h-[55vh] sm:h-[65vh] md:h-[80vh]",
+    cinetorrio: "h-[55vh] sm:h-[65vh] md:h-[80vh]",
     galaxia: "h-[60vh] sm:h-[70vh] md:h-[85vh]",
     cosmos: "h-[50vh] sm:h-[60vh] md:h-[75vh]",
     planitor: "h-[45vh] sm:h-[55vh] md:h-[65vh]",
@@ -362,11 +362,11 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
     );
   }
 
-  // Default: Zuniverse - Premium Modern Style (same as before)
+  // Default: CineTorrio - Premium Modern Style (same as before)
   return (
     <>
       <div 
-        className={`relative ${heightClasses.zuniverse} w-full overflow-hidden`}
+        className={`relative ${heightClasses.cinetorrio} w-full overflow-hidden`}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >

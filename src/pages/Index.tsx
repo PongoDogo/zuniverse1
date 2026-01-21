@@ -6,6 +6,7 @@ import MediaRow from "@/components/MediaRow";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import PinnedFavorites from "@/components/PinnedFavorites";
 import ScrollToTop from "@/components/ScrollToTop";
+import CustomRecommendsButton from "@/components/CustomRecommendsButton";
 import {
   getTrending,
   getPopular,
@@ -116,11 +117,14 @@ const Index = () => {
       {/* Scroll To Top */}
       <ScrollToTop />
 
+      {/* Custom Recommends Button */}
+      <CustomRecommendsButton />
+
       {/* Footer */}
-      <footer className="border-t border-border py-8 sm:py-10 safe-bottom bg-card/50">
+      <footer className="border-t border-border py-8 sm:py-10 pb-24 safe-bottom bg-card/50">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 Zuniverse. {t("poweredBy")}
+            © 2024 CineTorrio. {t("poweredBy")}
           </p>
         </div>
       </footer>

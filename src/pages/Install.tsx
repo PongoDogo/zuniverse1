@@ -68,7 +68,7 @@ const Install = () => {
             <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
               <Smartphone className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-3xl font-bold mb-3">Install ZUniverse</h1>
+            <h1 className="text-3xl font-bold mb-3">Install CineTorrio</h1>
             <p className="text-muted-foreground">
               Get the full app experience on your device
             </p>
@@ -83,7 +83,7 @@ const Install = () => {
               <Check className="w-16 h-16 mx-auto mb-4 text-green-500" />
               <h2 className="text-xl font-semibold mb-2">Already Installed!</h2>
               <p className="text-muted-foreground">
-                ZUniverse is installed on your device. Open it from your home screen.
+                CineTorrio is installed on your device. Open it from your home screen.
               </p>
             </motion.div>
           ) : isIOS ? (

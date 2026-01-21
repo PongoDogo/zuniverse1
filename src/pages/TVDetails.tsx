@@ -65,7 +65,7 @@ const TVDetails = () => {
       try {
         await navigator.share({
           title: show?.name || "TV Show",
-          text: `Check out ${show?.name} on Zuniverse`,
+          text: `Check out ${show?.name} on CineTorrio`,
           url: url,
         });
       } catch (err) {

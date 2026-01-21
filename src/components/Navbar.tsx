@@ -7,7 +7,7 @@ import ThemeSwitcher from "./ThemeSwitcher";
 import NotificationCenter from "./NotificationCenter";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UILayoutSwitcher from "./UILayoutSwitcher";
-import AuthButton from "./AuthButton";
+import SupabaseAuthButton from "./SupabaseAuthButton";
 import SyncStatus from "./SyncStatus";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUILayout } from "@/hooks/useUILayout";
@@ -56,9 +56,9 @@ const Navbar = () => {
 
   // Dynamic logo based on layout
   const layoutLogos: Record<string, { icon: React.ReactNode; name: string; gradient: string }> = {
-    zuniverse: { 
+    cinetorrio: { 
       icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />, 
-      name: "Zuniverse",
+      name: "CineTorrio",
       gradient: "from-violet-600 to-purple-700"
     },
     galaxia: { 
@@ -78,7 +78,7 @@ const Navbar = () => {
     },
   };
 
-  const currentLogo = layoutLogos[layout] || layoutLogos.zuniverse;
+  const currentLogo = layoutLogos[layout] || layoutLogos.cinetorrio;
 
   return (
     <>
@@ -167,7 +167,7 @@ const Navbar = () => {
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
-                <AuthButton />
+                <SupabaseAuthButton />
               </div>
 
               {/* Mobile Menu Button */}
@@ -205,7 +205,7 @@ const Navbar = () => {
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
-                <AuthButton />
+                <SupabaseAuthButton />
               </div>
 
               <div className="space-y-2">

@@ -3,8 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { SupabaseAuthProvider } from "@/contexts/SupabaseAuthContext";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Movies from "./pages/Movies";
@@ -26,26 +25,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Clerk publishable key (safe to include in frontend code)
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_YWxpdmUtaHVtcGJhY2stMC5jbGVyay5hY2NvdW50cy5kZXYk";
-
-// Wrapper component to conditionally use ClerkProvider
-const AppContent = ({ children }: { children: React.ReactNode }) => {
-  if (clerkPubKey) {
-    return (
-      <ClerkProvider publishableKey={clerkPubKey}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </ClerkProvider>
-    );
-  }
-  // If no Clerk key, render without auth (fallback mode)
-  return <>{children}</>;
-};
-
 const App = () => (
-  <AppContent>
+  <SupabaseAuthProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -68,7 +49,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
-  </AppContent>
+  </SupabaseAuthProvider>
 );
 
 export default App;
