@@ -49,7 +49,7 @@ const Navbar = () => {
     { href: "/movies", labelKey: "movies" as const, icon: Film },
     { href: "/tv", labelKey: "tvShows" as const, icon: Tv },
     { href: "/discover", labelKey: "discover" as const, icon: Compass },
-    { href: "/watchlist", labelKey: "watchlist" as const, icon: Heart },
+    { href: "/favorites", labelKey: "favorites" as const, icon: Heart },
     { href: "/collection", labelKey: "myCollection" as const, icon: Sparkles },
   ];
 

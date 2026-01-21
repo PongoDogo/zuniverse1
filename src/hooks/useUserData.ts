@@ -2,18 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useSupabaseAuthSafe } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabaseShared";
 import {
-  getWatchlist as getLocalWatchlist,
-  addToWatchlist as addToLocalWatchlist,
-  removeFromWatchlist as removeFromLocalWatchlist,
-  isInWatchlist as isInLocalWatchlist,
   getContinueWatching as getLocalContinueWatching,
   updateContinueWatching as updateLocalContinueWatching,
   removeContinueWatching as removeLocalContinueWatching,
   getContinueWatchingItem as getLocalContinueWatchingItem,
-  WatchlistItem,
   ContinueWatchingItem,
-  convertDBToLegacy,
-  WatchlistItemDB,
 } from "@/lib/watchlist";
 import {
   getPinnedItems as getLocalPinnedItems,
@@ -33,8 +26,39 @@ import {
 } from "@/lib/userPreferences";
 import { Movie } from "@/lib/tmdb";
 
+// Interface matching CineVault's user_collection table
+interface CollectionItemDB {
+  id: string;
+  user_id: string;
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+  title: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string | null;
+  release_date: string | null;
+  vote_average: number | null;
+  genres: string[] | null;
+  rating: number | null;
+  watched_at: string | null;
+  created_at: string;
+}
+
 // Extended collection item interface with watched_at
-export interface CollectionItem extends WatchlistItem {
+export interface CollectionItem {
+  id: number;
+  mediaType: "movie" | "tv";
+  title?: string;
+  name?: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview: string;
+  vote_average: number;
+  vote_count: number;
+  genre_ids: number[];
+  release_date?: string;
+  first_air_date?: string;
+  addedAt: number;
   watchedAt?: number;
 }
 
@@ -43,14 +67,12 @@ export const useUserData = () => {
   const user = auth?.user;
   const isSignedIn = !!user;
 
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all data from Supabase
-  const fetchData = useCallback(async () => {
+  // Fetch watched items from CineVault's user_collection table
+  const fetchCollection = useCallback(async () => {
     if (!user) {
-      setWatchlist(getLocalWatchlist());
       setCollection([]);
       setLoading(false);
       return;
@@ -61,32 +83,33 @@ export const useUserData = () => {
         .from("user_collection")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .not("watched_at", "is", null) // Only get items that have been watched
+        .order("watched_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching collection:", error);
-        setWatchlist([]);
+        console.error("Error fetching collection from CineVault:", error);
         setCollection([]);
       } else {
-        const items = data || [];
-        // Items WITHOUT watched_at go to watchlist (to watch later)
-        const watchlistItems = items
-          .filter((item: WatchlistItemDB) => !item.watched_at)
-          .map((item: WatchlistItemDB) => convertDBToLegacy(item));
-        setWatchlist(watchlistItems);
-        
-        // Items WITH watched_at go to collection (already watched)
-        const collectionItems = items
-          .filter((item: WatchlistItemDB) => item.watched_at)
-          .map((item: WatchlistItemDB) => ({
-            ...convertDBToLegacy(item),
-            watchedAt: item.watched_at ? new Date(item.watched_at).getTime() : undefined,
-          }));
+        const items = (data || []) as CollectionItemDB[];
+        const collectionItems: CollectionItem[] = items.map((item) => ({
+          id: item.tmdb_id,
+          mediaType: item.media_type,
+          title: item.title,
+          name: item.title,
+          poster_path: item.poster_path,
+          backdrop_path: item.backdrop_path,
+          overview: item.overview || "",
+          vote_average: item.vote_average || 0,
+          vote_count: 0,
+          genre_ids: item.genres?.map((g) => parseInt(g)).filter((n) => !isNaN(n)) || [],
+          release_date: item.release_date || undefined,
+          addedAt: new Date(item.created_at).getTime(),
+          watchedAt: item.watched_at ? new Date(item.watched_at).getTime() : undefined,
+        }));
         setCollection(collectionItems);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setWatchlist([]);
+      console.error("Error fetching collection:", error);
       setCollection([]);
     } finally {
       setLoading(false);
@@ -95,69 +118,10 @@ export const useUserData = () => {
 
   // Refresh data when user changes
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchCollection();
+  }, [fetchCollection]);
 
-  // Watchlist functions
-  const isInWatchlist = (id: number, mediaType: "movie" | "tv"): boolean => {
-    if (isSignedIn) {
-      return watchlist.some((w) => w.id === id && w.mediaType === mediaType);
-    }
-    return isInLocalWatchlist(id, mediaType);
-  };
-
-  const addToWatchlist = async (item: Movie, mediaType: "movie" | "tv") => {
-    if (isSignedIn && user) {
-      try {
-        await supabase.from("user_collection").upsert(
-          {
-            user_id: user.id,
-            tmdb_id: item.id,
-            media_type: mediaType,
-            title: item.title || item.name || "",
-            poster_path: item.poster_path || null,
-            backdrop_path: item.backdrop_path || null,
-            overview: item.overview || null,
-            release_date: item.release_date || item.first_air_date || null,
-            vote_average: item.vote_average || null,
-            genres: item.genre_ids?.map(String) || null,
-            watched_at: null, // Not watched, just in watchlist
-          },
-          { onConflict: "user_id,tmdb_id" }
-        );
-        await fetchData();
-      } catch (error) {
-        console.error("Error adding to watchlist:", error);
-      }
-    } else {
-      addToLocalWatchlist(item, mediaType);
-      setWatchlist(getLocalWatchlist());
-    }
-  };
-
-  const removeFromWatchlist = async (id: number, mediaType: "movie" | "tv") => {
-    if (isSignedIn && user) {
-      try {
-        await supabase
-          .from("user_collection")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("tmdb_id", id);
-        await fetchData();
-      } catch (error) {
-        console.error("Error removing from watchlist:", error);
-      }
-    } else {
-      removeFromLocalWatchlist(id, mediaType);
-      setWatchlist(getLocalWatchlist());
-    }
-  };
-
-  const getWatchlist = (): WatchlistItem[] => {
-    return watchlist;
-  };
-
-  // Collection (Watched) functions
+  // Collection (Watched) functions - sync with CineVault
   const isWatched = (id: number, mediaType: "movie" | "tv"): boolean => {
     return collection.some((c) => c.id === id && c.mediaType === mediaType);
   };
@@ -166,9 +130,9 @@ export const useUserData = () => {
     if (!isSignedIn || !user) {
       return; // Watched collection requires sign-in
     }
-    
+
     try {
-      await supabase.from("user_collection").upsert(
+      const { error } = await supabase.from("user_collection").upsert(
         {
           user_id: user.id,
           tmdb_id: item.id,
@@ -184,7 +148,13 @@ export const useUserData = () => {
         },
         { onConflict: "user_id,tmdb_id" }
       );
-      await fetchData();
+
+      if (error) {
+        console.error("Error marking as watched:", error);
+        throw error;
+      }
+
+      await fetchCollection();
     } catch (error) {
       console.error("Error marking as watched:", error);
     }
@@ -194,15 +164,21 @@ export const useUserData = () => {
     if (!isSignedIn || !user) {
       return;
     }
-    
+
     try {
-      // Remove watched_at to move back to watchlist or delete entirely
-      await supabase
+      // Delete the item completely from collection
+      const { error } = await supabase
         .from("user_collection")
         .delete()
         .eq("user_id", user.id)
         .eq("tmdb_id", id);
-      await fetchData();
+
+      if (error) {
+        console.error("Error unmarking as watched:", error);
+        throw error;
+      }
+
+      await fetchCollection();
     } catch (error) {
       console.error("Error unmarking as watched:", error);
     }
@@ -432,17 +408,12 @@ export const useUserData = () => {
     isSignedIn,
     syncInProgress: auth?.syncInProgress ?? false,
     loading,
-    // Watchlist
-    isInWatchlist,
-    addToWatchlist,
-    removeFromWatchlist,
-    getWatchlist,
-    refetchWatchlist: fetchData,
-    // Collection (Watched)
+    // Collection (Watched) - synced with CineVault
     isWatched,
     markAsWatched,
     unmarkAsWatched,
     getCollection,
+    refetchCollection: fetchCollection,
     // Pinned
     isPinned,
     pinItem,

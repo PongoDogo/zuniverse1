@@ -131,12 +131,12 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight line-clamp-2 drop-shadow-lg">
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight line-clamp-2 drop-shadow-lg break-words">
                   {title}
                 </h1>
 
                 {/* Overview */}
-                <p className="text-muted-foreground line-clamp-2 sm:line-clamp-3 text-sm sm:text-base max-w-xl hidden xs:block">
+                <p className="text-muted-foreground line-clamp-2 sm:line-clamp-3 text-sm sm:text-base max-w-xl hidden xs:block break-words">
                   {current.overview}
                 </p>
 

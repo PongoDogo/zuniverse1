@@ -13,8 +13,17 @@ export const translations = {
     discover: "Discover",
     search: "Search",
     searchPlaceholder: "Search movies, TV shows...",
-    watchlist: "Watchlist",
+    favorites: "Favorites",
     myCollection: "My Collection",
+    
+    // Favorites
+    addToFavorites: "Add to Favorites",
+    removeFromFavorites: "Remove from Favorites",
+    inFavorites: "In Favorites",
+    addedToFavorites: "Added to favorites",
+    removedFromFavorites: "Removed from favorites",
+    noFavorites: "No favorites yet",
+    addFavoritesToStart: "Add movies and TV shows to your favorites",
     
     // Collection / Watched
     markAsWatched: "Mark as Watched",
@@ -162,8 +171,17 @@ export const translations = {
     discover: "Ανακάλυψη",
     search: "Αναζήτηση",
     searchPlaceholder: "Αναζήτηση ταινιών, σειρών...",
-    watchlist: "Λίστα Παρακολούθησης",
+    favorites: "Αγαπημένα",
     myCollection: "Η Συλλογή μου",
+    
+    // Favorites
+    addToFavorites: "Προσθήκη στα Αγαπημένα",
+    removeFromFavorites: "Αφαίρεση από τα Αγαπημένα",
+    inFavorites: "Στα Αγαπημένα",
+    addedToFavorites: "Προστέθηκε στα αγαπημένα",
+    removedFromFavorites: "Αφαιρέθηκε από τα αγαπημένα",
+    noFavorites: "Δεν υπάρχουν αγαπημένα",
+    addFavoritesToStart: "Προσθέστε ταινίες και σειρές στα αγαπημένα σας",
     
     // Collection / Watched
     markAsWatched: "Επισήμανση ως Είδα",

@@ -11,22 +11,19 @@ import {
 import { useLanguage } from "@/hooks/useLanguage";
 import { useState, useEffect } from "react";
 
-interface WatchlistButtonProps {
+interface FavoritesButtonProps {
   item: Movie;
   mediaType: "movie" | "tv";
   variant?: "icon" | "full";
   className?: string;
 }
 
-/**
- * @deprecated Use FavoritesButton instead. This component is kept for backwards compatibility.
- */
-const WatchlistButton = ({
+const FavoritesButton = ({
   item,
   mediaType,
   variant = "icon",
   className = "",
-}: WatchlistButtonProps) => {
+}: FavoritesButtonProps) => {
   const { t } = useLanguage();
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -56,6 +53,7 @@ const WatchlistButton = ({
         whileTap={{ scale: 0.9 }}
         onClick={toggleFavorite}
         className={`p-2 rounded-full bg-background/80 backdrop-blur-sm hover:bg-primary transition-colors ${className}`}
+        title={isFavorite ? t("removeFromFavorites") : t("addToFavorites")}
       >
         <Heart
           className={`w-5 h-5 ${
@@ -78,4 +76,4 @@ const WatchlistButton = ({
   );
 };
 
-export default WatchlistButton;
+export default FavoritesButton;
