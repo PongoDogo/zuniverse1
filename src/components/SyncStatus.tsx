@@ -1,11 +1,14 @@
-import { useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContextSafe } from "@/contexts/AuthContext";
 import { Cloud, CloudOff, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const SyncStatus = () => {
-  const { isSignedIn, syncInProgress } = useAuthContext();
+  const authContext = useAuthContextSafe();
   const { language } = useLanguage();
+  
+  const isSignedIn = authContext?.isSignedIn ?? false;
+  const syncInProgress = authContext?.syncInProgress ?? false;
 
   if (!isSignedIn) {
     return (

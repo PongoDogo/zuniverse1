@@ -1,10 +1,32 @@
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { motion } from "framer-motion";
-import { LogIn, UserPlus, Loader2 } from "lucide-react";
+import { LogIn, UserPlus, Loader2, CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 
-const AuthButton = () => {
+// Check if Clerk is available
+const clerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Component for when Clerk is not available
+const AuthButtonDisabled = () => {
+  const { language } = useLanguage();
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex items-center gap-2"
+    >
+      <Button variant="ghost" size="sm" className="gap-1.5 text-sm opacity-50" disabled>
+        <CloudOff className="w-4 h-4" />
+        <span className="hidden sm:inline">{language === "el" ? "Εκτός σύνδεσης" : "Auth Unavailable"}</span>
+      </Button>
+    </motion.div>
+  );
+};
+
+// Component for when Clerk is available
+const AuthButtonWithClerk = () => {
   const { isSignedIn, isLoaded, user } = useUser();
   const { t } = useLanguage();
 
@@ -61,6 +83,15 @@ const AuthButton = () => {
       </SignUpButton>
     </motion.div>
   );
+};
+
+const AuthButton = () => {
+  // If Clerk is not available, show disabled state
+  if (!clerkAvailable) {
+    return <AuthButtonDisabled />;
+  }
+
+  return <AuthButtonWithClerk />;
 };
 
 export default AuthButton;
