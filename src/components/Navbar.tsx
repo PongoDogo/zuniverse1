@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles } from "lucide-react";
+import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles, Star, Moon, Orbit } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import ThemeSwitcher from "./ThemeSwitcher";
 import ProfileSwitcher from "./ProfileSwitcher";
 import NotificationCenter from "./NotificationCenter";
 import LanguageSwitcher from "./LanguageSwitcher";
+import UILayoutSwitcher from "./UILayoutSwitcher";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUILayout } from "@/hooks/useUILayout";
 
 const Navbar = () => {
   const { t } = useLanguage();
+  const { layout, config } = useUILayout();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,6 +53,32 @@ const Navbar = () => {
 
   const isActive = (href: string) => location.pathname === href;
 
+  // Dynamic logo based on layout
+  const layoutLogos: Record<string, { icon: React.ReactNode; name: string; gradient: string }> = {
+    zuniverse: { 
+      icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />, 
+      name: "Zuniverse",
+      gradient: "from-violet-600 to-purple-700"
+    },
+    galaxia: { 
+      icon: <Star className="w-5 h-5 sm:w-6 sm:h-6 text-white" />, 
+      name: "Galaxia",
+      gradient: "from-red-600 to-rose-700"
+    },
+    cosmos: { 
+      icon: <Moon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />, 
+      name: "Cosmos",
+      gradient: "from-blue-500 to-cyan-600"
+    },
+    planitor: { 
+      icon: <Orbit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />, 
+      name: "Planitor",
+      gradient: "from-teal-500 to-emerald-600"
+    },
+  };
+
+  const currentLogo = layoutLogos[layout] || layoutLogos.zuniverse;
+
   return (
     <>
       <motion.nav
@@ -61,14 +90,24 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Logo */}
+            {/* Dynamic Logo based on Layout */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center glow-shadow">
-                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <span className="text-lg sm:text-xl font-bold hidden xs:block bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                Zuniverse
-              </span>
+              <motion.div 
+                key={layout}
+                initial={{ scale: 0.8, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${currentLogo.gradient} flex items-center justify-center glow-shadow`}
+              >
+                {currentLogo.icon}
+              </motion.div>
+              <motion.span 
+                key={`name-${layout}`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-lg sm:text-xl font-bold hidden xs:block text-gradient"
+              >
+                {currentLogo.name}
+              </motion.span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -120,8 +159,9 @@ const Navbar = () => {
                 {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
-              {/* Language, Theme, Notifications, Profile - Hidden on mobile */}
+              {/* UI Layout, Language, Theme, Notifications, Profile - Hidden on mobile */}
               <div className="hidden sm:flex items-center gap-1">
+                <UILayoutSwitcher />
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />
@@ -158,6 +198,7 @@ const Navbar = () => {
             >
               {/* Mobile Settings Row */}
               <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
+                <UILayoutSwitcher />
                 <LanguageSwitcher />
                 <ThemeSwitcher />
                 <NotificationCenter />

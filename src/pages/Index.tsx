@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
-import HeroBanner from "@/components/HeroBanner";
+import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import PinnedFavorites from "@/components/PinnedFavorites";
@@ -19,15 +19,19 @@ import {
   getOnTheAir,
 } from "@/lib/tmdb";
 import { applyTheme, getTheme } from "@/lib/userPreferences";
+import { applyUILayout, getUILayout } from "@/lib/uiLayout";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUILayout } from "@/hooks/useUILayout";
 import { getSourceCount } from "@/lib/streamingSources";
 
 const Index = () => {
   const { t } = useLanguage();
+  const { layout, config } = useUILayout();
 
-  // Apply saved theme on mount
+  // Apply saved theme and layout on mount
   useEffect(() => {
     applyTheme(getTheme());
+    applyUILayout(getUILayout());
   }, []);
 
   const { data: trending, isLoading: trendingLoading } = useQuery({
@@ -66,9 +70,9 @@ const Index = () => {
     <div className="min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
       <Navbar />
 
-      {/* Hero Banner */}
-      <div className="min-h-[55vh] sm:min-h-[65vh] md:min-h-[80vh]">
-        {trending && <HeroBanner items={trending} />}
+      {/* Hero Banner - Layout Aware */}
+      <div className="min-h-[45vh] sm:min-h-[55vh] md:min-h-[70vh]">
+        {trending && <LayoutHeroBanner items={trending} />}
       </div>
 
       {/* Content Rows */}
