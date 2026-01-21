@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from "react";
 import { useUser, useAuth as useClerkAuth } from "@clerk/clerk-react";
-import { supabase } from "@/integrations/supabase/client";
+import { createAuthenticatedClient, setClerkUserId } from "@/lib/supabaseWithAuth";
 import { toast } from "sonner";
 
 interface UserData {
@@ -118,6 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [syncInProgress, setSyncInProgress] = useState(false);
 
   const userId = user?.id || null;
+
+  // Create authenticated supabase client that updates when userId changes
+  const supabase = useMemo(() => {
+    setClerkUserId(userId);
+    return createAuthenticatedClient(userId);
+  }, [userId]);
 
   // Fetch all user data
   const fetchUserData = async () => {
