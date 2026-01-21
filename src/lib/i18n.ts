@@ -14,6 +14,22 @@ export const translations = {
     search: "Search",
     searchPlaceholder: "Search movies, TV shows...",
     watchlist: "Watchlist",
+    myCollection: "My Collection",
+    
+    // Collection / Watched
+    markAsWatched: "Mark as Watched",
+    markAsUnwatched: "Remove from Collection",
+    watched: "Watched",
+    addedToCollection: "Added to your collection",
+    removedFromCollection: "Removed from collection",
+    signInToSeeCollection: "Sign in to see your collection",
+    signInToSync: "Sign in to sync your watched movies and shows across devices",
+    itemsWatched: "items watched",
+    noWatchedItems: "No watched items yet",
+    markMoviesAsWatched: "Mark movies and TV shows as watched to add them to your collection",
+    browseContent: "Browse Content",
+    removeFromCollection: "Remove from collection",
+    all: "All",
     
     // Auth
     signIn: "Sign In",
@@ -147,6 +163,22 @@ export const translations = {
     search: "Αναζήτηση",
     searchPlaceholder: "Αναζήτηση ταινιών, σειρών...",
     watchlist: "Λίστα Παρακολούθησης",
+    myCollection: "Η Συλλογή μου",
+    
+    // Collection / Watched
+    markAsWatched: "Επισήμανση ως Είδα",
+    markAsUnwatched: "Αφαίρεση από τη Συλλογή",
+    watched: "Το είδα",
+    addedToCollection: "Προστέθηκε στη συλλογή σας",
+    removedFromCollection: "Αφαιρέθηκε από τη συλλογή",
+    signInToSeeCollection: "Συνδεθείτε για να δείτε τη συλλογή σας",
+    signInToSync: "Συνδεθείτε για να συγχρονίσετε τις ταινίες και σειρές σας",
+    itemsWatched: "στοιχεία είδατε",
+    noWatchedItems: "Δεν υπάρχουν στοιχεία ακόμα",
+    markMoviesAsWatched: "Επισημάνετε ταινίες και σειρές ως είδατε για να τα προσθέσετε στη συλλογή σας",
+    browseContent: "Περιήγηση",
+    removeFromCollection: "Αφαίρεση από τη συλλογή",
+    all: "Όλα",
     
     // Auth
     signIn: "Σύνδεση",
