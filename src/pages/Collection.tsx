@@ -3,16 +3,17 @@ import { Link } from "react-router-dom";
 import { Film, Tv, Check, Trash2, Calendar, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/hooks/useLanguage";
-import { useUserData } from "@/hooks/useUserData";
+import { useUserData, CollectionItem } from "@/hooks/useUserData";
 import { getImageUrl } from "@/lib/tmdb";
 import { toast } from "sonner";
 
 const Collection = () => {
   const { t } = useLanguage();
-  const { getCollection, unmarkAsWatched, loading, isSignedIn } = useUserData();
+  const { getCollection, unmarkAsWatched, updateRating, loading, isSignedIn } = useUserData();
   const [filter, setFilter] = useState<"all" | "movie" | "tv">("all");
 
   const collection = getCollection();
@@ -25,6 +26,11 @@ const Collection = () => {
   const handleRemove = async (id: number, mediaType: "movie" | "tv") => {
     await unmarkAsWatched(id, mediaType);
     toast.success(t("removedFromCollection"));
+  };
+
+  const handleRatingChange = async (id: number, mediaType: "movie" | "tv", rating: number) => {
+    await updateRating(id, mediaType, rating);
+    toast.success(t("ratingUpdated"));
   };
 
   const movieCount = collection.filter((i) => i.mediaType === "movie").length;
@@ -150,10 +156,27 @@ const Collection = () => {
                               </span>
                             )}
                           </div>
+                          {/* User Rating */}
+                          {item.rating !== null && item.rating !== undefined && item.rating > 0 && (
+                            <div className="mt-2 flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground">{t("yourRating")}:</span>
+                              <span className="text-xs font-medium text-yellow-500">{item.rating}/10</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   </Link>
+
+                  {/* Rating Controls - Show on hover */}
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-background/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity border-t border-border/50">
+                    <StarRating
+                      value={item.rating ?? 0}
+                      onChange={(rating) => handleRatingChange(item.id, item.mediaType, rating)}
+                      maxStars={10}
+                      size="sm"
+                    />
+                  </div>
 
                   {/* Remove button */}
                   <motion.button

@@ -39,6 +39,9 @@ export const translations = {
     browseContent: "Browse Content",
     removeFromCollection: "Remove from collection",
     all: "All",
+    yourRating: "Your Rating",
+    ratingUpdated: "Rating updated",
+    markAsWatchedFirst: "Mark as watched first to rate",
     
     // Auth
     signIn: "Sign In",
@@ -197,6 +200,9 @@ export const translations = {
     browseContent: "Περιήγηση",
     removeFromCollection: "Αφαίρεση από τη συλλογή",
     all: "Όλα",
+    yourRating: "Η Βαθμολογία σας",
+    ratingUpdated: "Η βαθμολογία ενημερώθηκε",
+    markAsWatchedFirst: "Επισημάνετε ως είδατε πρώτα για να βαθμολογήσετε",
     
     // Auth
     signIn: "Σύνδεση",

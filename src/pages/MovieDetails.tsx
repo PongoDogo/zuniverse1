@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Share2, ExternalLink } from "lucide-react";
+import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Share2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
 import WatchlistButton from "@/components/WatchlistButton";
 import MarkAsWatchedButton from "@/components/MarkAsWatchedButton";
 import PinButton from "@/components/PinButton";
 import TrailerModal from "@/components/TrailerModal";
+import StarRating from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,12 +21,30 @@ import {
 } from "@/lib/tmdb";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUserData } from "@/hooks/useUserData";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const movieId = parseInt(id || "0");
   const [showTrailer, setShowTrailer] = useState(false);
   const { t, language } = useLanguage();
+  const { isWatched, getUserRating, updateRating, isSignedIn } = useUserData();
+  
+  const watched = isWatched(movieId, "movie");
+  const userRating = getUserRating(movieId, "movie");
+
+  const handleRatingChange = async (rating: number) => {
+    if (!isSignedIn) {
+      toast.error(t("signInToSync"));
+      return;
+    }
+    if (!watched) {
+      toast.error(t("markAsWatchedFirst"));
+      return;
+    }
+    await updateRating(movieId, "movie", rating);
+    toast.success(t("ratingUpdated"));
+  };
 
   const { data: movie, isLoading } = useQuery({
     queryKey: ["movie", movieId],
@@ -80,7 +99,6 @@ const MovieDetails = () => {
   }
 
   const year = (movie.release_date || "").split("-")[0];
-  const director = credits?.find((c: any) => c.job === "Director")?.name;
 
   return (
     <div className="min-h-screen bg-background">
@@ -229,6 +247,19 @@ const MovieDetails = () => {
                   <Share2 className="w-5 h-5" />
                 </Button>
               </div>
+
+              {/* User Rating Section - Only show when watched */}
+              {watched && (
+                <div className="pt-4 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground mb-2">{t("yourRating")}</p>
+                  <StarRating
+                    value={userRating}
+                    onChange={handleRatingChange}
+                    maxStars={10}
+                    size="lg"
+                  />
+                </div>
+              )}
             </motion.div>
           </div>
 

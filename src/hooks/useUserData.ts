@@ -44,7 +44,7 @@ interface CollectionItemDB {
   created_at: string;
 }
 
-// Extended collection item interface with watched_at
+// Extended collection item interface with watched_at and rating
 export interface CollectionItem {
   id: number;
   mediaType: "movie" | "tv";
@@ -60,6 +60,7 @@ export interface CollectionItem {
   first_air_date?: string;
   addedAt: number;
   watchedAt?: number;
+  rating?: number | null;
 }
 
 export const useUserData = () => {
@@ -106,6 +107,7 @@ export const useUserData = () => {
           release_date: item.release_date || undefined,
           addedAt: new Date(item.created_at).getTime(),
           watchedAt: item.watched_at ? new Date(item.watched_at).getTime() : undefined,
+          rating: item.rating,
         }));
         setCollection(collectionItems);
       }
@@ -195,6 +197,42 @@ export const useUserData = () => {
   const getCollection = (): CollectionItem[] => {
     return collection;
   };
+
+  // Get user's rating for a specific item
+  const getUserRating = (id: number, mediaType: "movie" | "tv"): number | null => {
+    const item = collection.find((c) => c.id === id && c.mediaType === mediaType);
+    return item?.rating ?? null;
+  };
+
+  // Update rating for an item in collection
+  const updateRating = async (id: number, mediaType: "movie" | "tv", rating: number) => {
+    if (!isSignedIn || !user) {
+      console.log("Update rating: user not signed in");
+      return;
+    }
+
+    try {
+      console.log("Updating rating:", id, mediaType, rating, "for user:", user.id);
+      
+      const { error } = await supabase
+        .from("user_collection")
+        .update({ rating })
+        .eq("user_id", user.id)
+        .eq("tmdb_id", id)
+        .eq("media_type", mediaType);
+
+      if (error) {
+        console.error("Error updating rating:", error);
+        throw error;
+      }
+
+      console.log("Successfully updated rating");
+      await fetchCollection();
+    } catch (error) {
+      console.error("Error updating rating:", error);
+    }
+  };
+
 
   // Pinned functions
   const isPinned = (id: number, mediaType: "movie" | "tv"): boolean => {
@@ -422,6 +460,9 @@ export const useUserData = () => {
     unmarkAsWatched,
     getCollection,
     refetchCollection: fetchCollection,
+    // Rating - synced with CineVault
+    getUserRating,
+    updateRating,
     // Pinned
     isPinned,
     pinItem,
