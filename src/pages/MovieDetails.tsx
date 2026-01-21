@@ -6,6 +6,7 @@ import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Share2, ExternalLin
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
 import WatchlistButton from "@/components/WatchlistButton";
+import MarkAsWatchedButton from "@/components/MarkAsWatchedButton";
 import PinButton from "@/components/PinButton";
 import TrailerModal from "@/components/TrailerModal";
 import { Button } from "@/components/ui/button";
@@ -222,6 +223,7 @@ const MovieDetails = () => {
                   {language === "el" ? "Τρέιλερ" : "Trailer"}
                 </Button>
                 <WatchlistButton item={movie} mediaType="movie" variant="full" />
+                <MarkAsWatchedButton item={movie} mediaType="movie" variant="full" />
                 <PinButton item={movie} mediaType="movie" />
                 <Button variant="ghost" size="icon" onClick={handleShare} className="h-12 w-12">
                   <Share2 className="w-5 h-5" />

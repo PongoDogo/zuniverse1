@@ -50,6 +50,7 @@ const Navbar = () => {
     { href: "/tv", labelKey: "tvShows" as const, icon: Tv },
     { href: "/discover", labelKey: "discover" as const, icon: Compass },
     { href: "/watchlist", labelKey: "watchlist" as const, icon: Heart },
+    { href: "/collection", labelKey: "myCollection" as const, icon: Sparkles },
   ];
 
   const isActive = (href: string) => location.pathname === href;
