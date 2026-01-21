@@ -1,4 +1,6 @@
+import { useState, useEffect, useCallback } from "react";
 import { useSupabaseAuthSafe } from "@/contexts/SupabaseAuthContext";
+import { supabase } from "@/lib/supabaseShared";
 import {
   getWatchlist as getLocalWatchlist,
   addToWatchlist as addToLocalWatchlist,
@@ -10,6 +12,8 @@ import {
   getContinueWatchingItem as getLocalContinueWatchingItem,
   WatchlistItem,
   ContinueWatchingItem,
+  convertDBToLegacy,
+  WatchlistItemDB,
 } from "@/lib/watchlist";
 import {
   getPinnedItems as getLocalPinnedItems,
@@ -30,64 +34,103 @@ import {
 import { Movie } from "@/lib/tmdb";
 
 export const useUserData = () => {
-  // Use Supabase auth context (shared with CineVault)
   const auth = useSupabaseAuthSafe();
-  
-  // Check if user is signed in
-  const isSignedIn = auth?.isSignedIn ?? false;
+  const user = auth?.user;
+  const isSignedIn = !!user;
+
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch watchlist from Supabase
+  const fetchWatchlist = useCallback(async () => {
+    if (!user) {
+      setWatchlist(getLocalWatchlist());
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("user_collection")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching watchlist:", error);
+        setWatchlist([]);
+      } else {
+        setWatchlist((data || []).map((item: WatchlistItemDB) => convertDBToLegacy(item)));
+      }
+    } catch (error) {
+      console.error("Error fetching watchlist:", error);
+      setWatchlist([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Refresh watchlist when user changes
+  useEffect(() => {
+    fetchWatchlist();
+  }, [fetchWatchlist]);
 
   // Watchlist functions
   const isInWatchlist = (id: number, mediaType: "movie" | "tv"): boolean => {
-    if (isSignedIn && auth) {
-      return auth.isInWatchlist(id, mediaType);
+    if (isSignedIn) {
+      return watchlist.some((w) => w.id === id && w.mediaType === mediaType);
     }
     return isInLocalWatchlist(id, mediaType);
   };
 
   const addToWatchlist = async (item: Movie, mediaType: "movie" | "tv") => {
-    if (isSignedIn && auth) {
-      await auth.addToWatchlist({
-        mediaId: item.id,
-        mediaType,
-        title: item.title || item.name || "Unknown",
-        posterPath: item.poster_path,
-        voteAverage: item.vote_average,
-        releaseDate: item.release_date || item.first_air_date,
-      });
+    if (isSignedIn && user) {
+      try {
+        await supabase.from("user_collection").upsert(
+          {
+            user_id: user.id,
+            tmdb_id: item.id,
+            media_type: mediaType,
+            title: item.title || item.name || "",
+            poster_path: item.poster_path || null,
+            backdrop_path: item.backdrop_path || null,
+            overview: item.overview || null,
+            release_date: item.release_date || item.first_air_date || null,
+            vote_average: item.vote_average || null,
+            genres: item.genre_ids?.map(String) || null,
+          },
+          { onConflict: "user_id,tmdb_id" }
+        );
+        await fetchWatchlist();
+      } catch (error) {
+        console.error("Error adding to watchlist:", error);
+      }
     } else {
       addToLocalWatchlist(item, mediaType);
+      setWatchlist(getLocalWatchlist());
     }
   };
 
   const removeFromWatchlist = async (id: number, mediaType: "movie" | "tv") => {
-    if (isSignedIn && auth) {
-      await auth.removeFromWatchlist(id, mediaType);
+    if (isSignedIn && user) {
+      try {
+        await supabase
+          .from("user_collection")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("tmdb_id", id);
+        await fetchWatchlist();
+      } catch (error) {
+        console.error("Error removing from watchlist:", error);
+      }
     } else {
       removeFromLocalWatchlist(id, mediaType);
+      setWatchlist(getLocalWatchlist());
     }
   };
 
   const getWatchlist = (): WatchlistItem[] => {
-    if (isSignedIn && auth?.userData) {
-      return auth.userData.watchlist.map(w => ({
-        id: w.tmdb_id,
-        title: w.title,
-        name: w.title,
-        poster_path: w.poster_path,
-        vote_average: w.vote_average || 0,
-        vote_count: 0,
-        genre_ids: [],
-        release_date: w.release_date || undefined,
-        mediaType: w.media_type,
-        addedAt: new Date(w.created_at).getTime(),
-        backdrop_path: w.backdrop_path,
-        overview: w.overview || "",
-        popularity: 0,
-        original_language: "",
-        adult: false,
-      })) as WatchlistItem[];
-    }
-    return getLocalWatchlist();
+    return watchlist;
   };
 
   // Pinned functions
@@ -98,7 +141,13 @@ export const useUserData = () => {
     return isLocalPinned(id, mediaType);
   };
 
-  const pinItem = async (item: { id: number; mediaType: "movie" | "tv"; title: string; poster_path: string | null; backdrop_path: string | null }) => {
+  const pinItem = async (item: {
+    id: number;
+    mediaType: "movie" | "tv";
+    title: string;
+    poster_path: string | null;
+    backdrop_path: string | null;
+  }) => {
     if (isSignedIn && auth) {
       await auth.pinItem({
         mediaId: item.id,
@@ -127,7 +176,7 @@ export const useUserData = () => {
 
   const getPinnedItems = (): PinnedItem[] => {
     if (isSignedIn && auth?.userData) {
-      return auth.userData.pinned.map(p => ({
+      return auth.userData.pinned.map((p) => ({
         id: p.media_id,
         mediaType: p.media_type,
         title: p.title,
@@ -142,7 +191,7 @@ export const useUserData = () => {
   // Continue Watching functions
   const getContinueWatching = (): ContinueWatchingItem[] => {
     if (isSignedIn && auth?.userData) {
-      return auth.userData.continueWatching.map(c => ({
+      return auth.userData.continueWatching.map((c) => ({
         id: c.media_id,
         mediaType: c.media_type,
         title: c.title,
@@ -179,7 +228,12 @@ export const useUserData = () => {
     }
   };
 
-  const removeContinueWatching = async (id: number, mediaType: "movie" | "tv", season?: number, episode?: number) => {
+  const removeContinueWatching = async (
+    id: number,
+    mediaType: "movie" | "tv",
+    season?: number,
+    episode?: number
+  ) => {
     if (isSignedIn && auth) {
       await auth.removeContinueWatching(id, mediaType, season, episode);
     } else {
@@ -187,7 +241,12 @@ export const useUserData = () => {
     }
   };
 
-  const getContinueWatchingItem = (id: number, mediaType: "movie" | "tv", season?: number, episode?: number): ContinueWatchingItem | undefined => {
+  const getContinueWatchingItem = (
+    id: number,
+    mediaType: "movie" | "tv",
+    season?: number,
+    episode?: number
+  ): ContinueWatchingItem | undefined => {
     if (isSignedIn && auth) {
       const item = auth.getContinueWatchingItem(id, mediaType, season, episode);
       if (item) {
@@ -261,7 +320,7 @@ export const useUserData = () => {
   // Achievements
   const getAchievements = (): Achievement[] => {
     if (isSignedIn && auth?.userData) {
-      return auth.userData.achievements.map(a => ({
+      return auth.userData.achievements.map((a) => ({
         id: a.achievement_id,
         title: a.title,
         description: a.description || "",
@@ -272,7 +331,12 @@ export const useUserData = () => {
     return getLocalAchievements();
   };
 
-  const unlockAchievement = async (achievement: { id: string; title: string; description?: string; icon?: string }) => {
+  const unlockAchievement = async (achievement: {
+    id: string;
+    title: string;
+    description?: string;
+    icon?: string;
+  }) => {
     if (isSignedIn && auth) {
       await auth.unlockAchievement(achievement);
     } else {
@@ -286,13 +350,15 @@ export const useUserData = () => {
   };
 
   return {
-    isSignedIn: isSignedIn || false,
+    isSignedIn,
     syncInProgress: auth?.syncInProgress ?? false,
+    loading,
     // Watchlist
     isInWatchlist,
     addToWatchlist,
     removeFromWatchlist,
     getWatchlist,
+    refetchWatchlist: fetchWatchlist,
     // Pinned
     isPinned,
     pinItem,
