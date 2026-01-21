@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { Play, Star, Heart, Pin } from "lucide-react";
 import { Movie, getImageUrl } from "@/lib/tmdb";
 import { useUserData } from "@/hooks/useUserData";
-import { useState, memo } from "react";
+import { isInFavorites, addToFavorites, removeFromFavorites } from "@/lib/favorites";
+import { useState, memo, useEffect } from "react";
 import { toast } from "sonner";
 
 interface MediaCardProps {
@@ -15,21 +16,27 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   const title = item.title || item.name || "Unknown";
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const year = (item.release_date || item.first_air_date || "").split("-")[0];
-  const { isInWatchlist, addToWatchlist, removeFromWatchlist, isPinned, pinItem, unpinItem } = useUserData();
+  const { isPinned, pinItem, unpinItem } = useUserData();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
-  const inWatchlist = isInWatchlist(item.id, mediaType);
+  useEffect(() => {
+    setIsFavorite(isInFavorites(item.id, mediaType));
+  }, [item.id, mediaType]);
+
   const pinned = isPinned(item.id, mediaType);
 
-  const handleWatchlistClick = async (e: React.MouseEvent) => {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (inWatchlist) {
-      await removeFromWatchlist(item.id, mediaType);
-      toast.success("Removed from watchlist");
+    if (isFavorite) {
+      removeFromFavorites(item.id, mediaType);
+      setIsFavorite(false);
+      toast.success("Removed from favorites");
     } else {
-      await addToWatchlist(item, mediaType);
-      toast.success("Added to watchlist");
+      addToFavorites(item, mediaType);
+      setIsFavorite(true);
+      toast.success("Added to favorites");
     }
   };
 
@@ -96,16 +103,16 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
 
           {/* Action Buttons */}
           <div className="absolute top-1 left-1 flex flex-col gap-1">
-            {/* Watchlist Button */}
+            {/* Favorite Button */}
             <motion.button
               whileTap={{ scale: 0.85 }}
-              onClick={handleWatchlistClick}
+              onClick={handleFavoriteClick}
               className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
-              aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
                 className={`w-3 h-3 sm:w-4 sm:h-4 transition-colors ${
-                  inWatchlist ? "fill-primary text-primary" : "text-foreground"
+                  isFavorite ? "fill-primary text-primary" : "text-foreground"
                 }`}
               />
             </motion.button>

@@ -27,7 +27,7 @@ const QuickAccessBar = () => {
 
   const tabs = [
     { id: "continue" as Tab, label: t("continueWatching").split(" ")[0], icon: Play, count: continueWatching.length },
-    { id: "watchlist" as Tab, label: t("watchlist"), icon: Heart, count: watchlist.length },
+    { id: "watchlist" as Tab, label: t("favorites"), icon: Heart, count: watchlist.length },
     { id: "pinned" as Tab, label: t("pinned"), icon: Pin, count: pinned.length },
   ];
 
