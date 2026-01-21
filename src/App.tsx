@@ -26,8 +26,8 @@ const queryClient = new QueryClient({
   },
 });
 
-// Get Clerk publishable key from environment
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Clerk publishable key (safe to include in frontend code)
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "pk_test_YWxpdmUtaHVtcGJhY2stMC5jbGVyay5hY2NvdW50cy5kZXYk";
 
 // Wrapper component to conditionally use ClerkProvider
 const AppContent = ({ children }: { children: React.ReactNode }) => {
