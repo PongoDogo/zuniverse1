@@ -1,4 +1,4 @@
-import { useAuthContextSafe } from "@/contexts/AuthContext";
+import { useSupabaseAuthSafe } from "@/contexts/SupabaseAuthContext";
 import {
   getWatchlist as getLocalWatchlist,
   addToWatchlist as addToLocalWatchlist,
@@ -30,10 +30,10 @@ import {
 import { Movie } from "@/lib/tmdb";
 
 export const useUserData = () => {
-  // Use safe hook that returns null when not within AuthProvider
-  const auth = useAuthContextSafe();
+  // Use Supabase auth context (shared with CineVault)
+  const auth = useSupabaseAuthSafe();
   
-  // Check if user is signed in (auth context available and user signed in)
+  // Check if user is signed in
   const isSignedIn = auth?.isSignedIn ?? false;
 
   // Watchlist functions
@@ -70,7 +70,7 @@ export const useUserData = () => {
   const getWatchlist = (): WatchlistItem[] => {
     if (isSignedIn && auth?.userData) {
       return auth.userData.watchlist.map(w => ({
-        id: w.media_id,
+        id: w.tmdb_id,
         title: w.title,
         name: w.title,
         poster_path: w.poster_path,
@@ -79,9 +79,9 @@ export const useUserData = () => {
         genre_ids: [],
         release_date: w.release_date || undefined,
         mediaType: w.media_type,
-        addedAt: new Date(w.added_at).getTime(),
-        backdrop_path: null,
-        overview: "",
+        addedAt: new Date(w.created_at).getTime(),
+        backdrop_path: w.backdrop_path,
+        overview: w.overview || "",
         popularity: 0,
         original_language: "",
         adult: false,

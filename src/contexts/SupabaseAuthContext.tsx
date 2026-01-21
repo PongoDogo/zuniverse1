@@ -3,19 +3,25 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseShared";
 import { toast } from "sonner";
 
-interface WatchlistItemDB {
+// CineVault's user_collection schema - exported for use in hooks
+export interface WatchlistItemDB {
   id: string;
   user_id: string;
-  media_id: number;
+  tmdb_id: number;
   media_type: "movie" | "tv";
   title: string;
   poster_path: string | null;
-  vote_average: number | null;
+  backdrop_path: string | null;
+  overview: string | null;
   release_date: string | null;
-  added_at: string;
+  vote_average: number | null;
+  genres: string[] | null;
+  rating: number | null;
+  watched_at: string | null;
+  created_at: string;
 }
 
-interface ContinueWatchingItemDB {
+export interface ContinueWatchingItemDB {
   id: string;
   user_id: string;
   media_id: number;
@@ -162,8 +168,9 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setSyncInProgress(true);
+      // Use user_collection table from CineVault's shared backend
       const [watchlistRes, pinnedRes, continueRes, statsRes, achievementsRes, prefsRes] = await Promise.all([
-        supabase.from("watchlist").select("*").eq("user_id", userId),
+        supabase.from("user_collection").select("*").eq("user_id", userId),
         supabase.from("pinned_favorites").select("*").eq("user_id", userId),
         supabase.from("continue_watching").select("*").eq("user_id", userId).order("last_watched", { ascending: false }),
         supabase.from("user_stats").select("*").eq("user_id", userId).single(),
@@ -223,26 +230,29 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
     toast.success("Signed out");
   };
 
-  // Watchlist functions
-  const addToWatchlist = async (item: { mediaId: number; mediaType: "movie" | "tv"; title: string; posterPath: string | null; voteAverage?: number; releaseDate?: string }) => {
+  // Collection/Watchlist functions - uses CineVault's user_collection table
+  const addToWatchlist = async (item: { mediaId: number; mediaType: "movie" | "tv"; title: string; posterPath: string | null; backdropPath?: string | null; overview?: string; voteAverage?: number; releaseDate?: string; genres?: string[] }) => {
     if (!userId) return;
 
     try {
-      await supabase.from("watchlist").upsert({
+      await supabase.from("user_collection").upsert({
         user_id: userId,
-        media_id: item.mediaId,
+        tmdb_id: item.mediaId,
         media_type: item.mediaType,
         title: item.title,
         poster_path: item.posterPath,
+        backdrop_path: item.backdropPath || null,
+        overview: item.overview || null,
         vote_average: item.voteAverage || null,
         release_date: item.releaseDate || null,
-      }, { onConflict: "user_id,media_id,media_type" });
+        genres: item.genres || null,
+      }, { onConflict: "user_id,tmdb_id" });
 
       await fetchUserData();
-      toast.success("Added to watchlist");
+      toast.success("Added to collection");
     } catch (error) {
-      console.error("Error adding to watchlist:", error);
-      toast.error("Failed to add to watchlist");
+      console.error("Error adding to collection:", error);
+      toast.error("Failed to add to collection");
     }
   };
 
@@ -250,21 +260,20 @@ export const SupabaseAuthProvider = ({ children }: { children: ReactNode }) => {
     if (!userId) return;
 
     try {
-      await supabase.from("watchlist")
+      await supabase.from("user_collection")
         .delete()
         .eq("user_id", userId)
-        .eq("media_id", mediaId)
-        .eq("media_type", mediaType);
+        .eq("tmdb_id", mediaId);
 
       await fetchUserData();
-      toast.success("Removed from watchlist");
+      toast.success("Removed from collection");
     } catch (error) {
-      console.error("Error removing from watchlist:", error);
+      console.error("Error removing from collection:", error);
     }
   };
 
   const isInWatchlist = (mediaId: number, mediaType: "movie" | "tv"): boolean => {
-    return userData?.watchlist.some(w => w.media_id === mediaId && w.media_type === mediaType) || false;
+    return userData?.watchlist.some(w => w.tmdb_id === mediaId && w.media_type === mediaType) || false;
   };
 
   // Pinned functions
