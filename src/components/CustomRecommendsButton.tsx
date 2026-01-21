@@ -6,7 +6,7 @@ const CustomRecommendsButton = () => {
   const { language } = useLanguage();
 
   const handleClick = () => {
-    window.open("https://cinetorriovault.lovable.app", "_blank");
+    window.open("https://cinetorriovault.lovable.app", "_blank", "noopener,noreferrer");
   };
 
   return (

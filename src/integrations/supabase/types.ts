@@ -232,6 +232,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_authenticated_user_id: { Args: never; Returns: string }
       get_clerk_user_id: { Args: never; Returns: string }
     }
     Enums: {
