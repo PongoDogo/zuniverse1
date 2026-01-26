@@ -71,7 +71,7 @@ export const useUserData = () => {
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch watched items from CineVault's user_collection table
+  // Fetch watched items from CineVault's user_collection table - runs on mount independently
   const fetchCollection = useCallback(async () => {
     if (!user) {
       setCollection([]);
@@ -79,23 +79,25 @@ export const useUserData = () => {
       return;
     }
 
+    setLoading(true);
+    
     try {
-      console.log("Fetching collection for user:", user.id);
+      console.log("[CineTorrio] Fetching collection for user:", user.id);
       const { data, error } = await supabase
         .from("user_collection")
         .select("*")
         .eq("user_id", user.id)
-        .not("watched_at", "is", null)
         .order("watched_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching collection:", error);
+        console.error("[CineTorrio] Error fetching collection:", error);
         setCollection([]);
       } else {
+        console.log("[CineTorrio] Fetched collection items:", data?.length || 0);
         const items = (data || []) as CollectionItemDB[];
         const collectionItems: CollectionItem[] = items.map((item) => ({
           id: item.tmdb_id,
-          mediaType: item.media_type,
+          mediaType: item.media_type as "movie" | "tv",
           title: item.title,
           name: item.title,
           poster_path: item.poster_path,
@@ -112,17 +114,20 @@ export const useUserData = () => {
         setCollection(collectionItems);
       }
     } catch (error) {
-      console.error("Error fetching collection:", error);
+      console.error("[CineTorrio] Error fetching collection:", error);
       setCollection([]);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  // Refresh data when user changes
+  // Initial fetch on mount when user is available - ensures CineTorrio loads collection independently
   useEffect(() => {
+    if (!user) return;
+    
+    console.log("[CineTorrio] Initial collection fetch triggered for user:", user.id);
     fetchCollection();
-  }, [fetchCollection]);
+  }, [user, fetchCollection]);
 
   // Collection (Watched) functions - sync with CineVault
   const isWatched = (id: number, mediaType: "movie" | "tv"): boolean => {
