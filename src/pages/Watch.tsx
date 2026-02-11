@@ -1,9 +1,11 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Star, Calendar, Clock, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Star, Calendar, Clock, Info, SkipForward, ToggleLeft, ToggleRight } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
+import AutoPlayCountdown from "@/components/AutoPlayCountdown";
 import MediaRow from "@/components/MediaRow";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +21,8 @@ import { isPinned, pinItem, unpinItem } from "@/lib/userPreferences";
 import { toast } from "sonner";
 import { useLanguage } from "@/hooks/useLanguage";
 
+const AUTO_PLAY_KEY = "cinetorrio_autoplay";
+
 const Watch = () => {
   const { type, id, season, episode } = useParams<{
     type: string;
@@ -33,6 +37,11 @@ const Watch = () => {
   const mediaId = parseInt(id || "0");
   const currentSeason = parseInt(season || "1");
   const currentEpisode = parseInt(episode || "1");
+
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(() => {
+    try { return localStorage.getItem(AUTO_PLAY_KEY) !== "false"; } catch { return true; }
+  });
+  const [showCountdown, setShowCountdown] = useState(false);
 
   const { data: details } = useQuery({
     queryKey: [mediaType, mediaId],
@@ -53,39 +62,56 @@ const Watch = () => {
   });
 
   const title = details?.title || details?.name || "Loading...";
-  const seasons = details?.seasons?.filter((s) => s.season_number > 0) || [];
+  const seasons = details?.seasons?.filter((s: any) => s.season_number > 0) || [];
   const year = (details?.release_date || details?.first_air_date || "").split("-")[0];
 
   const currentEpisodeData = episodes?.find(
-    (ep) => ep.episode_number === currentEpisode
+    (ep: any) => ep.episode_number === currentEpisode
   );
 
   const hasPrevEpisode = currentEpisode > 1;
   const hasNextEpisode = episodes && currentEpisode < episodes.length;
+  const nextEpisodeData = hasNextEpisode ? episodes?.find((ep: any) => ep.episode_number === currentEpisode + 1) : null;
 
   const inWatchlist = details ? isInWatchlist(mediaId, mediaType) : false;
   const itemPinned = details ? isPinned(mediaId, mediaType) : false;
 
-  const goToEpisode = (ep: number) => {
+  const goToEpisode = useCallback((ep: number) => {
+    setShowCountdown(false);
     navigate(`/tv/${mediaId}/watch/${currentSeason}/${ep}`);
-  };
+  }, [navigate, mediaId, currentSeason]);
 
   const goToSeason = (s: number) => {
     navigate(`/tv/${mediaId}/watch/${s}/1`);
   };
 
+  const handleAutoPlayToggle = () => {
+    const newVal = !autoPlayEnabled;
+    setAutoPlayEnabled(newVal);
+    localStorage.setItem(AUTO_PLAY_KEY, newVal.toString());
+    toast.success(
+      newVal
+        ? (language === "el" ? "Αυτόματη αναπαραγωγή ενεργή" : "Auto-play enabled")
+        : (language === "el" ? "Αυτόματη αναπαραγωγή απενεργοποιημένη" : "Auto-play disabled")
+    );
+  };
+
+  const handleRequestNextEpisode = useCallback(() => {
+    if (hasNextEpisode) {
+      if (autoPlayEnabled) {
+        setShowCountdown(true);
+      } else {
+        goToEpisode(currentEpisode + 1);
+      }
+    }
+  }, [hasNextEpisode, autoPlayEnabled, goToEpisode, currentEpisode]);
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: title,
-          text: `Watch ${title} on CineTorrio`,
-          url: url,
-        });
-      } catch (err) {
-        // User cancelled
-      }
+        await navigator.share({ title, text: `Watch ${title} on CineTorrio`, url });
+      } catch {}
     } else {
       await navigator.clipboard.writeText(url);
       toast.success(language === "el" ? "Ο σύνδεσμος αντιγράφηκε!" : "Link copied to clipboard!");
@@ -141,8 +167,18 @@ const Watch = () => {
               <span>{t("backToDetails")}</span>
             </Link>
             
-            {/* Quick Actions */}
             <div className="flex items-center gap-1 sm:gap-2">
+              {mediaType === "tv" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAutoPlayToggle}
+                  className={`gap-1.5 text-xs ${autoPlayEnabled ? "text-primary" : "text-muted-foreground"}`}
+                >
+                  {autoPlayEnabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{t("autoPlay")}</span>
+                </Button>
+              )}
               <Button 
                 variant={inWatchlist ? "default" : "ghost"}
                 size="sm" 
@@ -170,7 +206,7 @@ const Watch = () => {
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-[1fr,320px] gap-6">
             
-            {/* Left Column - Video Player & Episodes */}
+            {/* Left Column */}
             <div className="space-y-4 sm:space-y-6">
               
               {/* Title & Meta */}
@@ -228,8 +264,21 @@ const Watch = () => {
                   posterPath={details?.poster_path}
                   backdropPath={details?.backdrop_path}
                   episodeName={currentEpisodeData?.name}
+                  onRequestNextEpisode={hasNextEpisode ? handleRequestNextEpisode : undefined}
                 />
               </motion.div>
+
+              {/* Auto-play countdown */}
+              <AnimatePresence>
+                {showCountdown && hasNextEpisode && (
+                  <AutoPlayCountdown
+                    seconds={10}
+                    onComplete={() => goToEpisode(currentEpisode + 1)}
+                    onCancel={() => setShowCountdown(false)}
+                    nextEpisodeName={nextEpisodeData?.name}
+                  />
+                )}
+              </AnimatePresence>
 
               {/* TV Show Controls */}
               {mediaType === "tv" && (
@@ -250,7 +299,7 @@ const Watch = () => {
                           <SelectValue placeholder="Season" />
                         </SelectTrigger>
                         <SelectContent>
-                          {seasons.map((s) => (
+                          {seasons.map((s: any) => (
                             <SelectItem key={s.season_number} value={s.season_number.toString()}>
                               {language === "el" ? `Σεζόν ${s.season_number}` : `Season ${s.season_number}`}
                             </SelectItem>
@@ -267,7 +316,7 @@ const Watch = () => {
                             <SelectValue placeholder="Episode" />
                           </SelectTrigger>
                           <SelectContent>
-                            {episodes.map((ep) => (
+                            {episodes.map((ep: any) => (
                               <SelectItem
                                 key={ep.episode_number}
                                 value={ep.episode_number.toString()}
@@ -280,7 +329,6 @@ const Watch = () => {
                       )}
                     </div>
 
-                    {/* Prev/Next Buttons */}
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -305,24 +353,37 @@ const Watch = () => {
                     </div>
                   </div>
 
-                  {/* Episode Quick Grid */}
+                  {/* Episode Grid with thumbnails */}
                   {episodes && episodes.length > 0 && (
                     <div className="p-4 bg-card rounded-xl border border-border/50">
                       <h3 className="text-sm font-medium text-muted-foreground mb-3">
                         {language === "el" ? "Επεισόδια" : "Episodes"}
                       </h3>
                       <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
-                        {episodes.map((ep) => (
+                        {episodes.map((ep: any) => (
                           <button
                             key={ep.episode_number}
                             onClick={() => goToEpisode(ep.episode_number)}
-                            className={`aspect-square rounded-lg text-sm font-medium transition-all ${
+                            title={ep.name}
+                            className={`relative aspect-square rounded-lg text-sm font-medium transition-all overflow-hidden ${
                               ep.episode_number === currentEpisode
-                                ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                                ? "bg-primary text-primary-foreground shadow-lg scale-105 ring-2 ring-primary"
                                 : "bg-secondary hover:bg-secondary/80 hover:scale-105"
                             }`}
                           >
-                            {ep.episode_number}
+                            {ep.still_path ? (
+                              <>
+                                <img
+                                  src={getImageUrl(ep.still_path, "w200")}
+                                  alt={ep.name}
+                                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                                  loading="lazy"
+                                />
+                                <span className="relative z-10">{ep.episode_number}</span>
+                              </>
+                            ) : (
+                              ep.episode_number
+                            )}
                           </button>
                         ))}
                       </div>
@@ -361,7 +422,6 @@ const Watch = () => {
               transition={{ delay: 0.15 }}
               className="hidden lg:block space-y-4"
             >
-              {/* Poster & Quick Info */}
               <div className="p-4 bg-card rounded-xl border border-border/50">
                 <img
                   src={getImageUrl(details?.poster_path, "w500")}
@@ -369,10 +429,9 @@ const Watch = () => {
                   className="w-full rounded-lg shadow-lg mb-4"
                 />
                 
-                {/* Genres */}
                 {details?.genres && details.genres.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
-                    {details.genres.slice(0, 4).map((genre) => (
+                    {details.genres.slice(0, 4).map((genre: any) => (
                       <span
                         key={genre.id}
                         className="px-2 py-0.5 bg-secondary text-xs rounded-full"
@@ -383,7 +442,6 @@ const Watch = () => {
                   </div>
                 )}
                 
-                {/* Details Link */}
                 <Button asChild variant="outline" className="w-full">
                   <Link to={`/${mediaType}/${mediaId}`}>
                     <Info className="w-4 h-4 mr-2" />
@@ -392,7 +450,6 @@ const Watch = () => {
                 </Button>
               </div>
 
-              {/* Season Info for TV */}
               {mediaType === "tv" && seasons.length > 0 && (
                 <div className="p-4 bg-card rounded-xl border border-border/50">
                   <h3 className="font-semibold mb-3 text-sm">
@@ -401,6 +458,9 @@ const Watch = () => {
                   <div className="text-sm text-muted-foreground space-y-1">
                     <p>{episodes?.length || 0} {language === "el" ? "επεισόδια" : "episodes"}</p>
                     <p>{language === "el" ? "Τρέχον:" : "Current:"} E{currentEpisode}</p>
+                    {autoPlayEnabled && (
+                      <p className="text-primary text-xs mt-2">✓ {t("autoPlay")}</p>
+                    )}
                   </div>
                 </div>
               )}

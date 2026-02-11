@@ -222,6 +222,17 @@ export const translations = {
 
     // Keyboard shortcuts
     searchShortcut: "Ctrl+K",
+
+    // Player Phase 3
+    reportBroken: "Report",
+    reported: "Reported",
+    pipActive: "Picture-in-Picture active",
+    pipNotSupported: "PiP not supported",
+    autoPlayEnabled: "Auto-play enabled",
+    autoPlayDisabled: "Auto-play disabled",
+    nextEpisodeIn: "Next episode in",
+    searchFavorites: "Search favorites...",
+    suggestedGenres: "Suggested genres based on your favorites",
   },
   el: {
     // Navigation
@@ -440,6 +451,17 @@ export const translations = {
 
     // Keyboard shortcuts
     searchShortcut: "Ctrl+K",
+
+    // Player Phase 3
+    reportBroken: "Αναφορά",
+    reported: "Αναφέρθηκε",
+    pipActive: "Picture-in-Picture ενεργό",
+    pipNotSupported: "Το PiP δεν υποστηρίζεται",
+    autoPlayEnabled: "Αυτόματη αναπαραγωγή ενεργή",
+    autoPlayDisabled: "Αυτόματη αναπαραγωγή απενεργοποιημένη",
+    nextEpisodeIn: "Επόμενο επεισόδιο σε",
+    searchFavorites: "Αναζήτηση αγαπημένων...",
+    suggestedGenres: "Προτεινόμενα είδη βάσει αγαπημένων",
   },
 } as const;
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck, CheckCircle, Info } from "lucide-react";
+import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck, CheckCircle, Info, PictureInPicture2, AlertTriangle } from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -37,15 +37,13 @@ interface VideoPlayerProps {
   posterPath?: string | null;
   backdropPath?: string | null;
   episodeName?: string;
+  onRequestNextEpisode?: () => void;
 }
 
-// Estimated durations (minutes)
 const MOVIE_DURATION = 120;
 const EPISODE_DURATION = 45;
-
-// Tracking thresholds (seconds)
-const TRACKING_THRESHOLD = 120; // 2 minutes for achievement
-const SAVE_INTERVAL = 15000; // 15 seconds
+const TRACKING_THRESHOLD = 120;
+const SAVE_INTERVAL = 15000;
 
 const VideoPlayer = ({ 
   tmdbId, 
@@ -55,7 +53,8 @@ const VideoPlayer = ({
   title,
   posterPath,
   backdropPath,
-  episodeName
+  episodeName,
+  onRequestNextEpisode
 }: VideoPlayerProps) => {
   const { t, language } = useLanguage();
   const [currentSource, setCurrentSource] = useState<StreamingSource>(getPreferredSource);
@@ -67,6 +66,7 @@ const VideoPlayer = ({
   const [retryCount, setRetryCount] = useState(0);
   const [adsBlocked, setAdsBlocked] = useState(0);
   const [autoFallback, setAutoFallback] = useState(false);
+  const [reportSent, setReportSent] = useState(false);
   
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,12 +78,34 @@ const VideoPlayer = ({
 
   const estimatedDurationSeconds = (mediaType === "movie" ? MOVIE_DURATION : EPISODE_DURATION) * 60;
 
-  // Get existing progress for this item
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch (e.key.toLowerCase()) {
+        case "f":
+          e.preventDefault();
+          handleFullscreen();
+          break;
+        case "n":
+          if (onRequestNextEpisode && mediaType === "tv") {
+            e.preventDefault();
+            onRequestNextEpisode();
+          }
+          break;
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onRequestNextEpisode, mediaType]);
+
   const getExistingProgress = useCallback(() => {
     return getContinueWatchingItem(tmdbId, mediaType, season, episode);
   }, [tmdbId, mediaType, season, episode]);
 
-  // Save progress to continue watching
   const saveProgress = useCallback(() => {
     if (!title) return;
     
@@ -91,12 +113,10 @@ const VideoPlayer = ({
     const sessionSeconds = Math.floor((now - startTimeRef.current) / 1000);
     sessionWatchTimeRef.current = sessionSeconds;
     
-    // Get existing item to add to previous time
     const existing = getExistingProgress();
     const previousTime = existing?.currentTime || 0;
     const totalWatchedSeconds = previousTime + sessionSeconds;
     
-    // Calculate progress percentage (cap at 95% unless explicitly marked complete)
     const progress = Math.min(95, Math.round((totalWatchedSeconds / estimatedDurationSeconds) * 100));
     
     const item: ContinueWatchingItem = {
@@ -118,7 +138,6 @@ const VideoPlayer = ({
     updateContinueWatching(item);
     lastUpdateRef.current = now;
     
-    // Track achievement after 2 minutes of watching this session
     if (sessionSeconds >= TRACKING_THRESHOLD && !hasTrackedViewRef.current) {
       hasTrackedViewRef.current = true;
       if (mediaType === "tv") {
@@ -126,7 +145,6 @@ const VideoPlayer = ({
       } else {
         incrementMoviesWatched();
       }
-      // Add watch time in minutes
       const minutesWatched = Math.floor(sessionSeconds / 60);
       if (minutesWatched > 0) {
         addWatchTime(minutesWatched);
@@ -134,24 +152,20 @@ const VideoPlayer = ({
     }
   }, [tmdbId, mediaType, title, posterPath, backdropPath, season, episode, episodeName, estimatedDurationSeconds, getExistingProgress]);
 
-  // Mark as complete
   const handleMarkAsComplete = useCallback(() => {
     removeContinueWatching(tmdbId, mediaType, season, episode);
     toast.success(language === "el" ? "Επισημάνθηκε ως ολοκληρωμένο!" : "Marked as complete!");
   }, [tmdbId, mediaType, season, episode, language]);
 
-  // Poll native ad blocker for blocked count (only on Android)
+  // Poll native ad blocker
   useEffect(() => {
     if (!isNativeAndroid()) return;
-    
     const pollBlockedCount = async () => {
       const count = await getBlockedCount();
       setAdsBlocked(count);
     };
-    
     const interval = setInterval(pollBlockedCount, 2000);
     pollBlockedCount();
-    
     return () => clearInterval(interval);
   }, []);
 
@@ -159,6 +173,7 @@ const VideoPlayer = ({
   useEffect(() => {
     setIsLoading(true);
     setError(false);
+    setReportSent(false);
     hasTrackedViewRef.current = false;
     startTimeRef.current = Date.now();
     sessionWatchTimeRef.current = 0;
@@ -166,26 +181,17 @@ const VideoPlayer = ({
     setEmbedUrl(url);
   }, [currentSource, tmdbId, mediaType, season, episode, retryCount]);
 
-  // Start progress tracking when video loads
+  // Start progress tracking
   useEffect(() => {
     if (!isLoading && !error && title) {
-      // Reset start time when video actually loads
       startTimeRef.current = Date.now();
-      
-      // Save progress every 15 seconds
       progressIntervalRef.current = setInterval(() => {
         saveProgress();
       }, SAVE_INTERVAL);
-      
-      // Initial save after 5 seconds
       const initialTimeout = setTimeout(saveProgress, 5000);
-      
       return () => {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
         clearTimeout(initialTimeout);
-        // Final save on unmount
         saveProgress();
       };
     }
@@ -194,11 +200,8 @@ const VideoPlayer = ({
   // Save on page unload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      if (title && !isLoading && !error) {
-        saveProgress();
-      }
+      if (title && !isLoading && !error) saveProgress();
     };
-    
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [title, isLoading, error, saveProgress]);
@@ -211,27 +214,19 @@ const VideoPlayer = ({
 
   const handleError = () => {
     setIsLoading(false);
-    
-    // Try auto-fallback to next source
     if (!autoFallback) {
       const nextSource = getNextSource(currentSource.id);
       if (nextSource) {
         setAutoFallback(true);
-        toast.info(
-          language === "el" 
-            ? `Αλλαγή σε ${nextSource.name}...` 
-            : `Switching to ${nextSource.name}...`
-        );
+        toast.info(language === "el" ? `Αλλαγή σε ${nextSource.name}...` : `Switching to ${nextSource.name}...`);
         setCurrentSource(nextSource);
         return;
       }
     }
-    
     setError(true);
   };
 
   const handleSourceChange = (source: StreamingSource) => {
-    // Save progress before switching
     saveProgress();
     setCurrentSource(source);
     setRetryCount(0);
@@ -250,6 +245,50 @@ const VideoPlayer = ({
       } else {
         containerRef.current.requestFullscreen();
       }
+    }
+  };
+
+  const handlePiP = async () => {
+    // PiP works best with <video> elements, but we can try with the iframe
+    // For iframes, we try the document PiP API
+    if ('documentPictureInPicture' in window) {
+      try {
+        // @ts-ignore - experimental API
+        const pipWindow = await window.documentPictureInPicture.requestWindow({
+          width: 640,
+          height: 360,
+        });
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        iframe.allowFullscreen = true;
+        pipWindow.document.body.style.margin = '0';
+        pipWindow.document.body.appendChild(iframe);
+        toast.success(language === "el" ? "Picture-in-Picture ενεργό" : "Picture-in-Picture active");
+      } catch {
+        toast.error(language === "el" ? "Το PiP δεν υποστηρίζεται" : "PiP not supported for this content");
+      }
+    } else {
+      toast.info(language === "el" ? "Το PiP δεν υποστηρίζεται στον browser σας" : "PiP not supported in your browser");
+    }
+  };
+
+  const handleReportBroken = () => {
+    setReportSent(true);
+    toast.success(
+      language === "el" 
+        ? `Αναφορά: "${currentSource.name}" σημειώθηκε ως μη λειτουργική` 
+        : `Reported: "${currentSource.name}" marked as not working`
+    );
+    // Try next source automatically
+    const nextSource = getNextSource(currentSource.id);
+    if (nextSource) {
+      setTimeout(() => {
+        setCurrentSource(nextSource);
+        setRetryCount(0);
+      }, 1000);
     }
   };
 
@@ -277,25 +316,45 @@ const VideoPlayer = ({
               {language === "el" ? "Ολοκληρωμένο" : "Mark Complete"}
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            className="text-xs sm:text-sm"
-          >
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            {t("retry")}
+          <Button variant="outline" size="sm" onClick={handlePiP} className="text-xs sm:text-sm">
+            <PictureInPicture2 className="w-3.5 h-3.5 mr-1.5" />
+            PiP
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleFullscreen}
+            onClick={handleReportBroken}
+            disabled={reportSent}
             className="text-xs sm:text-sm"
           >
+            <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
+            {reportSent 
+              ? (language === "el" ? "Αναφέρθηκε" : "Reported") 
+              : (language === "el" ? "Αναφορά" : "Report")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRetry} className="text-xs sm:text-sm">
+            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+            {t("retry")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleFullscreen} className="text-xs sm:text-sm">
             <Maximize2 className="w-3.5 h-3.5 mr-1.5" />
             {t("fullscreen")}
           </Button>
         </div>
+      </div>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px] font-mono">F</kbd>
+          {t("fullscreen")}
+        </span>
+        {mediaType === "tv" && onRequestNextEpisode && (
+          <span className="flex items-center gap-1">
+            <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px] font-mono">N</kbd>
+            {t("nextEpisode")}
+          </span>
+        )}
       </div>
 
       {/* Native ad blocker indicator */}
