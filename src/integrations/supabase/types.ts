@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pinned_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          media_type: string
+          poster_path: string | null
+          title: string | null
+          tmdb_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          media_type: string
+          poster_path?: string | null
+          title?: string | null
+          tmdb_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          media_type?: string
+          poster_path?: string | null
+          title?: string | null
+          tmdb_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -209,6 +260,33 @@ export type Database = {
           theme?: string | null
           ui_layout?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          created_at: string | null
+          episodes_watched: number | null
+          id: string
+          movies_watched: number | null
+          total_minutes_watched: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          episodes_watched?: number | null
+          id?: string
+          movies_watched?: number | null
+          total_minutes_watched?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          episodes_watched?: number | null
+          id?: string
+          movies_watched?: number | null
+          total_minutes_watched?: number | null
+          user_id?: string
         }
         Relationships: []
       }

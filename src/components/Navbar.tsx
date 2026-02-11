@@ -35,6 +35,22 @@ const Navbar = () => {
     setIsSearchOpen(false);
   }, [location.pathname]);
 
+  // Ctrl+K keyboard shortcut to open search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setIsSearchOpen(true);
+      }
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -155,10 +171,17 @@ const Navbar = () => {
               
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="p-2.5 rounded-lg hover:bg-secondary transition-colors"
+                className="p-2.5 rounded-lg hover:bg-secondary transition-colors flex items-center gap-1"
                 aria-label={isSearchOpen ? "Close search" : "Open search"}
               >
-                {isSearchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                {isSearchOpen ? <X className="w-5 h-5" /> : (
+                  <>
+                    <Search className="w-5 h-5" />
+                    <span className="hidden lg:inline text-[10px] text-muted-foreground border border-border rounded px-1 py-0.5">
+                      {t("searchShortcut")}
+                    </span>
+                  </>
+                )}
               </button>
 
               {/* UI Layout, Language, Theme, Notifications, Auth - Hidden on mobile */}
