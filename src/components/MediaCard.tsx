@@ -6,6 +6,7 @@ import { useUserData } from "@/hooks/useUserData";
 import { isInFavorites, addToFavorites, removeFromFavorites } from "@/lib/favorites";
 import { useState, memo, useEffect } from "react";
 import { toast } from "sonner";
+import WatchedBadge from "./WatchedBadge";
 
 interface MediaCardProps {
   item: Movie;
@@ -16,7 +17,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   const title = item.title || item.name || "Unknown";
   const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
   const year = (item.release_date || item.first_air_date || "").split("-")[0];
-  const { isPinned, pinItem, unpinItem } = useUserData();
+  const { isPinned, pinItem, unpinItem, isWatched } = useUserData();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -25,7 +26,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   }, [item.id, mediaType]);
 
   const pinned = isPinned(item.id, mediaType);
-
+  const watched = isWatched(item.id, mediaType);
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -132,9 +133,12 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
             </motion.button>
           </div>
 
+          {/* Watched Badge */}
+          {watched && <WatchedBadge />}
+
           {/* Rating Badge */}
           {item.vote_average > 0 && (
-            <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-background/80 backdrop-blur-sm px-1 py-0.5 rounded text-[10px] font-medium">
+            <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-background/80 backdrop-blur-sm px-1 py-0.5 rounded text-[10px] font-medium" style={watched ? { top: "1.75rem" } : {}}>
               <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
               {item.vote_average.toFixed(1)}
             </div>

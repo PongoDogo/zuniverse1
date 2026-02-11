@@ -1,12 +1,17 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { Film, Tv, Heart, Compass, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
+import TopTenRow from "@/components/TopTenRow";
+import WelcomeSection from "@/components/WelcomeSection";
 import ContinueWatchingRow from "@/components/ContinueWatchingRow";
 import PinnedFavorites from "@/components/PinnedFavorites";
 import ScrollToTop from "@/components/ScrollToTop";
 import CustomRecommendsButton from "@/components/CustomRecommendsButton";
+import PageTransition from "@/components/PageTransition";
 import {
   getTrending,
   getPopular,
@@ -19,9 +24,8 @@ import { applyUILayout, getUILayout } from "@/lib/uiLayout";
 import { useLanguage } from "@/hooks/useLanguage";
 
 const Index = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
-  // Apply saved theme and layout on mount
   useEffect(() => {
     applyTheme(getTheme());
     applyUILayout(getUILayout());
@@ -58,77 +62,124 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
-      <Navbar />
+    <PageTransition>
+      <div className="min-h-screen bg-background overflow-x-hidden transition-colors duration-300">
+        <Navbar />
 
-      {/* Hero Banner */}
-      <div className="min-h-[50vh] sm:min-h-[60vh] md:min-h-[75vh]">
-        {trending && <LayoutHeroBanner items={trending} />}
-      </div>
-
-      {/* Content Rows */}
-      <div className="relative z-10 -mt-16 sm:-mt-20 space-y-6 sm:space-y-8 pb-8 sm:pb-16">
-        <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
-          
-          {/* Pinned Favorites - Only show if user has pinned items */}
-          <PinnedFavorites />
-
-          {/* Continue Watching */}
-          <ContinueWatchingRow />
-
-          <MediaRow
-            title={t("trendingNow")}
-            items={trending || []}
-            isLoading={trendingLoading}
-          />
-
-          <MediaRow
-            title={t("popularMovies")}
-            items={popularMovies || []}
-            isLoading={popularMoviesLoading}
-          />
-
-          <MediaRow
-            title={t("nowPlaying")}
-            items={nowPlaying || []}
-            isLoading={nowPlayingLoading}
-          />
-
-          <MediaRow
-            title={t("popularTVShows")}
-            items={popularTV || []}
-            isLoading={popularTVLoading}
-          />
-
-          <MediaRow
-            title={t("onTheAir")}
-            items={onTheAir || []}
-            isLoading={onTheAirLoading}
-          />
-
-          <MediaRow
-            title={t("topRated")}
-            items={topRatedMovies || []}
-            isLoading={topRatedMoviesLoading}
-          />
+        {/* Hero Banner */}
+        <div className="min-h-[50vh] sm:min-h-[60vh] md:min-h-[75vh]">
+          {trending && <LayoutHeroBanner items={trending} />}
         </div>
-      </div>
 
-      {/* Scroll To Top */}
-      <ScrollToTop />
+        {/* Content Rows */}
+        <div className="relative z-10 -mt-16 sm:-mt-20 space-y-6 sm:space-y-8 pb-8 sm:pb-16">
+          <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
+            
+            {/* Welcome Section - signed in users */}
+            <WelcomeSection />
 
-      {/* Custom Recommends Button */}
-      <CustomRecommendsButton />
+            {/* Pinned Favorites */}
+            <PinnedFavorites />
 
-      {/* Footer */}
-      <footer className="border-t border-border py-8 sm:py-10 pb-24 safe-bottom bg-card/50">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-muted-foreground text-sm">
-            © 2024 CineTorrio. {t("poweredBy")}
-          </p>
+            {/* Continue Watching */}
+            <ContinueWatchingRow />
+
+            {/* Top 10 This Week */}
+            <TopTenRow items={trending || []} isLoading={trendingLoading} />
+
+            <MediaRow
+              title={t("trendingNow")}
+              items={trending || []}
+              isLoading={trendingLoading}
+            />
+
+            <MediaRow
+              title={t("popularMovies")}
+              items={popularMovies || []}
+              isLoading={popularMoviesLoading}
+            />
+
+            <MediaRow
+              title={t("nowPlaying")}
+              items={nowPlaying || []}
+              isLoading={nowPlayingLoading}
+            />
+
+            <MediaRow
+              title={t("popularTVShows")}
+              items={popularTV || []}
+              isLoading={popularTVLoading}
+            />
+
+            <MediaRow
+              title={t("onTheAir")}
+              items={onTheAir || []}
+              isLoading={onTheAirLoading}
+            />
+
+            <MediaRow
+              title={t("topRated")}
+              items={topRatedMovies || []}
+              isLoading={topRatedMoviesLoading}
+            />
+          </div>
         </div>
-      </footer>
-    </div>
+
+        <ScrollToTop />
+        <CustomRecommendsButton />
+
+        {/* Enhanced Footer */}
+        <footer className="border-t border-border py-8 sm:py-10 pb-24 safe-bottom bg-card/50">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8">
+              {/* Brand */}
+              <div>
+                <h3 className="font-bold text-lg mb-2 text-gradient">CineTorrio</h3>
+                <p className="text-sm text-muted-foreground">
+                  {language === "el" 
+                    ? "Η αγαπημένη σου πλατφόρμα streaming" 
+                    : "Your favorite streaming platform"}
+                </p>
+              </div>
+
+              {/* Quick Links */}
+              <div>
+                <h4 className="font-semibold text-sm mb-3 text-muted-foreground uppercase tracking-wider">{t("quickLinks")}</h4>
+                <div className="flex flex-wrap gap-2">
+                  <Link to="/movies" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Film className="w-3 h-3" /> {t("movies")}
+                  </Link>
+                  <Link to="/tv" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Tv className="w-3 h-3" /> {t("tvShows")}
+                  </Link>
+                  <Link to="/discover" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Compass className="w-3 h-3" /> {t("discover")}
+                  </Link>
+                  <Link to="/favorites" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Heart className="w-3 h-3" /> {t("favorites")}
+                  </Link>
+                  <Link to="/collection" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> {t("myCollection")}
+                  </Link>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">{t("version")} 2.0.0</p>
+                <p className="text-xs text-muted-foreground mt-1">© 2024 CineTorrio</p>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 text-center">
+              <p className="text-muted-foreground text-xs">
+                {t("poweredBy")}
+              </p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </PageTransition>
   );
 };
 

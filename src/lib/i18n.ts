@@ -165,6 +165,63 @@ export const translations = {
     
     // Footer
     poweredBy: "Powered by TMDB",
+    version: "Version",
+    quickLinks: "Quick Links",
+
+    // Top 10
+    topTenThisWeek: "Top 10 This Week",
+
+    // Welcome
+    welcomeBack: "Welcome back",
+    itemsInCollection: "items in your collection",
+    hours: "Hours",
+
+    // Search enhanced
+    searchHistory: "Recent Searches",
+    trendingSearches: "Trending Searches",
+    clearHistory: "Clear History",
+    resultsFor: "results for",
+    filterAll: "All",
+    filterMovies: "Movies Only",
+    filterTVShows: "TV Shows Only",
+
+    // Discover enhanced
+    sortBy: "Sort by",
+    popularity: "Popularity",
+    rating: "Rating",
+    releaseDate: "Release Date",
+    revenue: "Revenue",
+    yearRange: "Year Range",
+    minimumRating: "Min Rating",
+    totalResults: "total results",
+    loadMore: "Load More",
+    selectGenre: "Select genre",
+
+    // Collection enhanced
+    sortDateWatched: "Date Watched",
+    sortRating: "Rating",
+    sortTitleAZ: "Title A-Z",
+    sortReleaseDate: "Release Date",
+    searchCollection: "Search collection...",
+    gridView: "Grid",
+    listView: "List",
+    exportCollection: "Export",
+    avgRating: "Avg Rating",
+    genreBreakdown: "Genre Breakdown",
+
+    // Favorites enhanced
+    sortDateAdded: "Date Added",
+
+    // Profile
+    profilePage: "Profile",
+    editDisplayName: "Edit Display Name",
+    displayName: "Display Name",
+    preferences: "Preferences",
+    watchStatistics: "Watch Statistics",
+    accountManagement: "Account Management",
+
+    // Keyboard shortcuts
+    searchShortcut: "Ctrl+K",
   },
   el: {
     // Navigation
@@ -326,6 +383,63 @@ export const translations = {
     
     // Footer
     poweredBy: "Με την υποστήριξη του TMDB",
+    version: "Έκδοση",
+    quickLinks: "Γρήγοροι Σύνδεσμοι",
+
+    // Top 10
+    topTenThisWeek: "Top 10 αυτή την Εβδομάδα",
+
+    // Welcome
+    welcomeBack: "Καλώς ήρθες",
+    itemsInCollection: "στοιχεία στη συλλογή σου",
+    hours: "Ώρες",
+
+    // Search enhanced
+    searchHistory: "Πρόσφατες Αναζητήσεις",
+    trendingSearches: "Δημοφιλείς Αναζητήσεις",
+    clearHistory: "Καθαρισμός",
+    resultsFor: "αποτελέσματα για",
+    filterAll: "Όλα",
+    filterMovies: "Μόνο Ταινίες",
+    filterTVShows: "Μόνο Σειρές",
+
+    // Discover enhanced
+    sortBy: "Ταξινόμηση",
+    popularity: "Δημοτικότητα",
+    rating: "Βαθμολογία",
+    releaseDate: "Ημερομηνία",
+    revenue: "Έσοδα",
+    yearRange: "Εύρος Ετών",
+    minimumRating: "Ελάχιστη Βαθμολογία",
+    totalResults: "συνολικά αποτελέσματα",
+    loadMore: "Φόρτωσε Περισσότερα",
+    selectGenre: "Επιλέξτε είδος",
+
+    // Collection enhanced
+    sortDateWatched: "Ημ. Παρακολούθησης",
+    sortRating: "Βαθμολογία",
+    sortTitleAZ: "Τίτλος Α-Ω",
+    sortReleaseDate: "Ημ. Κυκλοφορίας",
+    searchCollection: "Αναζήτηση στη συλλογή...",
+    gridView: "Πλέγμα",
+    listView: "Λίστα",
+    exportCollection: "Εξαγωγή",
+    avgRating: "Μέση Βαθμολογία",
+    genreBreakdown: "Είδη",
+
+    // Favorites enhanced
+    sortDateAdded: "Ημ. Προσθήκης",
+
+    // Profile
+    profilePage: "Προφίλ",
+    editDisplayName: "Επεξεργασία Ονόματος",
+    displayName: "Εμφανιζόμενο Όνομα",
+    preferences: "Προτιμήσεις",
+    watchStatistics: "Στατιστικά Παρακολούθησης",
+    accountManagement: "Διαχείριση Λογαριασμού",
+
+    // Keyboard shortcuts
+    searchShortcut: "Ctrl+K",
   },
 } as const;
 
