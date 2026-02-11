@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Server, Check, Search, Star, Flag, Zap, Archive } from "lucide-react";
+import { Server, Check, Search, Star, Flag, Zap, Archive, Heart } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +20,8 @@ import {
   SourceCategory,
   savePreferredSource,
 } from "@/lib/streamingSources";
+import { getSourceFavorites, toggleSourceFavorite, isSourceFavorite } from "@/lib/sourceFavorites";
 
-// Re-export for backward compatibility
 export type { StreamingSource };
 export { streamingSources };
 
@@ -43,6 +43,7 @@ const StreamingSourceSelector = ({
   onSourceChange,
 }: StreamingSourceSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [, setRefresh] = useState(0);
   const sourcesByCategory = getSourcesByCategory();
 
   const handleSourceChange = (source: StreamingSource) => {
@@ -50,11 +51,20 @@ const StreamingSourceSelector = ({
     onSourceChange(source);
   };
 
+  const handleToggleFavorite = (e: React.MouseEvent, sourceId: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    toggleSourceFavorite(sourceId);
+    setRefresh((r) => r + 1);
+  };
+
   const filteredSources = searchQuery
     ? streamingSources.filter((source) =>
         source.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : null;
+
+  const favoriteSources = streamingSources.filter((s) => isSourceFavorite(s.id));
 
   return (
     <DropdownMenu>
@@ -64,7 +74,7 @@ const StreamingSourceSelector = ({
           <span className="max-w-[100px] sm:max-w-none truncate">{currentSource.name}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 p-0">
+      <DropdownMenuContent align="end" className="w-72 p-0">
         {/* Search */}
         <div className="p-2 border-b border-border">
           <div className="relative">
@@ -78,10 +88,34 @@ const StreamingSourceSelector = ({
           </div>
         </div>
 
-        <ScrollArea className="h-[350px]">
+        <ScrollArea className="h-[380px]">
           <div className="p-1">
+            {/* Favorite Sources Section */}
+            {!searchQuery && favoriteSources.length > 0 && (
+              <>
+                <DropdownMenuLabel className="flex items-center gap-2 text-xs text-primary py-2">
+                  <Heart className="w-3.5 h-3.5 fill-primary" />
+                  Your Favorites
+                </DropdownMenuLabel>
+                {favoriteSources.map((source) => (
+                  <DropdownMenuItem
+                    key={`fav-${source.id}`}
+                    onClick={() => handleSourceChange(source)}
+                    className="flex items-center justify-between cursor-pointer ml-2"
+                  >
+                    <span>{source.name}</span>
+                    <div className="flex items-center gap-1">
+                      {currentSource.id === source.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+              </>
+            )}
+
             {filteredSources ? (
-              // Show search results
               filteredSources.length > 0 ? (
                 filteredSources.map((source) => (
                   <DropdownMenuItem
@@ -95,9 +129,17 @@ const StreamingSourceSelector = ({
                       </span>
                       {source.name}
                     </div>
-                    {currentSource.id === source.id && (
-                      <Check className="w-4 h-4 text-primary" />
-                    )}
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => handleToggleFavorite(e, source.id)}
+                        className="p-0.5 hover:text-primary transition-colors"
+                      >
+                        <Heart className={`w-3 h-3 ${isSourceFavorite(source.id) ? "fill-primary text-primary" : ""}`} />
+                      </button>
+                      {currentSource.id === source.id && (
+                        <Check className="w-4 h-4 text-primary" />
+                      )}
+                    </div>
                   </DropdownMenuItem>
                 ))
               ) : (
@@ -106,7 +148,6 @@ const StreamingSourceSelector = ({
                 </p>
               )
             ) : (
-              // Show categorized sources
               categoryOrder.map((category) => {
                 const sources = sourcesByCategory[category];
                 if (sources.length === 0) return null;
@@ -125,10 +166,18 @@ const StreamingSourceSelector = ({
                         onClick={() => handleSourceChange(source)}
                         className="flex items-center justify-between cursor-pointer ml-2"
                       >
-                        {source.name}
-                        {currentSource.id === source.id && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
+                        <span>{source.name}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => handleToggleFavorite(e, source.id)}
+                            className="p-0.5 hover:text-primary transition-colors"
+                          >
+                            <Heart className={`w-3 h-3 ${isSourceFavorite(source.id) ? "fill-primary text-primary" : ""}`} />
+                          </button>
+                          {currentSource.id === source.id && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </div>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
