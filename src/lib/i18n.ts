@@ -233,6 +233,19 @@ export const translations = {
     nextEpisodeIn: "Next episode in",
     searchFavorites: "Search favorites...",
     suggestedGenres: "Suggested genres based on your favorites",
+
+    // Phase 5 & 6
+    keyboardShortcuts: "Keyboard Shortcuts",
+    copyLink: "Copy Link",
+    linkCopied: "Link copied!",
+    shareCollection: "Share Collection",
+    errorOccurred: "Something went wrong",
+    offlineNotice: "You're offline. Some features may be limited.",
+    lastSynced: "Last synced",
+    neverSynced: "Never synced",
+    justNow: "Just now",
+    minutesAgo: "minutes ago",
+    hoursAgo: "hours ago",
   },
   el: {
     // Navigation
@@ -462,6 +475,19 @@ export const translations = {
     nextEpisodeIn: "Επόμενο επεισόδιο σε",
     searchFavorites: "Αναζήτηση αγαπημένων...",
     suggestedGenres: "Προτεινόμενα είδη βάσει αγαπημένων",
+
+    // Phase 5 & 6
+    keyboardShortcuts: "Συντομεύσεις Πληκτρολογίου",
+    copyLink: "Αντιγραφή Συνδέσμου",
+    linkCopied: "Ο σύνδεσμος αντιγράφηκε!",
+    shareCollection: "Κοινοποίηση Συλλογής",
+    errorOccurred: "Κάτι πήγε στραβά",
+    offlineNotice: "Είστε εκτός σύνδεσης. Ορισμένες λειτουργίες μπορεί να είναι περιορισμένες.",
+    lastSynced: "Τελευταίος συγχρονισμός",
+    neverSynced: "Ποτέ",
+    justNow: "Μόλις τώρα",
+    minutesAgo: "λεπτά πριν",
+    hoursAgo: "ώρες πριν",
   },
 } as const;
 
