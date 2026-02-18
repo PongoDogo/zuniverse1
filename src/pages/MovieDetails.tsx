@@ -10,6 +10,7 @@ import MarkAsWatchedButton from "@/components/MarkAsWatchedButton";
 import PinButton from "@/components/PinButton";
 import TrailerModal from "@/components/TrailerModal";
 import StarRating from "@/components/StarRating";
+import ActorGraphModal from "@/components/ActorGraphModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,6 +28,7 @@ const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
   const movieId = parseInt(id || "0");
   const [showTrailer, setShowTrailer] = useState(false);
+  const [actorGraph, setActorGraph] = useState<{ id: number; name: string; image: string | null } | null>(null);
   const { t, language } = useLanguage();
   const { isWatched, getUserRating, updateRating, isSignedIn } = useUserData();
   
@@ -286,6 +288,12 @@ const MovieDetails = () => {
                     <p className="text-xs text-muted-foreground line-clamp-1">
                       {person.character}
                     </p>
+                    <button
+                      onClick={() => setActorGraph({ id: person.id, name: person.name, image: person.profile_path })}
+                      className="mt-1 text-[10px] text-primary hover:underline cursor-pointer"
+                    >
+                      {language === "el" ? "Συνδέσεις 🕸️" : "Connections 🕸️"}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -311,6 +319,16 @@ const MovieDetails = () => {
         mediaId={movieId}
         title={movie.title || ""}
       />
+
+      {actorGraph && (
+        <ActorGraphModal
+          isOpen={!!actorGraph}
+          onClose={() => setActorGraph(null)}
+          actorId={actorGraph.id}
+          actorName={actorGraph.name}
+          actorImage={actorGraph.image}
+        />
+      )}
     </div>
   );
 };
