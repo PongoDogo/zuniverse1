@@ -9,6 +9,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import UILayoutSwitcher from "./UILayoutSwitcher";
 import SupabaseAuthButton from "./SupabaseAuthButton";
 import SyncStatus from "./SyncStatus";
+import KeyboardShortcutsHelp from "./KeyboardShortcutsHelp";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUILayout } from "@/hooks/useUILayout";
 
@@ -35,7 +36,7 @@ const Navbar = () => {
     setIsSearchOpen(false);
   }, [location.pathname]);
 
-  // Ctrl+K keyboard shortcut to open search
+  // Ctrl+K keyboard shortcut + openSearch event
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -47,8 +48,13 @@ const Navbar = () => {
         setIsMenuOpen(false);
       }
     };
+    const handleOpenSearch = () => setIsSearchOpen(true);
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("openSearch", handleOpenSearch);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("openSearch", handleOpenSearch);
+    };
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -187,6 +193,7 @@ const Navbar = () => {
               {/* UI Layout, Language, Theme, Notifications, Auth - Hidden on mobile */}
               <div className="hidden sm:flex items-center gap-1">
                 <SyncStatus />
+                <KeyboardShortcutsHelp />
                 <UILayoutSwitcher />
                 <LanguageSwitcher />
                 <ThemeSwitcher />
