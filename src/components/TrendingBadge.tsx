@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Flame } from "lucide-react";
+import { TrendingUp, Flame, Sparkles } from "lucide-react";
 
 interface TrendingBadgeProps {
   rank?: number;
@@ -19,7 +19,7 @@ const TrendingBadge = ({ rank, type = "trending" }: TrendingBadgeProps) => {
       text: "Hot",
     },
     new: {
-      icon: TrendingUp,
+      icon: Sparkles,
       bg: "bg-gradient-to-r from-green-500 to-emerald-500",
       text: "New",
     },
@@ -30,9 +30,10 @@ const TrendingBadge = ({ rank, type = "trending" }: TrendingBadgeProps) => {
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-semibold text-white shadow-lg ${badge.bg}`}
+      initial={{ scale: 0, opacity: 0, rotate: -12 }}
+      animate={{ scale: 1, opacity: 1, rotate: 0 }}
+      whileHover={{ scale: 1.1 }}
+      className={`badge-neon inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold text-white ${badge.bg}`}
     >
       <Icon className="w-3 h-3" />
       {rank ? `#${rank}` : badge.text}

@@ -47,10 +47,10 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
   if (isLoading) {
     return (
       <div className="relative">
-        <div className="h-7 w-48 bg-secondary rounded animate-pulse mb-3" />
+        <div className="h-7 w-48 skeleton-wave rounded mb-3" />
         <div className="flex gap-4 overflow-hidden pb-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex-shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] bg-secondary rounded-lg animate-pulse" />
+            <div key={i} className="flex-shrink-0 w-[180px] sm:w-[220px] aspect-[2/3] skeleton-wave rounded-lg" />
           ))}
         </div>
       </div>
@@ -61,71 +61,81 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
 
   return (
     <div className="relative group/row overflow-hidden">
-      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2">
-        <span className="text-gradient">🔥 {t("topTenThisWeek")}</span>
-      </h2>
+      <motion.h2 
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2"
+      >
+        <span className="text-gradient text-neon">🔥 {t("topTenThisWeek")}</span>
+      </motion.h2>
 
-      <button
+      <motion.button
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => scroll("left")}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
           canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <ChevronLeft className="w-5 h-5" />
-      </button>
-      <button
+      </motion.button>
+      <motion.button
+        whileHover={{ scale: 1.15 }}
+        whileTap={{ scale: 0.9 }}
         onClick={() => scroll("right")}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-background/90 backdrop-blur-sm items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hidden md:flex ${
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
           canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <ChevronRight className="w-5 h-5" />
-      </button>
+      </motion.button>
 
-      <div
-        ref={scrollRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
-      >
-        {topItems.map((item, index) => {
-          const title = item.title || item.name || "Unknown";
-          const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
+      <div className="scroll-indicator">
+        <div
+          ref={scrollRef}
+          className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-hide pb-2 -mx-3 px-3 sm:-mx-4 sm:px-4"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+        >
+          {topItems.map((item, index) => {
+            const title = item.title || item.name || "Unknown";
+            const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
 
-          return (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="flex-shrink-0 relative group"
-            >
-              <Link to={`/${mediaType}/${item.id}`} className="flex items-end">
-                {/* Large rank number */}
-                <span
-                  className="text-[80px] sm:text-[100px] md:text-[120px] font-black leading-none select-none"
-                  style={{
-                    WebkitTextStroke: "2px hsl(var(--primary))",
-                    WebkitTextFillColor: "transparent",
-                    marginRight: "-20px",
-                    zIndex: 1,
-                    fontFamily: "'Bebas Neue', sans-serif",
-                  }}
-                >
-                  {index + 1}
-                </span>
-                <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover">
-                  <img
-                    src={getImageUrl(item.poster_path)}
-                    alt={title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-              </Link>
-            </motion.div>
-          );
-        })}
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06, type: "spring", stiffness: 150 }}
+                className="flex-shrink-0 relative group"
+              >
+                <Link to={`/${mediaType}/${item.id}`} className="flex items-end">
+                  {/* Large rank number with neon effect */}
+                  <span
+                    className="text-[80px] sm:text-[100px] md:text-[120px] font-black leading-none select-none transition-all duration-300 group-hover:text-neon"
+                    style={{
+                      WebkitTextStroke: "2px hsl(var(--primary))",
+                      WebkitTextFillColor: "transparent",
+                      marginRight: "-20px",
+                      zIndex: 1,
+                      fontFamily: "'Bebas Neue', sans-serif",
+                    }}
+                  >
+                    {index + 1}
+                  </span>
+                  <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover card-fancy">
+                    <img
+                      src={getImageUrl(item.poster_path)}
+                      alt={title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
