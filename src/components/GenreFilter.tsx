@@ -106,12 +106,12 @@ const GenreFilter = ({ selectedGenres, onGenresChange, mediaType = "movie" }: Ge
               return (
                 <span
                   key={genreId}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full"
+                  className="chip-fancy active inline-flex items-center gap-1"
                 >
                   {getGenreName(genre)}
                   <button
                     onClick={() => toggleGenre(genreId)}
-                    className="hover:text-primary-foreground"
+                    className="hover:opacity-70 transition-opacity"
                   >
                     <X className="w-3 h-3" />
                   </button>
