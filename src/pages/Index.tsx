@@ -129,7 +129,8 @@ const Index = () => {
         <CustomRecommendsButton />
 
         {/* Enhanced Footer */}
-        <footer className="border-t border-border py-8 sm:py-10 pb-24 safe-bottom bg-card/50">
+        <div className="section-divider" />
+        <footer className="py-8 sm:py-10 pb-24 safe-bottom bg-card/30 backdrop-blur-sm">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8">
               {/* Brand */}
