@@ -163,7 +163,17 @@ const Search = () => {
             )}
 
             {!isLoading && debouncedQuery && results.length === 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="text-center py-16"
+              >
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <SearchIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                </motion.div>
                 <p className="text-muted-foreground text-lg">{t("noResults")} "{debouncedQuery}"</p>
               </motion.div>
             )}

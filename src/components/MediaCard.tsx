@@ -83,9 +83,10 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
             onLoad={() => setImageLoaded(true)}
           />
           
-          {/* Hover glow effect */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent" />
+          {/* Hover glow overlay */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-t from-primary/25 via-primary/5 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-accent/10" />
           </div>
           
           {/* Overlay - Only on hover for desktop */}
