@@ -135,15 +135,15 @@ const Navbar = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-0.5">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`nav-link-fancy px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                     isActive(link.href)
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      ? "bg-primary/15 text-primary active"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {t(link.labelKey)}
