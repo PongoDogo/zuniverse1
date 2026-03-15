@@ -319,6 +319,212 @@
     background-clip: text;
   }
 
+  /* ============================
+     FANCY UI EFFECTS (uiverse.io inspired)
+     ============================ */
+
+  /* Animated border glow for inputs */
+  .fancy-input {
+    position: relative;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fancy-input:focus-within {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15), 0 0 20px hsl(var(--primary) / 0.1);
+  }
+
+  /* Fancy button with sweep effect */
+  .btn-fancy {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+
+  .btn-fancy::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary-foreground) / 0.1), transparent);
+    transition: left 0.5s ease;
+    z-index: -1;
+  }
+
+  .btn-fancy:hover::before {
+    left: 100%;
+  }
+
+  .btn-fancy:hover {
+    box-shadow: 0 0 25px hsl(var(--primary) / 0.4), 0 0 50px hsl(var(--primary) / 0.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-fancy:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Animated nav link underline */
+  .nav-link-fancy {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-link-fancy::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: hsl(var(--primary));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(-50%);
+    border-radius: 2px;
+  }
+
+  .nav-link-fancy:hover::after,
+  .nav-link-fancy.active::after {
+    width: 80%;
+  }
+
+  /* Fancy card with animated border */
+  .card-fancy {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-fancy::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.3), transparent 40%, transparent 60%, hsl(var(--accent) / 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .card-fancy:hover::before {
+    opacity: 1;
+  }
+
+  .card-fancy:hover {
+    box-shadow: 0 8px 40px hsl(var(--primary) / 0.15);
+  }
+
+  /* Pulse dot for notifications */
+  .pulse-dot {
+    position: relative;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    background: hsl(var(--primary));
+    opacity: 0;
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.8); }
+  }
+
+  /* Fancy loading spinner */
+  .spinner-fancy {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    position: relative;
+    animation: spinner-rotate 1s linear infinite;
+  }
+
+  .spinner-fancy::before,
+  .spinner-fancy::after {
+    content: '';
+    position: absolute;
+    border-radius: inherit;
+  }
+
+  .spinner-fancy::before {
+    inset: 0;
+    background: conic-gradient(from 0deg, transparent, hsl(var(--primary)));
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 0);
+  }
+
+  .spinner-fancy::after {
+    width: 6px;
+    height: 6px;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background: hsl(var(--primary));
+    border-radius: 50%;
+  }
+
+  @keyframes spinner-rotate {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Fancy chip / badge with gradient border */
+  .chip-fancy {
+    position: relative;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: hsl(var(--secondary));
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 1px solid hsl(var(--border));
+  }
+
+  .chip-fancy:hover {
+    background: hsl(var(--primary) / 0.15);
+    border-color: hsl(var(--primary) / 0.5);
+    color: hsl(var(--primary));
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.15);
+  }
+
+  .chip-fancy.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 16px hsl(var(--primary) / 0.3);
+  }
+
+  /* Glassmorphism panel */
+  .glass-panel {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.5);
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.2);
+  }
+
+  /* Hover lift with tilt */
+  .hover-tilt {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-tilt:hover {
+    transform: translateY(-6px) rotateX(2deg);
+    box-shadow: 0 20px 40px hsl(0 0% 0% / 0.3);
+  }
+
   /* Interactive card effects */
   .media-card-hover {
     @apply transition-all duration-300 ease-out;
