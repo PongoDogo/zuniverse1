@@ -68,9 +68,9 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
     >
       <Link to={`/${mediaType}/${item.id}`}>
         <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-fancy card-shadow media-card-hover">
-          {/* Shimmer placeholder */}
+          {/* Wave skeleton placeholder */}
           {!imageLoaded && (
-            <div className="absolute inset-0 shimmer" />
+            <div className="absolute inset-0 skeleton-wave" />
           )}
           <img
             src={getImageUrl(item.poster_path)}
