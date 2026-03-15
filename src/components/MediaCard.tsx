@@ -108,7 +108,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={handleFavoriteClick}
-              className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
+              className="p-1.5 rounded-full bg-background/70 backdrop-blur-md transition-all duration-200 hover:bg-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
