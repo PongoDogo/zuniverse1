@@ -67,7 +67,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
       transition={{ duration: 0.2 }}
     >
       <Link to={`/${mediaType}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover">
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-fancy card-shadow media-card-hover">
           {/* Shimmer placeholder */}
           {!imageLoaded && (
             <div className="absolute inset-0 shimmer" />
