@@ -191,7 +191,7 @@ const Navbar = () => {
               </button>
 
               {/* UI Layout, Language, Theme, Notifications, Auth - Hidden on mobile */}
-              <div className="hidden sm:flex items-center gap-1">
+              <div className="hidden sm:flex items-center gap-1.5">
                 <SyncStatus />
                 <KeyboardShortcutsHelp />
                 <UILayoutSwitcher />

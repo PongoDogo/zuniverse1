@@ -87,14 +87,14 @@ const Search = () => {
           <div className="container mx-auto px-4">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mb-8">
               <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">{t("search")}</h1>
-              <div className="relative">
-                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <div className="relative fancy-input rounded-xl">
+                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                 <Input
                   type="text"
                   placeholder={t("searchPlaceholder")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full pl-12 pr-12 py-6 text-lg bg-card border-0 rounded-xl focus-visible:ring-primary"
+                  className="w-full pl-12 pr-12 py-6 text-lg bg-transparent border-0 rounded-xl shadow-none focus-visible:ring-0 focus-visible:shadow-none"
                 />
                 {query && (
                   <Button variant="ghost" size="icon" onClick={() => setQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
