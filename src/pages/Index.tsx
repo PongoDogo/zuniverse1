@@ -172,7 +172,8 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="border-t border-border pt-4 text-center">
+            <div className="section-divider mb-4" />
+            <div className="text-center">
               <p className="text-muted-foreground text-xs">
                 {t("poweredBy")}
               </p>
