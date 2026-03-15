@@ -153,9 +153,12 @@ const Search = () => {
             )}
 
             {isLoading && debouncedQuery && (
-              <div className="flex flex-col items-center justify-center py-16 gap-4">
-                <div className="spinner-fancy" />
-                <p className="text-sm text-muted-foreground animate-pulse">{t("search")}...</p>
+              <div className="flex flex-col items-center justify-center py-16 gap-6">
+                <div className="loader-orbit" />
+                <div className="loader-dna">
+                  <span /><span /><span /><span /><span />
+                </div>
+                <p className="text-sm text-muted-foreground typewriter-cursor">{t("search")}</p>
               </div>
             )}
 
