@@ -142,7 +142,7 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 pt-2">
-                  <Button asChild size="default" className="gap-2 text-sm sm:text-base h-10 sm:h-11 px-4 sm:px-6 glow-shadow">
+                  <Button asChild size="default" className="gap-2 text-sm sm:text-base h-10 sm:h-12 px-5 sm:px-7 btn-fancy glow-shadow font-semibold">
                     <Link to={`/${mediaType}/${current.id}/watch`}>
                       <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
                       {language === "el" ? "Παρακολούθηση" : "Watch Now"}
