@@ -21,10 +21,10 @@ const WelcomeSection = () => {
   const displayName = auth.user?.email?.split("@")[0] || (language === "el" ? "Χρήστη" : "User");
 
   const statItems = [
-    { icon: Film, value: stats.moviesWatched, label: t("moviesCount"), color: "text-blue-400", bg: "bg-blue-500/10" },
-    { icon: Tv, value: stats.episodesWatched, label: t("episodesCount"), color: "text-purple-400", bg: "bg-purple-500/10" },
-    { icon: Clock, value: Math.round(stats.totalWatchTime / 60), label: language === "el" ? "Ώρες" : "Hours", color: "text-green-400", bg: "bg-green-500/10" },
-    { icon: Trophy, value: achievements.length, label: t("achievements"), color: "text-yellow-400", bg: "bg-yellow-500/10" },
+    { icon: Film, value: stats.moviesWatched, label: t("moviesCount"), color: "text-blue-400", bg: "from-blue-500/20 to-blue-600/5" },
+    { icon: Tv, value: stats.episodesWatched, label: t("episodesCount"), color: "text-purple-400", bg: "from-purple-500/20 to-purple-600/5" },
+    { icon: Clock, value: Math.round(stats.totalWatchTime / 60), label: language === "el" ? "Ώρες" : "Hours", color: "text-green-400", bg: "from-green-500/20 to-green-600/5" },
+    { icon: Trophy, value: achievements.length, label: t("achievements"), color: "text-yellow-400", bg: "from-yellow-500/20 to-yellow-600/5" },
   ];
 
   return (
@@ -48,14 +48,18 @@ const WelcomeSection = () => {
         {statItems.map((item, index) => (
           <motion.div
             key={item.label}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
-            className={`${item.bg} rounded-xl p-3 flex items-center gap-3`}
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: index * 0.08, type: "spring", stiffness: 200 }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            className={`bg-gradient-to-br ${item.bg} rounded-xl p-3 flex items-center gap-3 border border-border/30 card-fancy backdrop-blur-sm`}
           >
-            <div className={`p-2 rounded-lg ${item.bg}`}>
+            <motion.div 
+              className="p-2.5 rounded-lg bg-background/40"
+              whileHover={{ rotate: 12 }}
+            >
               <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${item.color}`} />
-            </div>
+            </motion.div>
             <div>
               <p className="text-lg font-bold leading-none">
                 <AnimatedCounter value={item.value} />
