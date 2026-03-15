@@ -73,7 +73,7 @@ const VideoPlayer = ({
   const startTimeRef = useRef<number>(Date.now());
   const lastUpdateRef = useRef<number>(0);
   const hasTrackedViewRef = useRef(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionWatchTimeRef = useRef<number>(0);
 
   const estimatedDurationSeconds = (mediaType === "movie" ? MOVIE_DURATION : EPISODE_DURATION) * 60;
