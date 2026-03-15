@@ -72,16 +72,16 @@ const GenreFilter = ({ selectedGenres, onGenresChange, mediaType = "movie" }: Ge
             <ChevronDown className="w-3 h-3" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64 p-2 max-h-80 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-1">
+        <DropdownMenuContent align="start" className="w-72 p-3 max-h-80 overflow-y-auto glass-panel">
+          <div className="grid grid-cols-2 gap-1.5">
             {MOVIE_GENRES.map((genre) => (
               <button
                 key={genre.id}
                 onClick={() => toggleGenre(genre.id)}
-                className={`text-left px-2 py-1.5 rounded text-sm transition-colors ${
+                className={`text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                   selectedGenres.includes(genre.id)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-secondary"
+                    ? "bg-primary text-primary-foreground shadow-[0_0_10px_hsl(var(--primary)/0.3)]"
+                    : "hover:bg-secondary/80 text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {getGenreName(genre)}
