@@ -67,7 +67,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
       transition={{ duration: 0.2 }}
     >
       <Link to={`/${mediaType}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover">
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-fancy card-shadow media-card-hover">
           {/* Shimmer placeholder */}
           {!imageLoaded && (
             <div className="absolute inset-0 shimmer" />
@@ -108,7 +108,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={handleFavoriteClick}
-              className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
+              className="p-1.5 rounded-full bg-background/70 backdrop-blur-md transition-all duration-200 hover:bg-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
@@ -122,7 +122,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={handlePinClick}
-              className="p-1.5 rounded-full bg-background/80 backdrop-blur-sm transition-all hover:bg-primary"
+              className="p-1.5 rounded-full bg-background/70 backdrop-blur-md transition-all duration-200 hover:bg-primary hover:shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
               aria-label={pinned ? "Unpin" : "Pin to home"}
             >
               <Pin

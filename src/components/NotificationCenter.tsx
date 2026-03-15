@@ -49,37 +49,38 @@ const NotificationCenter = () => {
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <motion.button
-          whileTap={{ scale: 0.95 }}
-          className="relative p-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-colors"
+          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          className="relative p-2 rounded-lg bg-secondary/80 hover:bg-secondary transition-all duration-300"
         >
           <Bell className="w-5 h-5" />
           {unreadCount > 0 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-[10px] font-bold flex items-center justify-center"
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-[10px] font-bold flex items-center justify-center pulse-dot text-primary-foreground"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </motion.span>
           )}
         </motion.button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 p-0">
+      <DropdownMenuContent align="end" className="w-80 p-0 glass-panel overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b border-border">
-          <h3 className="font-semibold">Notifications</h3>
+        <div className="flex items-center justify-between p-3 border-b border-border/50 bg-secondary/30">
+          <h3 className="font-semibold text-sm">Notifications</h3>
           {notifications.length > 0 && (
             <div className="flex gap-1">
               <button
                 onClick={handleMarkAllRead}
-                className="p-1.5 rounded hover:bg-secondary transition-colors"
+                className="p-1.5 rounded-md hover:bg-primary/15 hover:text-primary transition-all duration-200"
                 title="Mark all as read"
               >
                 <Check className="w-4 h-4" />
               </button>
               <button
                 onClick={handleClearAll}
-                className="p-1.5 rounded hover:bg-secondary transition-colors text-destructive"
+                className="p-1.5 rounded-md hover:bg-destructive/15 hover:text-destructive transition-all duration-200"
                 title="Clear all"
               >
                 <Trash2 className="w-4 h-4" />
@@ -91,16 +92,19 @@ const NotificationCenter = () => {
         {/* Notifications */}
         <div className="max-h-[300px] overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">
+            <div className="py-10 text-center text-muted-foreground text-sm">
+              <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
               No notifications
             </div>
           ) : (
-            notifications.map((notification) => (
+            notifications.map((notification, i) => (
               <motion.div
                 key={notification.id}
-                layout
-                className={`p-3 border-b border-border last:border-0 transition-colors ${
-                  !notification.read ? "bg-primary/5" : ""
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`p-3 border-b border-border/30 last:border-0 transition-all duration-200 hover:bg-secondary/50 ${
+                  !notification.read ? "bg-primary/5 border-l-2 border-l-primary" : ""
                 }`}
               >
                 {notification.mediaId && notification.mediaType ? (
@@ -118,7 +122,7 @@ const NotificationCenter = () => {
                     </p>
                   </Link>
                 ) : (
-                  <div onClick={() => handleMarkRead(notification.id)}>
+                  <div onClick={() => handleMarkRead(notification.id)} className="cursor-pointer">
                     <p className="text-sm font-medium">{notification.title}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {notification.message}
