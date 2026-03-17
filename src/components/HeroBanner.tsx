@@ -225,13 +225,15 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
         </div>
 
         {/* Thumbnail preview strip */}
-        <div className="absolute bottom-4 right-4 hidden lg:flex items-center gap-2">
+        <div className="absolute bottom-4 right-4 hidden lg:flex items-center gap-2 z-10">
           {featuredItems.slice(0, 5).map((item, i) => (
             <button
               key={item.id}
               onClick={() => setCurrentIndex(i)}
-              className={`relative w-16 h-10 rounded overflow-hidden transition-all ${
-                i === currentIndex ? "ring-2 ring-primary scale-110" : "opacity-60 hover:opacity-100"
+              className={`relative w-16 h-10 rounded-lg overflow-hidden transition-all duration-300 border ${
+                i === currentIndex 
+                  ? "ring-2 ring-primary scale-110 border-primary/50 shadow-[0_0_12px_hsl(var(--primary)/0.3)]" 
+                  : "opacity-50 hover:opacity-90 border-transparent hover:border-primary/30"
               }`}
             >
               <img
