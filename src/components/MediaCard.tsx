@@ -4,7 +4,7 @@ import { Play, Star, Heart, Pin } from "lucide-react";
 import { Movie, getImageUrl } from "@/lib/tmdb";
 import { useUserData } from "@/hooks/useUserData";
 import { isInFavorites, addToFavorites, removeFromFavorites } from "@/lib/favorites";
-import { useState, memo, useEffect } from "react";
+import { useState, memo, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import WatchedBadge from "./WatchedBadge";
 
@@ -20,6 +20,9 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   const { isPinned, pinItem, unpinItem, isWatched } = useUserData();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setIsFavorite(isInFavorites(item.id, mediaType));
@@ -27,6 +30,27 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
 
   const pinned = isPinned(item.id, mediaType);
   const watched = isWatched(item.id, mediaType);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setTilt({
+      x: (y - 0.5) * -15,
+      y: (x - 0.5) * 15,
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setTilt({ x: 0, y: 0 });
+    setIsHovered(false);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,14 +84,20 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
   };
 
   return (
-    <motion.div 
-      className="group relative"
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div className="group relative" style={{ perspective: "800px" }}>
       <Link to={`/${mediaType}/${item.id}`}>
-        <div className="relative aspect-[2/3] rounded-lg overflow-hidden card-fancy card-shadow media-card-hover">
+        <div
+          ref={cardRef}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          className="relative aspect-[2/3] rounded-xl overflow-hidden cyber-card"
+          style={{
+            transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+            transition: isHovered ? "transform 0.1s ease-out" : "transform 0.4s ease-out",
+            transformStyle: "preserve-3d",
+          }}
+        >
           {/* Wave skeleton placeholder */}
           {!imageLoaded && (
             <div className="absolute inset-0 skeleton-wave" />
@@ -75,27 +105,56 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
           <img
             src={getImageUrl(item.poster_path)}
             alt={title}
-            className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
-              imageLoaded ? "opacity-100" : "opacity-0"
-            }`}
+            className={`w-full h-full object-cover transition-all duration-500 ${
+              isHovered ? "scale-110 brightness-110" : "scale-100"
+            } ${imageLoaded ? "opacity-100" : "opacity-0"}`}
             loading="lazy"
             decoding="async"
             onLoad={() => setImageLoaded(true)}
           />
-          
-          {/* Hover glow overlay */}
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/25 via-primary/5 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-accent/10" />
+
+          {/* Card glare effect */}
+          <div
+            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+            style={{
+              background: `linear-gradient(${125 + tilt.y * 3}deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0) 100%)`,
+              opacity: isHovered ? 1 : 0,
+            }}
+          />
+
+          {/* Cyber scan line */}
+          <div className={`absolute inset-0 pointer-events-none overflow-hidden ${isHovered ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}>
+            <div className="cyber-scan-line" />
+          </div>
+
+          {/* Cyber corner elements */}
+          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${isHovered ? "opacity-100" : "opacity-0"}`}>
+            <span className="absolute top-[6px] left-[6px] w-3 h-3 border-l-2 border-t-2 border-primary/60 rounded-tl-sm transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.5)]" />
+            <span className="absolute top-[6px] right-[6px] w-3 h-3 border-r-2 border-t-2 border-primary/60 rounded-tr-sm transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.5)]" />
+            <span className="absolute bottom-[6px] left-[6px] w-3 h-3 border-l-2 border-b-2 border-primary/60 rounded-bl-sm transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.5)]" />
+            <span className="absolute bottom-[6px] right-[6px] w-3 h-3 border-r-2 border-b-2 border-primary/60 rounded-br-sm transition-all duration-300 group-hover:border-primary group-hover:shadow-[0_0_6px_hsl(var(--primary)/0.5)]" />
+          </div>
+
+          {/* Cyber lines */}
+          <div className={`absolute inset-0 pointer-events-none overflow-hidden ${isHovered ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}>
+            <span className="absolute top-[25%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent cyber-line-grow" style={{ animationDelay: "0s" }} />
+            <span className="absolute top-[50%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent cyber-line-grow" style={{ animationDelay: "1s" }} />
+            <span className="absolute top-[75%] left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/20 to-transparent cyber-line-grow" style={{ animationDelay: "2s" }} />
+          </div>
+
+          {/* Glow elements */}
+          <div className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${isHovered ? "opacity-100" : "opacity-0"}`}>
+            <div className="absolute -top-5 -left-5 w-20 h-20 rounded-full bg-primary/20 blur-xl" />
+            <div className="absolute -bottom-5 -right-5 w-20 h-20 rounded-full bg-accent/15 blur-xl" />
           </div>
           
-          {/* Overlay - Only on hover for desktop */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Gradient overlays on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           
-          {/* Play Button - Only on hover for desktop */}
+          {/* Play Button on hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <motion.div 
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center glow-shadow"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center glow-shadow backdrop-blur-sm"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
@@ -104,8 +163,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
           </div>
 
           {/* Action Buttons */}
-          <div className="absolute top-1 left-1 flex flex-col gap-1">
-            {/* Favorite Button */}
+          <div className="absolute top-1 left-1 flex flex-col gap-1 z-10">
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={handleFavoriteClick}
@@ -118,8 +176,6 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
                 }`}
               />
             </motion.button>
-
-            {/* Pin Button */}
             <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={handlePinClick}
@@ -139,14 +195,20 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
 
           {/* Rating Badge */}
           {item.vote_average > 0 && (
-            <div className="absolute top-1 right-1 flex items-center gap-0.5 bg-background/80 backdrop-blur-sm px-1 py-0.5 rounded text-[10px] font-medium" style={watched ? { top: "1.75rem" } : {}}>
+            <div 
+              className="absolute top-1 right-1 flex items-center gap-0.5 bg-background/80 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[10px] font-medium border border-primary/20 z-10"
+              style={watched ? { top: "1.75rem" } : {}}
+            >
               <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
               {item.vote_average.toFixed(1)}
             </div>
           )}
+
+          {/* Bottom gradient border glow */}
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </div>
 
-        {/* Info - Fixed overflow */}
+        {/* Info */}
         <div className="mt-1.5 space-y-0.5 overflow-hidden">
           <h3 className="font-medium text-xs sm:text-sm truncate group-hover:text-primary transition-colors">
             {title}
@@ -156,7 +218,7 @@ const MediaCard = memo(({ item, index = 0 }: MediaCardProps) => {
           </p>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 });
 

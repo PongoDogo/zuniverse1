@@ -122,7 +122,7 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
                   >
                     {index + 1}
                   </span>
-                  <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-lg overflow-hidden card-shadow media-card-hover card-fancy">
+                  <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-xl overflow-hidden card-shadow cyber-card border-animate">
                     <img
                       src={getImageUrl(item.poster_path)}
                       alt={title}
@@ -130,6 +130,13 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {/* Cyber corners */}
+                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="absolute top-[5px] left-[5px] w-2.5 h-2.5 border-l-2 border-t-2 border-primary/70" />
+                      <span className="absolute top-[5px] right-[5px] w-2.5 h-2.5 border-r-2 border-t-2 border-primary/70" />
+                      <span className="absolute bottom-[5px] left-[5px] w-2.5 h-2.5 border-l-2 border-b-2 border-primary/70" />
+                      <span className="absolute bottom-[5px] right-[5px] w-2.5 h-2.5 border-r-2 border-b-2 border-primary/70" />
+                    </div>
                   </div>
                 </Link>
               </motion.div>

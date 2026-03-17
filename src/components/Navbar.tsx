@@ -161,7 +161,7 @@ const Navbar = () => {
                     exit={{ opacity: 0, scaleX: 0 }}
                     style={{ originX: 1 }}
                     onSubmit={handleSearch}
-                    className="absolute left-3 right-14 top-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:right-auto sm:top-auto sm:translate-y-0 sm:w-[250px]"
+                    className="absolute left-3 right-14 top-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:right-auto sm:top-auto sm:translate-y-0 sm:w-[250px] z-50"
                   >
                     <Input
                       type="text"
