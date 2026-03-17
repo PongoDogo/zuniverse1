@@ -150,7 +150,7 @@ const Watch = () => {
     }
   };
 
-  const backdropUrl = details?.backdrop_path ? getImageUrl(details.backdrop_path, "w1280") : null;
+  const backdropUrl = details?.backdrop_path ? getImageUrl(details.backdrop_path, "w780") : null;
 
   return (
     <div className="min-h-screen bg-background relative">
