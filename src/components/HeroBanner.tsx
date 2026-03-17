@@ -190,25 +190,25 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
         </div>
 
         {/* Navigation Arrows & Dots */}
-        <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-4">
+        <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 sm:gap-4 z-10">
           <button
             onClick={() => setCurrentIndex((prev) => (prev - 1 + featuredItems.length) % featuredItems.length)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/40 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-all hover:scale-110"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/50 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-all hover:scale-110 border border-border/20 hover:border-primary/50 hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
             aria-label="Previous"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          {/* Progress dots */}
+          {/* Progress dots with glow */}
           <div className="flex items-center gap-1.5">
             {featuredItems.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
-                className={`transition-all rounded-full ${
+                className={`transition-all duration-300 rounded-full ${
                   i === currentIndex 
-                    ? "w-8 h-2 bg-primary" 
-                    : "w-2 h-2 bg-foreground/30 hover:bg-foreground/50"
+                    ? "w-8 h-2 bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]" 
+                    : "w-2 h-2 bg-foreground/30 hover:bg-foreground/50 hover:scale-125"
                 }`}
                 aria-label={`Go to slide ${i + 1}`}
               />
@@ -217,7 +217,7 @@ const HeroBanner = ({ items }: HeroBannerProps) => {
 
           <button
             onClick={() => setCurrentIndex((prev) => (prev + 1) % featuredItems.length)}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/40 backdrop-blur-sm flex items-center justify-center hover:bg-primary transition-all hover:scale-110"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-background/50 backdrop-blur-md flex items-center justify-center hover:bg-primary transition-all hover:scale-110 border border-border/20 hover:border-primary/50 hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
             aria-label="Next"
           >
             <ChevronRight className="w-5 h-5" />
