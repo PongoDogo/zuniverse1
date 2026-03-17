@@ -1,8 +1,12 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Star, Calendar, Clock, Info, SkipForward, ToggleLeft, ToggleRight } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { 
+  ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Star, 
+  Calendar, Clock, Info, ToggleLeft, ToggleRight, Play, Film, Tv,
+  Layers, Eye, ExternalLink
+} from "lucide-react";
+import { useState, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
 import AutoPlayCountdown from "@/components/AutoPlayCountdown";
@@ -146,126 +150,167 @@ const Watch = () => {
     }
   };
 
+  const backdropUrl = details?.backdrop_path ? getImageUrl(details.backdrop_path, "w780") : null;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <Navbar />
 
-      <div className="pt-16 sm:pt-20 pb-8 sm:pb-16 safe-bottom">
+      {/* Cinematic Backdrop */}
+      {backdropUrl && (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+          <img 
+            src={backdropUrl} 
+            alt="" 
+            className="w-full h-full object-cover opacity-[0.07]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
+        </div>
+      )}
+
+      <div className="relative z-10 pt-16 sm:pt-20 pb-8 sm:pb-16 safe-bottom">
         <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
           
-          {/* Top Navigation Bar */}
+          {/* Top Cinema Bar */}
           <motion.div 
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-4 bg-card/50 backdrop-blur-sm rounded-xl border border-border/50"
+            className="flex items-center justify-between mb-5 sm:mb-6 p-3 sm:p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl shadow-lg shadow-black/5"
           >
             <Link
               to={`/${mediaType}/${mediaId}`}
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-300 group"
             >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span>{t("backToDetails")}</span>
+              <div className="p-1.5 rounded-lg bg-secondary/80 group-hover:bg-primary/20 transition-colors">
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              </div>
+              <span className="hidden sm:inline">{t("backToDetails")}</span>
             </Link>
             
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Center: Now Playing indicator */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+                <span className="font-medium text-foreground/70">
+                  {language === "el" ? "Παίζει τώρα" : "Now Playing"}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-1 sm:gap-1.5">
               {mediaType === "tv" && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleAutoPlayToggle}
-                  className={`gap-1.5 text-xs ${autoPlayEnabled ? "text-primary" : "text-muted-foreground"}`}
+                  className={`gap-1.5 text-xs rounded-xl ${autoPlayEnabled ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
                 >
                   {autoPlayEnabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                   <span className="hidden sm:inline">{t("autoPlay")}</span>
                 </Button>
               )}
               <Button 
-                variant={inWatchlist ? "default" : "ghost"}
+                variant="ghost"
                 size="sm" 
                 onClick={handleWatchlistToggle}
-                className="gap-1.5"
+                className={`gap-1.5 rounded-xl ${inWatchlist ? "text-red-400 bg-red-500/10" : ""}`}
               >
                 <Heart className={`w-4 h-4 ${inWatchlist ? "fill-current" : ""}`} />
-                <span className="hidden sm:inline">{inWatchlist ? t("removeFromWatchlist").split(" ")[0] : t("addToWatchlist").split(" ")[0]}</span>
+                <span className="hidden sm:inline">{inWatchlist ? (language === "el" ? "Αφαίρεση" : "Remove") : (language === "el" ? "Λίστα" : "Save")}</span>
               </Button>
               <Button 
-                variant={itemPinned ? "default" : "ghost"}
+                variant="ghost"
                 size="sm" 
                 onClick={handlePinToggle}
-                className="gap-1.5"
+                className={`rounded-xl ${itemPinned ? "text-primary bg-primary/10" : ""}`}
               >
                 <Pin className={`w-4 h-4 ${itemPinned ? "fill-current" : ""}`} />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleShare} className="gap-1.5">
+              <Button variant="ghost" size="sm" onClick={handleShare} className="gap-1.5 rounded-xl">
                 <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("share")}</span>
               </Button>
             </div>
           </motion.div>
 
           {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-[1fr,320px] gap-6">
+          <div className="grid lg:grid-cols-[1fr,340px] gap-5 lg:gap-6">
             
             {/* Left Column */}
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-5">
               
-              {/* Title & Meta */}
+              {/* Title & Meta Hero */}
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
+                className="space-y-3"
               >
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{title}</h1>
-                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  {mediaType === "tv" && currentEpisodeData && (
-                    <span className="px-2 py-0.5 bg-primary/20 text-primary rounded-md font-medium">
-                      S{currentSeason} E{currentEpisode}
-                    </span>
-                  )}
-                  {details?.vote_average && details.vote_average > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      {details.vote_average.toFixed(1)}
-                    </span>
-                  )}
-                  {year && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {year}
-                    </span>
-                  )}
-                  {details?.runtime && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
-                    </span>
-                  )}
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0 mt-1">
+                    {mediaType === "tv" ? <Tv className="w-5 h-5" /> : <Film className="w-5 h-5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">{title}</h1>
+                    <div className="flex flex-wrap items-center gap-2.5 mt-2 text-sm text-muted-foreground">
+                      {mediaType === "tv" && currentEpisodeData && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/15 text-primary rounded-lg font-semibold text-xs tracking-wide">
+                          <Layers className="w-3 h-3" />
+                          S{currentSeason} E{currentEpisode}
+                        </span>
+                      )}
+                      {details?.vote_average && details.vote_average > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded-lg text-xs font-medium">
+                          <Star className="w-3 h-3 fill-current" />
+                          {details.vote_average.toFixed(1)}
+                        </span>
+                      )}
+                      {year && (
+                        <span className="inline-flex items-center gap-1 text-xs">
+                          <Calendar className="w-3 h-3" />
+                          {year}
+                        </span>
+                      )}
+                      {details?.runtime && (
+                        <span className="inline-flex items-center gap-1 text-xs">
+                          <Clock className="w-3 h-3" />
+                          {Math.floor(details.runtime / 60)}h {details.runtime % 60}m
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {mediaType === "tv" && currentEpisodeData && (
-                  <p className="text-muted-foreground mt-2 font-medium">
-                    {currentEpisodeData.name}
+                  <p className="text-muted-foreground font-medium pl-[52px] text-sm">
+                    "{currentEpisodeData.name}"
                   </p>
                 )}
               </motion.div>
 
-              {/* Video Player */}
+              {/* Video Player with premium frame */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-                className="rounded-xl overflow-hidden shadow-2xl"
+                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                className="relative group"
               >
-                <VideoPlayer
-                  tmdbId={mediaId}
-                  mediaType={mediaType}
-                  season={mediaType === "tv" ? currentSeason : undefined}
-                  episode={mediaType === "tv" ? currentEpisode : undefined}
-                  title={title}
-                  posterPath={details?.poster_path}
-                  backdropPath={details?.backdrop_path}
-                  episodeName={currentEpisodeData?.name}
-                  onRequestNextEpisode={hasNextEpisode ? handleRequestNextEpisode : undefined}
-                />
+                {/* Glow ring behind player */}
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-xl" />
+                <div className="relative rounded-2xl overflow-hidden border border-border/30 shadow-2xl shadow-black/20 bg-card/30 backdrop-blur-sm">
+                  <VideoPlayer
+                    tmdbId={mediaId}
+                    mediaType={mediaType}
+                    season={mediaType === "tv" ? currentSeason : undefined}
+                    episode={mediaType === "tv" ? currentEpisode : undefined}
+                    title={title}
+                    posterPath={details?.poster_path}
+                    backdropPath={details?.backdrop_path}
+                    episodeName={currentEpisodeData?.name}
+                    onRequestNextEpisode={hasNextEpisode ? handleRequestNextEpisode : undefined}
+                  />
+                </div>
               </motion.div>
 
               {/* Auto-play countdown */}
@@ -289,13 +334,13 @@ const Watch = () => {
                   className="space-y-4"
                 >
                   {/* Navigation Controls */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-card rounded-xl border border-border/50">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                       <Select
                         value={currentSeason.toString()}
                         onValueChange={(v) => goToSeason(parseInt(v))}
                       >
-                        <SelectTrigger className="w-full sm:w-32 h-10">
+                        <SelectTrigger className="w-full sm:w-36 h-10 rounded-xl bg-secondary/50 border-border/30">
                           <SelectValue placeholder="Season" />
                         </SelectTrigger>
                         <SelectContent>
@@ -312,7 +357,7 @@ const Watch = () => {
                           value={currentEpisode.toString()}
                           onValueChange={(v) => goToEpisode(parseInt(v))}
                         >
-                          <SelectTrigger className="w-full sm:w-44 h-10">
+                          <SelectTrigger className="w-full sm:w-48 h-10 rounded-xl bg-secondary/50 border-border/30">
                             <SelectValue placeholder="Episode" />
                           </SelectTrigger>
                           <SelectContent>
@@ -321,7 +366,7 @@ const Watch = () => {
                                 key={ep.episode_number}
                                 value={ep.episode_number.toString()}
                               >
-                                E{ep.episode_number}: {ep.name?.slice(0, 20)}...
+                                E{ep.episode_number}: {ep.name?.slice(0, 22)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -335,7 +380,7 @@ const Watch = () => {
                         size="default"
                         disabled={!hasPrevEpisode}
                         onClick={() => goToEpisode(currentEpisode - 1)}
-                        className="flex-1 sm:flex-initial h-10"
+                        className="flex-1 sm:flex-initial h-10 rounded-xl"
                       >
                         <ChevronLeft className="w-4 h-4 mr-1" />
                         {language === "el" ? "Προηγ." : "Prev"}
@@ -345,7 +390,7 @@ const Watch = () => {
                         size="default"
                         disabled={!hasNextEpisode}
                         onClick={() => goToEpisode(currentEpisode + 1)}
-                        className="flex-1 sm:flex-initial h-10 glow-shadow"
+                        className="flex-1 sm:flex-initial h-10 rounded-xl"
                       >
                         {language === "el" ? "Επόμ." : "Next"}
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -353,62 +398,76 @@ const Watch = () => {
                     </div>
                   </div>
 
-                  {/* Episode Grid with thumbnails */}
+                  {/* Premium Episode Grid */}
                   {episodes && episodes.length > 0 && (
-                    <div className="p-4 bg-card rounded-xl border border-border/50">
-                      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                        {language === "el" ? "Επεισόδια" : "Episodes"}
-                      </h3>
+                    <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                          <Eye className="w-4 h-4 text-primary" />
+                          {language === "el" ? "Επεισόδια" : "Episodes"}
+                        </h3>
+                        <span className="text-xs text-muted-foreground">
+                          {currentEpisode}/{episodes.length}
+                        </span>
+                      </div>
                       <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
-                        {episodes.map((ep: any) => (
-                          <button
-                            key={ep.episode_number}
-                            onClick={() => goToEpisode(ep.episode_number)}
-                            title={ep.name}
-                            className={`relative aspect-square rounded-lg text-sm font-medium transition-all overflow-hidden ${
-                              ep.episode_number === currentEpisode
-                                ? "bg-primary text-primary-foreground shadow-lg scale-105 ring-2 ring-primary"
-                                : "bg-secondary hover:bg-secondary/80 hover:scale-105"
-                            }`}
-                          >
-                            {ep.still_path ? (
-                              <>
-                                <img
-                                  src={getImageUrl(ep.still_path, "w200")}
-                                  alt={ep.name}
-                                  className="absolute inset-0 w-full h-full object-cover opacity-40"
-                                  loading="lazy"
-                                />
-                                <span className="relative z-10">{ep.episode_number}</span>
-                              </>
-                            ) : (
-                              ep.episode_number
-                            )}
-                          </button>
-                        ))}
+                        {episodes.map((ep: any) => {
+                          const isCurrent = ep.episode_number === currentEpisode;
+                          return (
+                            <button
+                              key={ep.episode_number}
+                              onClick={() => goToEpisode(ep.episode_number)}
+                              title={ep.name}
+                              className={`relative aspect-square rounded-xl text-sm font-bold transition-all duration-300 overflow-hidden group/ep ${
+                                isCurrent
+                                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 ring-2 ring-primary/50"
+                                  : "bg-secondary/60 hover:bg-secondary hover:scale-105 hover:shadow-md"
+                              }`}
+                            >
+                              {ep.still_path ? (
+                                <>
+                                  <img
+                                    src={getImageUrl(ep.still_path, "w200")}
+                                    alt={ep.name}
+                                    className={`absolute inset-0 w-full h-full object-cover transition-opacity ${isCurrent ? "opacity-30" : "opacity-20 group-hover/ep:opacity-40"}`}
+                                    loading="lazy"
+                                  />
+                                  <span className="relative z-10">{ep.episode_number}</span>
+                                </>
+                              ) : (
+                                <span className="flex items-center justify-center h-full">{ep.episode_number}</span>
+                              )}
+                              {isCurrent && (
+                                <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-primary-foreground/70" />
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </motion.div>
               )}
 
-              {/* Episode/Movie Description */}
+              {/* Synopsis Panel */}
               {(currentEpisodeData?.overview || details?.overview) && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.25 }}
-                  className="p-5 bg-card rounded-xl border border-border/50"
+                  className="p-5 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl"
                 >
-                  <div className="flex items-center gap-2 mb-3">
-                    <Info className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="p-1.5 rounded-lg bg-primary/10">
+                      <Info className="w-4 h-4 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-sm">
                       {mediaType === "tv" && currentEpisodeData?.overview 
                         ? (language === "el" ? "Περίληψη Επεισοδίου" : "Episode Synopsis")
                         : (language === "el" ? "Περιγραφή" : "Overview")}
                     </h3>
                   </div>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-muted-foreground leading-relaxed text-sm">
                     {currentEpisodeData?.overview || details?.overview}
                   </p>
                 </motion.div>
@@ -419,48 +478,105 @@ const Watch = () => {
             <motion.aside
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 }}
-              className="hidden lg:block space-y-4"
+              transition={{ delay: 0.15, type: "spring", stiffness: 150 }}
+              className="hidden lg:flex flex-col gap-4"
             >
-              <div className="p-4 bg-card rounded-xl border border-border/50">
-                <img
-                  src={getImageUrl(details?.poster_path, "w500")}
-                  alt={title}
-                  className="w-full rounded-lg shadow-lg mb-4"
-                />
-                
-                {details?.genres && details.genres.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {details.genres.slice(0, 4).map((genre: any) => (
-                      <span
-                        key={genre.id}
-                        className="px-2 py-0.5 bg-secondary text-xs rounded-full"
-                      >
-                        {genre.name}
-                      </span>
-                    ))}
+              {/* Poster Card */}
+              <div className="relative group/poster rounded-2xl overflow-hidden border border-border/30 bg-card/40 backdrop-blur-xl">
+                <div className="p-4">
+                  <div className="relative overflow-hidden rounded-xl">
+                    <img
+                      src={getImageUrl(details?.poster_path, "w500")}
+                      alt={title}
+                      className="w-full rounded-xl shadow-lg transition-transform duration-500 group-hover/poster:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/poster:opacity-100 transition-opacity rounded-xl" />
                   </div>
-                )}
-                
-                <Button asChild variant="outline" className="w-full">
-                  <Link to={`/${mediaType}/${mediaId}`}>
-                    <Info className="w-4 h-4 mr-2" />
-                    {language === "el" ? "Πλήρεις Πληροφορίες" : "Full Details"}
-                  </Link>
-                </Button>
+                  
+                  {details?.genres && details.genres.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                      {details.genres.slice(0, 4).map((genre: any) => (
+                        <span
+                          key={genre.id}
+                          className="px-2.5 py-1 bg-secondary/60 text-xs rounded-lg font-medium"
+                        >
+                          {genre.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <Button asChild variant="outline" className="w-full mt-4 rounded-xl h-10 gap-2">
+                    <Link to={`/${mediaType}/${mediaId}`}>
+                      <ExternalLink className="w-4 h-4" />
+                      {language === "el" ? "Πλήρεις Πληροφορίες" : "Full Details"}
+                    </Link>
+                  </Button>
+                </div>
               </div>
 
+              {/* Season Info Card */}
               {mediaType === "tv" && seasons.length > 0 && (
-                <div className="p-4 bg-card rounded-xl border border-border/50">
-                  <h3 className="font-semibold mb-3 text-sm">
+                <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                  <h3 className="font-semibold mb-3 text-sm flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-primary" />
                     {language === "el" ? "Σεζόν" : "Season"} {currentSeason}
                   </h3>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p>{episodes?.length || 0} {language === "el" ? "επεισόδια" : "episodes"}</p>
-                    <p>{language === "el" ? "Τρέχον:" : "Current:"} E{currentEpisode}</p>
-                    {autoPlayEnabled && (
-                      <p className="text-primary text-xs mt-2">✓ {t("autoPlay")}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{language === "el" ? "Επεισόδια" : "Episodes"}</span>
+                      <span className="font-medium">{episodes?.length || 0}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{language === "el" ? "Τρέχον" : "Current"}</span>
+                      <span className="font-medium">E{currentEpisode}</span>
+                    </div>
+                    {episodes?.length && (
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                          <span>{language === "el" ? "Πρόοδος" : "Progress"}</span>
+                          <span>{Math.round((currentEpisode / episodes.length) * 100)}%</span>
+                        </div>
+                        <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(currentEpisode / episodes.length) * 100}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
                     )}
+                    {autoPlayEnabled && (
+                      <div className="flex items-center gap-1.5 text-xs text-primary mt-2 pt-2 border-t border-border/30">
+                        <Play className="w-3 h-3 fill-current" />
+                        {t("autoPlay")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Seasons Switcher */}
+              {mediaType === "tv" && seasons.length > 1 && (
+                <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                  <h3 className="font-semibold mb-3 text-sm">
+                    {language === "el" ? "Αλλαγή Σεζόν" : "Switch Season"}
+                  </h3>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {seasons.slice(0, 12).map((s: any) => (
+                      <button
+                        key={s.season_number}
+                        onClick={() => goToSeason(s.season_number)}
+                        className={`px-2 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                          s.season_number === currentSeason
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                            : "bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        S{s.season_number}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -469,14 +585,19 @@ const Watch = () => {
 
           {/* Similar Content */}
           {similar && similar.length > 0 && (
-            <div className="mt-10 sm:mt-14">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mt-10 sm:mt-14"
+            >
               <MediaRow
                 title={language === "el" 
                   ? `Παρόμοιες ${mediaType === "tv" ? "Σειρές" : "Ταινίες"}` 
                   : `More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
                 items={similar}
               />
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

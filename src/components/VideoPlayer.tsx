@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck, CheckCircle, Info, PictureInPicture2, AlertTriangle } from "lucide-react";
+import { 
+  Loader2, AlertCircle, Maximize2, RotateCcw, ShieldCheck, CheckCircle, 
+  Info, PictureInPicture2, AlertTriangle, Server, Sparkles
+} from "lucide-react";
 import StreamingSourceSelector from "./StreamingSourceSelector";
 import { Button } from "@/components/ui/button";
 import { 
@@ -81,9 +84,7 @@ const VideoPlayer = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      
       switch (e.key.toLowerCase()) {
         case "f":
           e.preventDefault();
@@ -97,7 +98,6 @@ const VideoPlayer = ({
           break;
       }
     };
-    
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onRequestNextEpisode, mediaType]);
@@ -108,17 +108,13 @@ const VideoPlayer = ({
 
   const saveProgress = useCallback(() => {
     if (!title) return;
-    
     const now = Date.now();
     const sessionSeconds = Math.floor((now - startTimeRef.current) / 1000);
     sessionWatchTimeRef.current = sessionSeconds;
-    
     const existing = getExistingProgress();
     const previousTime = existing?.currentTime || 0;
     const totalWatchedSeconds = previousTime + sessionSeconds;
-    
     const progress = Math.min(95, Math.round((totalWatchedSeconds / estimatedDurationSeconds) * 100));
-    
     const item: ContinueWatchingItem = {
       id: tmdbId,
       mediaType,
@@ -134,10 +130,8 @@ const VideoPlayer = ({
       lastWatched: now,
       startedAt: existing?.startedAt || startTimeRef.current,
     };
-    
     updateContinueWatching(item);
     lastUpdateRef.current = now;
-    
     if (sessionSeconds >= TRACKING_THRESHOLD && !hasTrackedViewRef.current) {
       hasTrackedViewRef.current = true;
       if (mediaType === "tv") {
@@ -249,8 +243,6 @@ const VideoPlayer = ({
   };
 
   const handlePiP = async () => {
-    // PiP works best with <video> elements, but we can try with the iframe
-    // For iframes, we try the document PiP API
     if ('documentPictureInPicture' in window) {
       try {
         // @ts-ignore - experimental API
@@ -282,7 +274,6 @@ const VideoPlayer = ({
         ? `Αναφορά: "${currentSource.name}" σημειώθηκε ως μη λειτουργική` 
         : `Reported: "${currentSource.name}" marked as not working`
     );
-    // Try next source automatically
     const nextSource = getNextSource(currentSource.id);
     if (nextSource) {
       setTimeout(() => {
@@ -296,62 +287,82 @@ const VideoPlayer = ({
   const showMarkComplete = existingProgress && existingProgress.progress >= 50;
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <StreamingSourceSelector
-          currentSource={currentSource}
-          onSourceChange={handleSourceChange}
-        />
-        
-        <div className="flex items-center gap-2 flex-wrap">
+    <div className="space-y-3">
+      {/* Premium Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+        <div className="flex items-center gap-2">
+          <StreamingSourceSelector
+            currentSource={currentSource}
+            onSourceChange={handleSourceChange}
+          />
           {showMarkComplete && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={handleMarkAsComplete}
-              className="text-xs sm:text-sm text-green-500 border-green-500/30 hover:bg-green-500/10"
+              className="text-xs text-green-400 hover:text-green-300 hover:bg-green-500/10 rounded-xl gap-1.5"
             >
-              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-              {language === "el" ? "Ολοκληρωμένο" : "Mark Complete"}
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{language === "el" ? "Ολοκληρωμένο" : "Complete"}</span>
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handlePiP} className="text-xs sm:text-sm">
-            <PictureInPicture2 className="w-3.5 h-3.5 mr-1.5" />
-            PiP
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleReportBroken}
-            disabled={reportSent}
-            className="text-xs sm:text-sm"
-          >
-            <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />
-            {reportSent 
-              ? (language === "el" ? "Αναφέρθηκε" : "Reported") 
-              : (language === "el" ? "Αναφορά" : "Report")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleRetry} className="text-xs sm:text-sm">
-            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-            {t("retry")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleFullscreen} className="text-xs sm:text-sm">
-            <Maximize2 className="w-3.5 h-3.5 mr-1.5" />
-            {t("fullscreen")}
-          </Button>
+        </div>
+        
+        <div className="flex items-center gap-1.5">
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={handlePiP} className="rounded-xl text-xs h-8 px-2.5">
+                  <PictureInPicture2 className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Picture-in-Picture</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleReportBroken}
+                  disabled={reportSent}
+                  className={`rounded-xl text-xs h-8 px-2.5 ${reportSent ? "text-yellow-500" : ""}`}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p className="text-xs">{reportSent ? (language === "el" ? "Αναφέρθηκε" : "Reported") : (language === "el" ? "Αναφορά" : "Report broken")}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={handleRetry} className="rounded-xl text-xs h-8 px-2.5">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">{t("retry")}</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={handleFullscreen} className="rounded-xl text-xs h-8 px-2.5">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">{t("fullscreen")}</p></TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
       {/* Keyboard shortcuts hint */}
-      <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px] font-mono">F</kbd>
+      <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground/60 px-1">
+        <span className="flex items-center gap-1.5">
+          <kbd className="px-1.5 py-0.5 bg-secondary/60 rounded-md text-[10px] font-mono border border-border/30">F</kbd>
           {t("fullscreen")}
         </span>
         {mediaType === "tv" && onRequestNextEpisode && (
-          <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px] font-mono">N</kbd>
+          <span className="flex items-center gap-1.5">
+            <kbd className="px-1.5 py-0.5 bg-secondary/60 rounded-md text-[10px] font-mono border border-border/30">N</kbd>
             {t("nextEpisode")}
           </span>
         )}
@@ -359,32 +370,48 @@ const VideoPlayer = ({
 
       {/* Native ad blocker indicator */}
       {isNativeAndroid() && adsBlocked > 0 && (
-        <div className="flex items-center gap-1.5 text-xs text-green-500 bg-green-500/10 px-2 py-1 rounded-md w-fit">
+        <div className="flex items-center gap-1.5 text-xs text-green-400 bg-green-500/10 px-3 py-1.5 rounded-xl w-fit border border-green-500/20">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span><strong>{adsBlocked}</strong> {t("adsBlocked")}</span>
         </div>
       )}
 
-      {/* Player */}
+      {/* Player Container */}
       <div 
         ref={containerRef}
-        className="relative w-full aspect-video bg-card rounded-lg overflow-hidden touch-manipulation"
+        className="relative w-full aspect-video bg-black/90 rounded-xl overflow-hidden touch-manipulation"
       >
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10">
-            <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">{t("loadingPlayer")}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "1.5s" }} />
+              <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin relative" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">{t("loadingPlayer")}</p>
+              <p className="text-[10px] text-muted-foreground/50 mt-1 flex items-center gap-1 justify-center">
+                <Server className="w-3 h-3" />
+                {currentSource.name}
+              </p>
+            </div>
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-card z-10 p-4 text-center">
-            <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-destructive" />
-            <p className="text-sm text-muted-foreground">{t("failedToLoad")}</p>
-            <Button variant="outline" size="sm" onClick={handleRetry}>
-              <RotateCcw className="w-4 h-4 mr-2" />
-              {t("tryAgain")}
-            </Button>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-10 p-6 text-center">
+            <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20">
+              <AlertCircle className="w-10 h-10 text-destructive" />
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-1">{t("failedToLoad")}</p>
+              <p className="text-xs text-muted-foreground">{language === "el" ? "Δοκιμάστε άλλη πηγή ή ξαναπροσπαθήστε" : "Try another source or retry"}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleRetry} className="rounded-xl">
+                <RotateCcw className="w-4 h-4 mr-2" />
+                {t("tryAgain")}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -392,7 +419,7 @@ const VideoPlayer = ({
           key={`${embedUrl}-${retryCount}`}
           ref={iframeRef}
           src={embedUrl}
-          className={`w-full h-full transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`w-full h-full transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           onLoad={handleLoad}
@@ -400,23 +427,24 @@ const VideoPlayer = ({
         />
       </div>
 
-      {/* Tips */}
-      <div className="flex items-center justify-center gap-2">
-        <p className="text-xs text-muted-foreground text-center">
-          💡 {t("sourceTip")}
+      {/* Tip */}
+      <div className="flex items-center justify-center gap-2 px-1">
+        <p className="text-[11px] text-muted-foreground/50 text-center flex items-center gap-1.5">
+          <Sparkles className="w-3 h-3" />
+          {t("sourceTip")}
         </p>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
-                <Info className="w-3.5 h-3.5" />
+              <button className="text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+                <Info className="w-3 h-3" />
               </button>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               <p className="text-xs">
                 {language === "el" 
-                  ? "💡 Για καλύτερη εμπειρία χωρίς διαφημίσεις, εγκαταστήστε το uBlock Origin extension στον browser σας."
-                  : "💡 For better ad-free experience, install the uBlock Origin extension in your browser."}
+                  ? "💡 Για καλύτερη εμπειρία χωρίς διαφημίσεις, εγκαταστήστε το uBlock Origin extension."
+                  : "💡 For better ad-free experience, install the uBlock Origin extension."}
               </p>
             </TooltipContent>
           </Tooltip>
