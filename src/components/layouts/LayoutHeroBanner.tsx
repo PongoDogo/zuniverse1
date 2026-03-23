@@ -70,8 +70,8 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
   const heightClasses = {
     cinetorrio: "h-[55vh] sm:h-[65vh] md:h-[80vh]",
     galaxia: "h-[60vh] sm:h-[70vh] md:h-[85vh]",
-    cosmos: "h-[50vh] sm:h-[60vh] md:h-[75vh]",
-    planitor: "h-[45vh] sm:h-[55vh] md:h-[65vh]",
+    cosmos: "h-[60vh] sm:h-[70vh] md:h-[85vh]",
+    planitor: "h-[50vh] sm:h-[60vh] md:h-[70vh]",
   };
 
   // Galaxia - Netflix-style Billboard
@@ -203,7 +203,7 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30 pointer-events-none" />
 
           {/* Center content */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center z-20">
+          <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 text-center z-20 w-full px-4">
             <motion.div
               key={current.id}
               initial={{ opacity: 0, y: 20 }}
@@ -235,7 +235,7 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
           </div>
 
           {/* Navigation dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {featuredItems.slice(0, 5).map((_, i) => (
               <button
                 key={i}
