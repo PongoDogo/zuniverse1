@@ -165,9 +165,9 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
   if (layout === "cosmos") {
     return (
       <>
-        <div className={`relative ${heightClasses.cosmos} w-full overflow-hidden`}>
-          {/* Carousel with visible adjacent items */}
-          <div className="absolute inset-0 flex items-center justify-center">
+        <div className={`relative ${heightClasses.cosmos} w-full overflow-hidden flex flex-col`}>
+          {/* Carousel area - takes top portion */}
+          <div className="relative flex-1 flex items-center justify-center">
             {featuredItems.slice(0, 5).map((item, i) => {
               const offset = i - currentIndex;
               const isActive = i === currentIndex;
@@ -202,13 +202,13 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
           {/* Magical gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/30 pointer-events-none" />
 
-          {/* Center content */}
-          <div className="absolute bottom-16 sm:bottom-20 left-1/2 -translate-x-1/2 text-center z-20 w-full px-4">
+          {/* Bottom content area - fixed height, never overlaps carousel */}
+          <div className="relative z-20 pb-6 sm:pb-8 text-center px-4 shrink-0">
             <motion.div
               key={current.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
+              className="space-y-2 sm:space-y-3"
             >
               <div className="flex items-center justify-center gap-2 text-sm">
                 <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -216,11 +216,11 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
                 <span className="text-muted-foreground">• {year}</span>
               </div>
               
-              <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold line-clamp-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
                 {title}
               </h1>
 
-              <div className="flex items-center justify-center gap-3 pt-2">
+              <div className="flex items-center justify-center gap-3 pt-1">
                 <Button asChild className="gap-2 rounded-full px-8 glow-shadow">
                   <Link to={`/${mediaType}/${current.id}/watch`}>
                     <Play className="w-4 h-4 fill-current" />
@@ -231,20 +231,20 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
                   <Heart className={`w-4 h-4 ${inWatchlist ? "fill-primary text-primary" : ""}`} />
                 </Button>
               </div>
-            </motion.div>
-          </div>
 
-          {/* Navigation dots */}
-          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-            {featuredItems.slice(0, 5).map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  i === currentIndex ? "w-6 bg-primary" : "bg-foreground/30"
-                }`}
-              />
-            ))}
+              {/* Navigation dots */}
+              <div className="flex justify-center gap-2 pt-2">
+                {featuredItems.slice(0, 5).map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      i === currentIndex ? "w-6 bg-primary" : "bg-foreground/30"
+                    }`}
+                  />
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
         <TrailerModal isOpen={showTrailer} onClose={() => setShowTrailer(false)} mediaType={mediaType} mediaId={current.id} title={title} />
