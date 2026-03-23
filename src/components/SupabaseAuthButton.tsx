@@ -4,6 +4,7 @@ import { LogIn, UserPlus, Loader2, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
+import { lovable } from "@/integrations/lovable/index";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 const SupabaseAuthButton = () => {
   const { user, isLoading, isSignedIn, signIn, signUp, signOut, userData } = useSupabaseAuth();
