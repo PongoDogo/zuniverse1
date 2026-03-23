@@ -26,7 +26,7 @@ import { useUILayout } from "@/hooks/useUILayout";
 
 const Index = () => {
   const { t, language } = useLanguage();
-
+  const { layout } = useUILayout();
   useEffect(() => {
     applyTheme(getTheme());
     applyUILayout(getUILayout());
