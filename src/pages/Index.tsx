@@ -22,6 +22,7 @@ import {
 import { applyTheme, getTheme } from "@/lib/userPreferences";
 import { applyUILayout, getUILayout } from "@/lib/uiLayout";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useUILayout } from "@/hooks/useUILayout";
 
 const Index = () => {
   const { t, language } = useLanguage();
