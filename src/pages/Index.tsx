@@ -68,12 +68,12 @@ const Index = () => {
         <Navbar />
 
         {/* Hero Banner */}
-        <div className="min-h-[50vh] sm:min-h-[60vh] md:min-h-[75vh]">
+        <div>
           {trending && <LayoutHeroBanner items={trending} />}
         </div>
 
         {/* Content Rows */}
-        <div className="relative z-10 -mt-16 sm:-mt-20 space-y-6 sm:space-y-8 pb-8 sm:pb-16">
+        <div className={`relative z-10 space-y-6 sm:space-y-8 pb-8 sm:pb-16 ${layout === "cosmos" ? "mt-0" : "-mt-16 sm:-mt-20"}`}>
           <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
             
             {/* Welcome Section - signed in users */}
