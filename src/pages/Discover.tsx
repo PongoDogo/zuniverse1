@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Filter, X, Sparkles, SlidersHorizontal } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaCard from "@/components/MediaCard";
 import PageTransition from "@/components/PageTransition";
@@ -41,6 +42,7 @@ const Discover = () => {
   const [minRating, setMinRating] = useState(0);
   const [yearRange, setYearRange] = useState<[number, number]>([2000, 2026]);
   const [allResults, setAllResults] = useState<Movie[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: genres } = useQuery({
     queryKey: ["genres", mediaType],
@@ -78,99 +80,150 @@ const Discover = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background gradient-mesh">
         <Navbar />
         <div className="pt-24 pb-16">
           <div className="container mx-auto px-4">
             <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold mb-6">{t("discover")}</h1>
-
-              {/* Filters Row */}
-              <div className="flex flex-wrap gap-3 items-end">
-                <div className="flex gap-2">
-                  <Button variant={mediaType === "movie" ? "default" : "secondary"} onClick={() => { setMediaType("movie"); resetFilters(); }}>
-                    {t("movies")}
-                  </Button>
-                  <Button variant={mediaType === "tv" ? "default" : "secondary"} onClick={() => { setMediaType("tv"); resetFilters(); }}>
-                    {t("tvShows")}
-                  </Button>
+              <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-7 h-7 text-primary" />
+                  <h1 className="text-3xl md:text-4xl font-bold">{t("discover")}</h1>
                 </div>
-
-                <Select value={selectedGenre?.toString() || ""} onValueChange={handleGenreChange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder={t("selectGenre")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {genres?.map((genre) => (
-                      <SelectItem key={genre.id} value={genre.id.toString()}>{genre.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); setAllResults([]); }}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="popularity.desc">{t("popularity")} ↓</SelectItem>
-                    <SelectItem value="vote_average.desc">{t("rating")} ↓</SelectItem>
-                    <SelectItem value="primary_release_date.desc">{t("releaseDate")} ↓</SelectItem>
-                    <SelectItem value="revenue.desc">{t("revenue")} ↓</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 self-start sm:self-auto"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  {showFilters ? "Hide Filters" : "Show Filters"}
+                </Button>
               </div>
 
-              {/* Advanced Filters */}
-              {selectedGenre && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-4 flex flex-wrap gap-6 items-center p-4 rounded-xl bg-card border border-border">
-                  <div className="space-y-1 w-48">
-                    <label className="text-xs text-muted-foreground">{t("minimumRating")}: {minRating}</label>
-                    <Slider
-                      value={[minRating]}
-                      onValueChange={([v]) => { setMinRating(v); setPage(1); setAllResults([]); }}
-                      max={9}
-                      step={0.5}
-                    />
-                  </div>
-                  <div className="space-y-1 w-64">
-                    <label className="text-xs text-muted-foreground">{t("yearRange")}: {yearRange[0]} - {yearRange[1]}</label>
-                    <Slider
-                      value={yearRange}
-                      onValueChange={(v) => { setYearRange(v as [number, number]); setPage(1); setAllResults([]); }}
-                      min={1970}
-                      max={2026}
-                      step={1}
-                    />
-                  </div>
-                  {data && (
-                    <p className="text-sm text-muted-foreground">
-                      {data.total_results.toLocaleString()} {t("totalResults")}
-                    </p>
-                  )}
-                </motion.div>
-              )}
+              {/* Filters Row */}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex flex-wrap gap-3 items-end pt-4">
+                      <div className="flex gap-2">
+                        <Button
+                          variant={mediaType === "movie" ? "default" : "secondary"}
+                          className="btn-ripple"
+                          onClick={() => { setMediaType("movie"); resetFilters(); }}
+                        >
+                          {t("movies")}
+                        </Button>
+                        <Button
+                          variant={mediaType === "tv" ? "default" : "secondary"}
+                          className="btn-ripple"
+                          onClick={() => { setMediaType("tv"); resetFilters(); }}
+                        >
+                          {t("tvShows")}
+                        </Button>
+                      </div>
+
+                      <Select value={selectedGenre?.toString() || ""} onValueChange={handleGenreChange}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder={t("selectGenre")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {genres?.map((genre) => (
+                            <SelectItem key={genre.id} value={genre.id.toString()}>{genre.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); setAllResults([]); }}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="popularity.desc">{t("popularity")} ↓</SelectItem>
+                          <SelectItem value="vote_average.desc">{t("rating")} ↓</SelectItem>
+                          <SelectItem value="primary_release_date.desc">{t("releaseDate")} ↓</SelectItem>
+                          <SelectItem value="revenue.desc">{t("revenue")} ↓</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      {selectedGenre && (
+                        <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-destructive">
+                          <X className="w-3 h-3" /> Reset
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Advanced Filters */}
+                    {selectedGenre && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 flex flex-wrap gap-6 items-center p-4 rounded-xl bg-card/50 border border-border/50 glass-panel">
+                        <div className="space-y-1.5 w-48">
+                          <label className="text-xs text-muted-foreground font-medium">{t("minimumRating")}: {minRating}</label>
+                          <Slider
+                            value={[minRating]}
+                            onValueChange={([v]) => { setMinRating(v); setPage(1); setAllResults([]); }}
+                            max={9}
+                            step={0.5}
+                          />
+                        </div>
+                        <div className="space-y-1.5 w-64">
+                          <label className="text-xs text-muted-foreground font-medium">{t("yearRange")}: {yearRange[0]} - {yearRange[1]}</label>
+                          <Slider
+                            value={yearRange}
+                            onValueChange={(v) => { setYearRange(v as [number, number]); setPage(1); setAllResults([]); }}
+                            min={1970}
+                            max={2026}
+                            step={1}
+                          />
+                        </div>
+                        {data && (
+                          <p className="text-sm text-muted-foreground">
+                            {data.total_results.toLocaleString()} {t("totalResults")}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Genre Chips */}
             {!selectedGenre && genres && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-3 mb-8">
-                {genres.map((genre) => (
-                  <Button key={genre.id} variant="outline" onClick={() => setSelectedGenre(genre.id)} className="rounded-full">
-                    {genre.name}
-                  </Button>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap gap-2.5 mb-8">
+                {genres.map((genre, i) => (
+                  <motion.div
+                    key={genre.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.02 }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => { setSelectedGenre(genre.id); setShowFilters(true); }}
+                      className="rounded-full btn-ripple hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-all"
+                    >
+                      {genre.name}
+                    </Button>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
 
             {isLoading && page === 1 && (
-              <div className="flex justify-center py-16">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="spinner-fancy" />
+                <p className="text-sm text-muted-foreground">{t("loading")}...</p>
               </div>
             )}
 
             {allResults.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-5">
                   {allResults.map((item, index) => (
                     <MediaCard key={`${item.id}-${index}`} item={{ ...item, media_type: mediaType }} index={index} />
                   ))}
@@ -183,7 +236,7 @@ const Discover = () => {
                       size="lg"
                       onClick={() => setPage((p) => p + 1)}
                       disabled={isLoading}
-                      className="px-8"
+                      className="px-8 btn-magnetic"
                     >
                       {isLoading ? t("loading") : t("loadMore")}
                     </Button>
@@ -193,7 +246,10 @@ const Discover = () => {
             )}
 
             {!selectedGenre && !isLoading && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state">
+                <div className="empty-state-icon">
+                  <Filter className="w-8 h-8 text-muted-foreground" />
+                </div>
                 <p className="text-muted-foreground text-lg">
                   {t("selectGenre")}
                 </p>

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search as SearchIcon, X, Clock, TrendingUp, Film, Tv } from "lucide-react";
+import { Search as SearchIcon, X, Clock, TrendingUp, Film, Tv, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaCard from "@/components/MediaCard";
 import PageTransition from "@/components/PageTransition";
@@ -81,14 +81,16 @@ const Search = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background gradient-mesh">
         <Navbar />
         <div className="pt-24 pb-16">
           <div className="container mx-auto px-4">
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mb-8">
-              <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">{t("search")}</h1>
-              <div className="relative fancy-input rounded-xl">
-                <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mb-10">
+              <h1 className="text-3xl md:text-4xl font-bold text-center mb-8">{t("search")}</h1>
+              
+              {/* Enhanced search input */}
+              <div className="relative glass-premium rounded-2xl p-1">
+                <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                 <Input
                   type="text"
                   placeholder={t("searchPlaceholder")}
@@ -105,13 +107,18 @@ const Search = () => {
 
               {/* Media type filter */}
               {debouncedQuery && (
-                <Tabs value={mediaFilter} onValueChange={(v) => setMediaFilter(v as typeof mediaFilter)} className="mt-4">
-                  <TabsList className="grid grid-cols-3 w-full max-w-sm mx-auto">
-                    <TabsTrigger value="all">{t("filterAll")}</TabsTrigger>
-                    <TabsTrigger value="movie" className="gap-1"><Film className="w-3 h-3" /> {t("movies")}</TabsTrigger>
-                    <TabsTrigger value="tv" className="gap-1"><Tv className="w-3 h-3" /> {t("tvShows")}</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Tabs value={mediaFilter} onValueChange={(v) => setMediaFilter(v as typeof mediaFilter)} className="mt-4">
+                    <TabsList className="grid grid-cols-3 w-full max-w-sm mx-auto">
+                      <TabsTrigger value="all">{t("filterAll")}</TabsTrigger>
+                      <TabsTrigger value="movie" className="gap-1"><Film className="w-3 h-3" /> {t("movies")}</TabsTrigger>
+                      <TabsTrigger value="tv" className="gap-1"><Tv className="w-3 h-3" /> {t("tvShows")}</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </motion.div>
               )}
             </motion.div>
 
@@ -122,13 +129,13 @@ const Search = () => {
                   <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <Clock className="w-4 h-4" /> {t("searchHistory")}
                   </h3>
-                  <Button variant="ghost" size="sm" onClick={handleClearHistory} className="text-xs">
+                  <Button variant="ghost" size="sm" onClick={handleClearHistory} className="text-xs text-destructive hover:text-destructive">
                     {t("clearHistory")}
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {history.map((term) => (
-                    <Button key={term} variant="secondary" size="sm" onClick={() => setQuery(term)} className="rounded-full text-xs">
+                    <Button key={term} variant="secondary" size="sm" onClick={() => setQuery(term)} className="rounded-full text-xs btn-ripple">
                       {term}
                     </Button>
                   ))}
@@ -144,7 +151,7 @@ const Search = () => {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {trendingSuggestions.filter(Boolean).map((term) => (
-                    <Button key={term} variant="outline" size="sm" onClick={() => setQuery(term)} className="rounded-full text-xs">
+                    <Button key={term} variant="outline" size="sm" onClick={() => setQuery(term)} className="rounded-full text-xs btn-ripple hover:bg-primary/10 hover:border-primary/50">
                       {term}
                     </Button>
                   ))}
@@ -154,11 +161,8 @@ const Search = () => {
 
             {isLoading && debouncedQuery && (
               <div className="flex flex-col items-center justify-center py-16 gap-6">
-                <div className="loader-orbit" />
-                <div className="loader-dna">
-                  <span /><span /><span /><span /><span />
-                </div>
-                <p className="text-sm text-muted-foreground typewriter-cursor">{t("search")}</p>
+                <div className="spinner-fancy" />
+                <p className="text-sm text-muted-foreground">{t("search")}...</p>
               </div>
             )}
 
@@ -166,24 +170,22 @@ const Search = () => {
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }} 
                 animate={{ opacity: 1, scale: 1 }} 
-                className="text-center py-16"
+                className="empty-state"
               >
-                <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <SearchIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                </motion.div>
+                <div className="empty-state-icon">
+                  <SearchIcon className="w-8 h-8 text-muted-foreground" />
+                </div>
                 <p className="text-muted-foreground text-lg">{t("noResults")} "{debouncedQuery}"</p>
               </motion.div>
             )}
 
             {results.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground mb-6 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
                   {results.length} {t("resultsFor")} "{debouncedQuery}"
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-5">
                   {results.map((item, index) => (
                     <MediaCard key={item.id} item={item} index={index} />
                   ))}
@@ -192,8 +194,10 @@ const Search = () => {
             )}
 
             {!debouncedQuery && !history.length && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
-                <SearchIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="empty-state">
+                <div className="empty-state-icon">
+                  <SearchIcon className="w-8 h-8 text-muted-foreground" />
+                </div>
                 <p className="text-muted-foreground text-lg">{t("searchPlaceholder")}</p>
               </motion.div>
             )}

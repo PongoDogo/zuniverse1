@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Film, Tv, Heart, Compass, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
@@ -74,7 +75,7 @@ const Index = () => {
 
         {/* Content Rows */}
         <div className={`relative z-10 space-y-6 sm:space-y-8 pb-8 sm:pb-16 ${layout === "cosmos" ? "mt-0" : "-mt-16 sm:-mt-20"}`}>
-          <div className="container mx-auto px-3 sm:px-4 space-y-6 sm:space-y-10">
+          <div className="container mx-auto px-3 sm:px-4 space-y-8 sm:space-y-12">
             
             {/* Welcome Section - signed in users */}
             <WelcomeSection />
@@ -131,46 +132,70 @@ const Index = () => {
 
         {/* Enhanced Footer */}
         <div className="section-divider" />
-        <footer className="py-8 sm:py-10 pb-24 safe-bottom bg-card/30 backdrop-blur-sm footer-glow">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8">
+        <footer className="relative py-10 sm:py-14 pb-24 safe-bottom bg-card/20 backdrop-blur-sm footer-glow">
+          {/* Gradient mesh background */}
+          <div className="absolute inset-0 gradient-mesh pointer-events-none opacity-50" />
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 mb-10">
               {/* Brand */}
-              <div className="text-center sm:text-left">
-                <h3 className="font-bold text-lg mb-2 text-shimmer">CineTorrio</h3>
-                <p className="text-sm text-muted-foreground">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center sm:text-left"
+              >
+                <h3 className="font-bold text-xl mb-2 text-shimmer" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  CineTorrio
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {language === "el" 
                     ? "Η αγαπημένη σου πλατφόρμα streaming" 
                     : "Your favorite streaming platform"}
                 </p>
-              </div>
+              </motion.div>
 
               {/* Quick Links */}
-              <div className="text-center sm:text-left">
-                <h4 className="font-semibold text-sm mb-3 text-muted-foreground uppercase tracking-wider">{t("quickLinks")}</h4>
-                <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                  <Link to="/movies" className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1">
-                    <Film className="w-3 h-3" /> {t("movies")}
-                  </Link>
-                  <Link to="/tv" className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1">
-                    <Tv className="w-3 h-3" /> {t("tvShows")}
-                  </Link>
-                  <Link to="/discover" className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1">
-                    <Compass className="w-3 h-3" /> {t("discover")}
-                  </Link>
-                  <Link to="/favorites" className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1">
-                    <Heart className="w-3 h-3" /> {t("favorites")}
-                  </Link>
-                  <Link to="/collection" className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" /> {t("myCollection")}
-                  </Link>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-center sm:text-left"
+              >
+                <h4 className="font-semibold text-xs mb-4 text-muted-foreground uppercase tracking-[0.2em]">
+                  {t("quickLinks")}
+                </h4>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2">
+                  {[
+                    { to: "/movies", icon: Film, label: t("movies") },
+                    { to: "/tv", icon: Tv, label: t("tvShows") },
+                    { to: "/discover", icon: Compass, label: t("discover") },
+                    { to: "/favorites", icon: Heart, label: t("favorites") },
+                    { to: "/collection", icon: Sparkles, label: t("myCollection") },
+                  ].map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="text-sm text-muted-foreground hover-glow-text transition-all flex items-center gap-1.5 py-1"
+                    >
+                      <link.icon className="w-3.5 h-3.5" /> {link.label}
+                    </Link>
+                  ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Info */}
-              <div className="text-center sm:text-right">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-center sm:text-right"
+              >
                 <p className="text-xs text-muted-foreground">{t("version")} 2.0.0</p>
                 <p className="text-xs text-muted-foreground mt-1">© 2024 CineTorrio</p>
-              </div>
+              </motion.div>
             </div>
 
             <div className="section-divider mb-4" />

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, Settings, BarChart3, Trophy, LogOut, Mail, Save } from "lucide-react";
+import { User, Settings, BarChart3, Trophy, LogOut, Mail, Save, Palette } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -32,12 +32,16 @@ const Profile = () => {
   if (!auth?.isSignedIn) {
     return (
       <PageTransition>
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background gradient-mesh">
           <Navbar />
-          <div className="pt-24 pb-16 container mx-auto px-4 text-center py-20">
-            <User className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h2 className="text-2xl font-bold mb-2">{t("signIn")}</h2>
-            <p className="text-muted-foreground">{t("signInToSync")}</p>
+          <div className="pt-24 pb-16 container mx-auto px-4">
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <User className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">{t("signIn")}</h2>
+              <p className="text-muted-foreground">{t("signInToSync")}</p>
+            </div>
           </div>
         </div>
       </PageTransition>
@@ -72,32 +76,41 @@ const Profile = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background gradient-mesh">
         <Navbar />
         <div className="pt-24 pb-16 container mx-auto px-4 max-w-4xl">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold">
+          {/* Profile Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-10"
+          >
+            <div className="flex items-center gap-5 p-6 rounded-2xl glass-premium">
+              <motion.div
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground text-3xl font-bold glow-shadow shrink-0"
+              >
                 {(auth.user?.email?.[0] || "U").toUpperCase()}
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">{displayName}</h1>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> {auth.user?.email}
+              </motion.div>
+              <div className="min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold truncate">{displayName}</h1>
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                  <Mail className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">{auth.user?.email}</span>
                 </p>
               </div>
             </div>
           </motion.div>
 
           <Tabs defaultValue="stats" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="stats" className="gap-2">
+            <TabsList className="grid w-full grid-cols-3 h-12">
+              <TabsTrigger value="stats" className="gap-2 text-xs sm:text-sm">
                 <BarChart3 className="w-4 h-4" /> {t("watchStatistics")}
               </TabsTrigger>
-              <TabsTrigger value="achievements" className="gap-2">
+              <TabsTrigger value="achievements" className="gap-2 text-xs sm:text-sm">
                 <Trophy className="w-4 h-4" /> {t("achievements")}
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
+              <TabsTrigger value="settings" className="gap-2 text-xs sm:text-sm">
                 <Settings className="w-4 h-4" /> {t("preferences")}
               </TabsTrigger>
             </TabsList>
@@ -106,40 +119,47 @@ const Profile = () => {
             <TabsContent value="stats" className="space-y-6">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: t("moviesCount"), value: stats.moviesWatched, color: "text-blue-400" },
-                  { label: t("episodesCount"), value: stats.episodesWatched, color: "text-purple-400" },
-                  { label: t("seasonsCount"), value: stats.seasonsCompleted, color: "text-green-400" },
-                  { label: t("hours"), value: Math.round(stats.totalWatchTime / 60), color: "text-orange-400" },
-                ].map((s) => (
-                  <Card key={s.label}>
-                    <CardContent className="p-4 text-center">
-                      <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                      <p className="text-xs text-muted-foreground">{s.label}</p>
-                    </CardContent>
-                  </Card>
+                  { label: t("moviesCount"), value: stats.moviesWatched, color: "from-blue-500/20 to-blue-600/5", textColor: "text-blue-400" },
+                  { label: t("episodesCount"), value: stats.episodesWatched, color: "from-purple-500/20 to-purple-600/5", textColor: "text-purple-400" },
+                  { label: t("seasonsCount"), value: stats.seasonsCompleted, color: "from-green-500/20 to-green-600/5", textColor: "text-green-400" },
+                  { label: t("hours"), value: Math.round(stats.totalWatchTime / 60), color: "from-orange-500/20 to-orange-600/5", textColor: "text-orange-400" },
+                ].map((s, i) => (
+                  <motion.div
+                    key={s.label}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.08 }}
+                  >
+                    <Card className={`bg-gradient-to-br ${s.color} border-border/30 stat-card`}>
+                      <CardContent className="p-4 text-center">
+                        <p className={`text-3xl font-bold ${s.textColor}`}>{s.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
 
-              <Card>
-                <CardHeader><CardTitle className="text-sm">{t("watchStatistics")}</CardTitle></CardHeader>
+              <Card className="glass-panel border-border/30">
+                <CardHeader><CardTitle className="text-sm section-heading">{t("watchStatistics")}</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={watchData}>
                       <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                       <Tooltip
-                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }}
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px" }}
                         labelStyle={{ color: "hsl(var(--foreground))" }}
                       />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
               {genreData.length > 0 && (
-                <Card>
-                  <CardHeader><CardTitle className="text-sm">{t("genreBreakdown")}</CardTitle></CardHeader>
+                <Card className="glass-panel border-border/30">
+                  <CardHeader><CardTitle className="text-sm section-heading">{t("genreBreakdown")}</CardTitle></CardHeader>
                   <CardContent className="flex justify-center">
                     <ResponsiveContainer width="100%" height={200}>
                       <PieChart>
@@ -159,22 +179,25 @@ const Profile = () => {
             {/* Achievements Tab */}
             <TabsContent value="achievements">
               {achievements.length === 0 ? (
-                <div className="text-center py-12">
-                  <Trophy className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                <div className="empty-state">
+                  <div className="empty-state-icon">
+                    <Trophy className="w-8 h-8 text-muted-foreground" />
+                  </div>
                   <p className="text-muted-foreground">{t("startWatching")}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {achievements.map((a) => (
+                  {achievements.map((a, i) => (
                     <motion.div
                       key={a.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
                     >
-                      <Card className="text-center">
+                      <Card className="text-center card-elevated border-border/30">
                         <CardContent className="p-4">
-                          <span className="text-3xl">{a.icon}</span>
-                          <p className="font-semibold text-sm mt-2">{a.title}</p>
+                          <span className="text-3xl block mb-2">{a.icon}</span>
+                          <p className="font-semibold text-sm">{a.title}</p>
                           <p className="text-xs text-muted-foreground mt-1">{a.description}</p>
                         </CardContent>
                       </Card>
@@ -185,21 +208,22 @@ const Profile = () => {
             </TabsContent>
 
             {/* Settings Tab */}
-            <TabsContent value="settings" className="space-y-6">
-              <Card>
-                <CardHeader><CardTitle className="text-sm">{t("displayName")}</CardTitle></CardHeader>
+            <TabsContent value="settings" className="space-y-4">
+              <Card className="glass-panel border-border/30">
+                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><User className="w-4 h-4" /> {t("displayName")}</CardTitle></CardHeader>
                 <CardContent className="flex gap-3">
                   <Input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder={t("displayName")}
+                    className="flex-1"
                   />
-                  <Button onClick={handleSaveName} size="icon"><Save className="w-4 h-4" /></Button>
+                  <Button onClick={handleSaveName} size="icon" className="shrink-0"><Save className="w-4 h-4" /></Button>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader><CardTitle className="text-sm">{t("preferences")}</CardTitle></CardHeader>
+              <Card className="glass-panel border-border/30">
+                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="w-4 h-4" /> {t("preferences")}</CardTitle></CardHeader>
                 <CardContent className="flex flex-wrap gap-3">
                   <ThemeSwitcher />
                   <LanguageSwitcher />
@@ -207,7 +231,7 @@ const Profile = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="glass-panel border-border/30">
                 <CardHeader><CardTitle className="text-sm">{t("accountManagement")}</CardTitle></CardHeader>
                 <CardContent>
                   <Button
