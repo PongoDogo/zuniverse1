@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
 import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
@@ -70,15 +71,26 @@ const TVShows = () => {
 
         <div className="relative z-10 -mt-12 sm:-mt-16">
           <div className="container mx-auto px-4 space-y-8 pb-16">
-            <h1 className="text-3xl md:text-4xl font-bold">{t("tvShows")}</h1>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="page-header"
+            >
+              <h1 className="text-3xl md:text-4xl font-bold">{t("tvShows")}</h1>
+            </motion.div>
 
             {/* Genre Quick Chips */}
             {genres && (
-              <div className="flex flex-wrap gap-2">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="flex flex-wrap gap-2"
+              >
                 <Button
                   variant={selectedGenre === null ? "default" : "secondary"}
                   size="sm"
-                  className="rounded-full text-xs"
+                  className="rounded-full text-xs btn-ripple"
                   onClick={() => setSelectedGenre(null)}
                 >
                   {t("all")}
@@ -88,13 +100,13 @@ const TVShows = () => {
                     key={genre.id}
                     variant={selectedGenre === genre.id ? "default" : "secondary"}
                     size="sm"
-                    className="rounded-full text-xs"
+                    className="rounded-full text-xs btn-ripple"
                     onClick={() => setSelectedGenre(genre.id)}
                   >
                     {genre.name}
                   </Button>
                 ))}
-              </div>
+              </motion.div>
             )}
 
             {/* Genre Results */}
