@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Share2 } from "lucide-react";
+import { Play, Star, Clock, Calendar, ArrowLeft, PlayCircle, Share2, Info } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import MediaRow from "@/components/MediaRow";
 import WatchlistButton from "@/components/WatchlistButton";
@@ -87,7 +87,10 @@ const MovieDetails = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="spinner-fancy" />
+          <p className="text-sm text-muted-foreground">{language === "el" ? "Φόρτωση..." : "Loading..."}</p>
+        </div>
       </div>
     );
   }
@@ -95,7 +98,13 @@ const MovieDetails = () => {
   if (!movie) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">{language === "el" ? "Η ταινία δεν βρέθηκε" : "Movie not found"}</p>
+        <div className="empty-state">
+          <div className="empty-state-icon">
+            <Info className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">{language === "el" ? "Η ταινία δεν βρέθηκε" : "Movie not found"}</p>
+          <Button asChild className="mt-4"><Link to="/">{t("back")}</Link></Button>
+        </div>
       </div>
     );
   }
@@ -121,7 +130,7 @@ const MovieDetails = () => {
           <div className="container mx-auto px-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg"
+              className="inline-flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors glass-premium px-4 py-2.5 rounded-xl text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               {t("back")}
@@ -144,34 +153,29 @@ const MovieDetails = () => {
               <img
                 src={getImageUrl(movie.poster_path, "w500")}
                 alt={movie.title}
-                className="w-48 lg:w-full rounded-xl shadow-2xl mx-auto lg:mx-0"
+                className="w-48 lg:w-full rounded-2xl shadow-2xl mx-auto lg:mx-0 border border-border/20"
               />
               
               {/* Quick Stats Card - Desktop */}
-              <div className="hidden lg:block mt-6 p-4 bg-card rounded-xl border border-border/50">
-                <h3 className="font-semibold mb-3 text-sm">{language === "el" ? "Πληροφορίες" : "Details"}</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{language === "el" ? "Κυκλοφορία" : "Release"}</span>
-                    <span>{movie.release_date}</span>
-                  </div>
-                  {movie.runtime && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">{language === "el" ? "Διάρκεια" : "Runtime"}</span>
-                      <span>{Math.floor(movie.runtime / 60)}h {movie.runtime % 60}m</span>
+              <div className="hidden lg:block mt-6 p-5 glass-panel rounded-2xl">
+                <h3 className="font-semibold mb-3 text-sm section-heading">{language === "el" ? "Πληροφορίες" : "Details"}</h3>
+                <div className="space-y-3 text-sm mt-5">
+                  {[
+                    { label: language === "el" ? "Κυκλοφορία" : "Release", value: movie.release_date },
+                    movie.runtime && { label: language === "el" ? "Διάρκεια" : "Runtime", value: `${Math.floor(movie.runtime / 60)}h ${movie.runtime % 60}m` },
+                    { label: language === "el" ? "Βαθμολογία" : "Rating", value: (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                        {movie.vote_average.toFixed(1)}
+                      </span>
+                    )},
+                    { label: language === "el" ? "Ψήφοι" : "Votes", value: movie.vote_count?.toLocaleString() },
+                  ].filter(Boolean).map((item: any) => (
+                    <div key={item.label} className="flex justify-between items-center">
+                      <span className="text-muted-foreground">{item.label}</span>
+                      <span className="font-medium">{item.value}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{language === "el" ? "Βαθμολογία" : "Rating"}</span>
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                      {movie.vote_average.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">{language === "el" ? "Ψήφοι" : "Votes"}</span>
-                    <span>{movie.vote_count?.toLocaleString()}</span>
-                  </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -185,7 +189,7 @@ const MovieDetails = () => {
             >
               {/* Title & Tagline */}
               <div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">{movie.title}</h1>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2 break-words">{movie.title}</h1>
                 {movie.tagline && (
                   <p className="text-muted-foreground italic text-lg">"{movie.tagline}"</p>
                 )}
@@ -193,8 +197,8 @@ const MovieDetails = () => {
 
               {/* Meta Info */}
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
-                <Badge variant="secondary" className="gap-1 px-3 py-1">
-                  <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                <Badge variant="secondary" className="gap-1 px-3 py-1.5 bg-yellow-500/10 border-yellow-500/20 text-yellow-500">
+                  <Star className="w-3.5 h-3.5 fill-current" />
                   {movie.vote_average.toFixed(1)}
                 </Badge>
                 {year && (
@@ -214,20 +218,20 @@ const MovieDetails = () => {
               {/* Genres */}
               <div className="flex flex-wrap gap-2">
                 {movie.genres?.map((genre) => (
-                  <Badge key={genre.id} variant="outline" className="px-3 py-1">
+                  <Badge key={genre.id} variant="outline" className="px-3 py-1.5 hover:bg-primary/10 hover:border-primary/50 transition-colors">
                     {genre.name}
                   </Badge>
                 ))}
               </div>
 
               {/* Overview */}
-              <p className="text-muted-foreground leading-relaxed max-w-3xl">
+              <p className="text-muted-foreground leading-relaxed max-w-3xl text-[15px]">
                 {movie.overview}
               </p>
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button asChild size="lg" className="gap-2 glow-shadow h-12 px-6">
+                <Button asChild size="lg" className="gap-2 glow-shadow h-12 px-6 btn-fancy">
                   <Link to={`/movie/${movieId}/watch`}>
                     <Play className="w-5 h-5 fill-current" />
                     {language === "el" ? "Παρακολούθηση" : "Watch Now"}
@@ -236,7 +240,7 @@ const MovieDetails = () => {
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="gap-2 h-12"
+                  className="gap-2 h-12 btn-ripple"
                   onClick={() => setShowTrailer(true)}
                 >
                   <PlayCircle className="w-5 h-5" />
@@ -245,14 +249,18 @@ const MovieDetails = () => {
                 <WatchlistButton item={movie} mediaType="movie" variant="full" />
                 <MarkAsWatchedButton item={movie} mediaType="movie" variant="full" />
                 <PinButton item={movie} mediaType="movie" />
-                <Button variant="ghost" size="icon" onClick={handleShare} className="h-12 w-12">
+                <Button variant="ghost" size="icon" onClick={handleShare} className="h-12 w-12 interactive-icon">
                   <Share2 className="w-5 h-5" />
                 </Button>
               </div>
 
               {/* User Rating Section - Only show when watched */}
               {watched && (
-                <div className="pt-4 border-t border-border/50">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="pt-4 border-t border-border/50"
+                >
                   <p className="text-sm text-muted-foreground mb-2">{t("yourRating")}</p>
                   <StarRating
                     value={userRating}
@@ -260,7 +268,7 @@ const MovieDetails = () => {
                     maxStars={10}
                     size="lg"
                   />
-                </div>
+                </motion.div>
               )}
             </motion.div>
           </div>
@@ -271,17 +279,23 @@ const MovieDetails = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="mt-12"
+              className="mt-14"
             >
-              <h2 className="text-xl font-bold mb-5">{language === "el" ? "Ηθοποιοί" : "Cast"}</h2>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {credits.slice(0, 12).map((person) => (
-                  <div key={person.id} className="flex-shrink-0 w-28 text-center group">
-                    <div className="relative mb-2 overflow-hidden rounded-full">
+              <h2 className="text-xl font-bold mb-5 section-heading">{language === "el" ? "Ηθοποιοί" : "Cast"}</h2>
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide mt-6">
+                {credits.slice(0, 12).map((person, i) => (
+                  <motion.div
+                    key={person.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex-shrink-0 w-28 text-center group"
+                  >
+                    <div className="relative mb-2">
                       <img
                         src={getImageUrl(person.profile_path, "w200")}
                         alt={person.name}
-                        className="w-20 h-20 rounded-full object-cover mx-auto ring-2 ring-border group-hover:ring-primary transition-all"
+                        className="w-20 h-20 rounded-full object-cover mx-auto ring-2 ring-border group-hover:ring-primary transition-all duration-300 group-hover:scale-105"
                       />
                     </div>
                     <p className="text-sm font-medium line-clamp-1">{person.name}</p>
@@ -290,11 +304,11 @@ const MovieDetails = () => {
                     </p>
                     <button
                       onClick={() => setActorGraph({ id: person.id, name: person.name, image: person.profile_path })}
-                      className="mt-1 text-[10px] text-primary hover:underline cursor-pointer"
+                      className="mt-1 text-[10px] text-primary hover:underline cursor-pointer hover-glow-text"
                     >
                       {language === "el" ? "Συνδέσεις 🕸️" : "Connections 🕸️"}
                     </button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -302,7 +316,7 @@ const MovieDetails = () => {
 
           {/* Similar Movies */}
           {similar && similar.length > 0 && (
-            <div className="mt-12">
+            <div className="mt-14">
               <MediaRow 
                 title={language === "el" ? "Παρόμοιες Ταινίες" : "Similar Movies"} 
                 items={similar} 
