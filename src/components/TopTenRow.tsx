@@ -1,7 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
 import { Movie, getImageUrl } from "@/lib/tmdb";
 import { useLanguage } from "@/hooks/useLanguage";
 
@@ -60,35 +59,27 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
   if (!topItems.length) return null;
 
   return (
-    <div className="relative group/row overflow-hidden">
-      <motion.h2 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2"
-      >
-        <span className="text-gradient text-neon">🔥 {t("topTenThisWeek")}</span>
-      </motion.h2>
+    <div className="relative group/row overflow-hidden" style={{ contentVisibility: "auto", containIntrinsicSize: "0 260px" }}>
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2 animate-fade-in">
+        <span className="text-gradient">🔥 {t("topTenThisWeek")}</span>
+      </h2>
 
-      <motion.button
-        whileHover={{ scale: 1.15 }}
-        whileTap={{ scale: 0.9 }}
+      <button
         onClick={() => scroll("left")}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 items-center justify-center transition-all duration-200 hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <ChevronLeft className="w-5 h-5" />
-      </motion.button>
-      <motion.button
-        whileHover={{ scale: 1.15 }}
-        whileTap={{ scale: 0.9 }}
+      </button>
+      <button
         onClick={() => scroll("right")}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 items-center justify-center transition-all duration-200 hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
         <ChevronRight className="w-5 h-5" />
-      </motion.button>
+      </button>
 
       <div className="scroll-indicator">
         <div
@@ -101,17 +92,15 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
             const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
 
             return (
-              <motion.div
+              <div
                 key={item.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.06, type: "spring", stiffness: 150 }}
-                className="flex-shrink-0 relative group"
+                className="flex-shrink-0 group animate-fade-in"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
                 <Link to={`/${mediaType}/${item.id}`} className="flex items-end">
-                  {/* Large rank number with neon effect */}
+                  {/* Large rank number */}
                   <span
-                    className="text-[80px] sm:text-[100px] md:text-[120px] font-black leading-none select-none transition-all duration-300 group-hover:text-neon"
+                    className="text-[80px] sm:text-[100px] md:text-[120px] font-black leading-none select-none transition-colors duration-300"
                     style={{
                       WebkitTextStroke: "2px hsl(var(--primary))",
                       WebkitTextFillColor: "transparent",
@@ -122,7 +111,7 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
                   >
                     {index + 1}
                   </span>
-                  <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-xl overflow-hidden card-shadow cyber-card border-animate">
+                  <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-xl overflow-hidden card-shadow cyber-card">
                     <img
                       src={getImageUrl(item.poster_path)}
                       alt={title}
@@ -130,16 +119,9 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {/* Cyber corners */}
-                    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <span className="absolute top-[5px] left-[5px] w-2.5 h-2.5 border-l-2 border-t-2 border-primary/70" />
-                      <span className="absolute top-[5px] right-[5px] w-2.5 h-2.5 border-r-2 border-t-2 border-primary/70" />
-                      <span className="absolute bottom-[5px] left-[5px] w-2.5 h-2.5 border-l-2 border-b-2 border-primary/70" />
-                      <span className="absolute bottom-[5px] right-[5px] w-2.5 h-2.5 border-r-2 border-b-2 border-primary/70" />
-                    </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
         </div>
