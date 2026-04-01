@@ -114,22 +114,12 @@ const Navbar = () => {
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Dynamic Logo based on Layout */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <motion.div 
-                key={layout}
-                initial={{ scale: 0.8, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${currentLogo.gradient} flex items-center justify-center glow-shadow`}
-              >
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${currentLogo.gradient} flex items-center justify-center glow-shadow`}>
                 {currentLogo.icon}
-              </motion.div>
-              <motion.span 
-                key={`name-${layout}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-lg sm:text-xl font-bold hidden xs:block text-gradient"
-              >
+              </div>
+              <span className="text-lg sm:text-xl font-bold hidden xs:block text-gradient">
                 {currentLogo.name}
-              </motion.span>
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
