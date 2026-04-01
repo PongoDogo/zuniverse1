@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
 import { Movie } from "@/lib/tmdb";
 import MediaCard from "./MediaCard";
 
@@ -44,7 +43,7 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
 
   if (isLoading) {
     return (
-      <div className="relative group/row">
+      <div className="relative group/row" style={{ contentVisibility: "auto", containIntrinsicSize: "0 220px" }}>
         <div className="h-7 w-40 skeleton-wave mb-3" />
         <div className="flex gap-3 overflow-hidden pb-4 -mx-3 px-3 sm:-mx-4 sm:px-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -62,38 +61,30 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
   if (!items?.length) return null;
 
   return (
-    <div className="relative group/row overflow-hidden">
-      <motion.h2 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 truncate"
-      >
+    <div className="relative group/row overflow-hidden" style={{ contentVisibility: "auto", containIntrinsicSize: "0 220px" }}>
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 truncate animate-fade-in">
         {title}
-      </motion.h2>
+      </h2>
 
-      {/* Scroll Buttons with hover glow */}
-      <motion.button
-        whileHover={{ scale: 1.15 }}
-        whileTap={{ scale: 0.9 }}
+      {/* Scroll Buttons - CSS only hover */}
+      <button
         onClick={() => scroll("left")}
-        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
+        className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 items-center justify-center transition-all duration-200 hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-label="Scroll left"
       >
         <ChevronLeft className="w-5 h-5" />
-      </motion.button>
-      <motion.button
-        whileHover={{ scale: 1.15 }}
-        whileTap={{ scale: 0.9 }}
+      </button>
+      <button
         onClick={() => scroll("right")}
-        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 backdrop-blur-md items-center justify-center transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_20px_hsl(var(--primary)/0.4)] hidden md:flex ${
+        className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background/90 items-center justify-center transition-all duration-200 hover:bg-primary hover:text-primary-foreground hidden md:flex ${
           canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-label="Scroll right"
       >
         <ChevronRight className="w-5 h-5" />
-      </motion.button>
+      </button>
 
       {/* Fade edges */}
       <div className="scroll-indicator">

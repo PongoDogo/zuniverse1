@@ -1288,6 +1288,81 @@
     }
   }
 
+  /* === MOBILE PERFORMANCE === */
+  @media (max-width: 768px) {
+    /* Reduce backdrop-filter on mobile - very expensive */
+    .glass,
+    .glass-panel,
+    .glass-aurora,
+    .glass-premium {
+      backdrop-filter: blur(8px) !important;
+    }
+    
+    /* Disable continuous animations on mobile */
+    .badge-neon {
+      animation: none !important;
+    }
+    
+    .text-shimmer {
+      animation: none !important;
+      background: none !important;
+      -webkit-text-fill-color: currentColor !important;
+      color: hsl(var(--primary)) !important;
+    }
+    
+    .animated-gradient {
+      animation: none !important;
+    }
+    
+    .cyber-scan-line,
+    .cyber-line-grow {
+      display: none !important;
+    }
+    
+    .border-animate::after {
+      display: none !important;
+    }
+    
+    .glass-aurora::before {
+      display: none !important;
+    }
+    
+    /* Disable glow shadows on mobile */
+    .glow-shadow {
+      box-shadow: none !important;
+    }
+    
+    /* Simplify card shadows */
+    .card-shadow {
+      box-shadow: 0 4px 12px hsl(0 0% 0% / 0.3) !important;
+    }
+    
+    /* Disable hover transforms on touch */
+    .media-card-hover:hover {
+      transform: none !important;
+      box-shadow: var(--shadow-card) !important;
+    }
+    
+    .card-elevated:hover {
+      transform: none !important;
+    }
+    
+    .hover-tilt:hover {
+      transform: none !important;
+    }
+  }
+  
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
   /* === CYBER CARD (uiverse.io inspired) === */
 
   .cyber-card {

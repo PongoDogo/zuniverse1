@@ -105,33 +105,21 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top ${
-          isScrolled || isMenuOpen ? "glass" : "bg-gradient-to-b from-background/80 to-transparent"
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top animate-fade-in ${
+          isScrolled || isMenuOpen ? "bg-background/85 backdrop-blur-md border-b border-border/30" : "bg-gradient-to-b from-background/80 to-transparent"
         }`}
       >
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Dynamic Logo based on Layout */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
-              <motion.div 
-                key={layout}
-                initial={{ scale: 0.8, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${currentLogo.gradient} flex items-center justify-center glow-shadow`}
-              >
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${currentLogo.gradient} flex items-center justify-center glow-shadow`}>
                 {currentLogo.icon}
-              </motion.div>
-              <motion.span 
-                key={`name-${layout}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-lg sm:text-xl font-bold hidden xs:block text-gradient"
-              >
+              </div>
+              <span className="text-lg sm:text-xl font-bold hidden xs:block text-gradient">
                 {currentLogo.name}
-              </motion.span>
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -212,59 +200,46 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Navigation - Full Screen Overlay */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background/95 backdrop-blur-lg md:hidden pt-16 safe-top"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="container mx-auto px-4 py-6"
-            >
-              {/* Mobile Settings Row */}
-              <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
-                <SyncStatus />
-                <UILayoutSwitcher />
-                <LanguageSwitcher />
-                <ThemeSwitcher />
-                <NotificationCenter />
-                <SupabaseAuthButton />
-              </div>
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-lg md:hidden pt-16 safe-top animate-fade-in">
+          <div className="container mx-auto px-4 py-6">
+            {/* Mobile Settings Row */}
+            <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">
+              <SyncStatus />
+              <UILayoutSwitcher />
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              <NotificationCenter />
+              <SupabaseAuthButton />
+            </div>
 
-              <div className="space-y-2">
-                {navLinks.map((link, index) => (
-                  <motion.div
-                    key={link.href}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
+            <div className="space-y-2">
+              {navLinks.map((link, index) => (
+                <div
+                  key={link.href}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <Link
+                    to={link.href}
+                    className={`flex items-center gap-4 px-4 py-4 rounded-xl transition-colors text-lg ${
+                      isActive(link.href)
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    }`}
                   >
-                    <Link
-                      to={link.href}
-                      className={`flex items-center gap-4 px-4 py-4 rounded-xl transition-colors text-lg ${
-                        isActive(link.href)
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                      }`}
-                    >
-                      <link.icon className="w-6 h-6" />
-                      {t(link.labelKey)}
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                    <link.icon className="w-6 h-6" />
+                    {t(link.labelKey)}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

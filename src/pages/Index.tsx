@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Film, Tv, Heart, Compass, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
@@ -132,20 +131,12 @@ const Index = () => {
 
         {/* Enhanced Footer */}
         <div className="section-divider" />
-        <footer className="relative py-10 sm:py-14 pb-24 safe-bottom bg-card/20 backdrop-blur-sm footer-glow">
-          {/* Gradient mesh background */}
-          <div className="absolute inset-0 gradient-mesh pointer-events-none opacity-50" />
-          
+        <footer className="relative py-10 sm:py-14 pb-24 safe-bottom bg-card/20 footer-glow">
           <div className="container mx-auto px-4 relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10 mb-10">
               {/* Brand */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-center sm:text-left"
-              >
-                <h3 className="font-bold text-xl mb-2 text-shimmer" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              <div className="text-center sm:text-left">
+                <h3 className="font-bold text-xl mb-2 text-gradient" style={{ fontFamily: "'Outfit', sans-serif" }}>
                   CineTorrio
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -153,16 +144,10 @@ const Index = () => {
                     ? "Η αγαπημένη σου πλατφόρμα streaming" 
                     : "Your favorite streaming platform"}
                 </p>
-              </motion.div>
+              </div>
 
               {/* Quick Links */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="text-center sm:text-left"
-              >
+              <div className="text-center sm:text-left">
                 <h4 className="font-semibold text-xs mb-4 text-muted-foreground uppercase tracking-[0.2em]">
                   {t("quickLinks")}
                 </h4>
@@ -183,19 +168,13 @@ const Index = () => {
                     </Link>
                   ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* Info */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="text-center sm:text-right"
-              >
+              <div className="text-center sm:text-right">
                 <p className="text-xs text-muted-foreground">{t("version")} 2.0.0</p>
                 <p className="text-xs text-muted-foreground mt-1">© 2024 CineTorrio</p>
-              </motion.div>
+              </div>
             </div>
 
             <div className="section-divider mb-4" />
