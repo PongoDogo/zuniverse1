@@ -105,11 +105,9 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top ${
-          isScrolled || isMenuOpen ? "glass" : "bg-gradient-to-b from-background/80 to-transparent"
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top animate-fade-in ${
+          isScrolled || isMenuOpen ? "bg-background/85 backdrop-blur-md border-b border-border/30" : "bg-gradient-to-b from-background/80 to-transparent"
         }`}
       >
         <div className="container mx-auto px-3 sm:px-4">
