@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Film, Tv, Heart, Compass, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import LayoutHeroBanner from "@/components/layouts/LayoutHeroBanner";
 import MediaRow from "@/components/MediaRow";
