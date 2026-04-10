@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import { SkipForward, X, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -32,19 +31,12 @@ const AutoPlayCountdown = ({
   const progress = ((seconds - remaining) / seconds) * 100;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 30, scale: 0.95 }}
-      className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/80 backdrop-blur-xl shadow-2xl shadow-primary/10"
-    >
+    <div className="relative overflow-hidden rounded-2xl performance-surface-strong shadow-2xl shadow-primary/10 performance-page-enter">
       {/* Progress bar bg */}
       <div className="absolute bottom-0 left-0 h-1 w-full bg-secondary/30">
-        <motion.div
+        <div
           className="h-full bg-gradient-to-r from-primary to-primary/60"
-          initial={{ width: "0%" }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 1, ease: "linear" }}
+          style={{ width: `${progress}%`, transition: "width 1s linear" }}
         />
       </div>
 
@@ -93,7 +85,7 @@ const AutoPlayCountdown = ({
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

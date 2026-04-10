@@ -68,7 +68,7 @@ const MediaCard = memo(({ item }: MediaCardProps) => {
             <div className="absolute inset-0 skeleton-wave" />
           )}
           <img
-            src={getImageUrl(item.poster_path)}
+            src={getImageUrl(item.poster_path, "w300")}
             alt={title}
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
             loading="lazy"
@@ -90,7 +90,7 @@ const MediaCard = memo(({ item }: MediaCardProps) => {
           <div className="absolute top-1 left-1 flex flex-col gap-1 z-10">
             <button
               onClick={handleFavoriteClick}
-              className="p-1.5 rounded-full bg-background/70 backdrop-blur-md transition-all duration-200 hover:bg-primary active:scale-90"
+              className="p-1.5 rounded-full performance-chip transition-all duration-200 hover:bg-primary/15 active:scale-90"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart
@@ -101,7 +101,7 @@ const MediaCard = memo(({ item }: MediaCardProps) => {
             </button>
             <button
               onClick={handlePinClick}
-              className="p-1.5 rounded-full bg-background/70 backdrop-blur-md transition-all duration-200 hover:bg-primary active:scale-90"
+              className="p-1.5 rounded-full performance-chip transition-all duration-200 hover:bg-primary/15 active:scale-90"
               aria-label={pinned ? "Unpin" : "Pin to home"}
             >
               <Pin

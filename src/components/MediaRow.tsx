@@ -62,7 +62,7 @@ const MediaRow = ({ title, items, isLoading }: MediaRowProps) => {
 
   return (
     <div className="relative group/row overflow-hidden" style={{ contentVisibility: "auto", containIntrinsicSize: "0 220px" }}>
-      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 truncate animate-fade-in">
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 truncate">
         {title}
       </h2>
 
