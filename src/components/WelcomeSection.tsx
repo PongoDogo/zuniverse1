@@ -1,8 +1,8 @@
-import { motion } from "framer-motion";
 import { Film, Tv, Clock, Trophy } from "lucide-react";
 import { useSupabaseAuthSafe } from "@/contexts/SupabaseAuthContext";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const AnimatedCounter = ({ value, suffix = "" }: { value: number; suffix?: string }) => (
   <span className="tabular-nums">{value}{suffix}</span>
@@ -12,6 +12,7 @@ const WelcomeSection = () => {
   const { t, language } = useLanguage();
   const auth = useSupabaseAuthSafe();
   const { getWatchStats, getAchievements, getCollection } = useUserData();
+  const isMobile = useIsMobile();
 
   if (!auth?.isSignedIn) return null;
 
@@ -28,11 +29,7 @@ const WelcomeSection = () => {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-4"
-    >
+    <div className={`space-y-4 content-auto ${isMobile ? "" : "performance-page-enter"}`} style={{ containIntrinsicSize: "0 180px" }}>
       <div>
         <h2 className="text-xl sm:text-2xl font-bold">
           {language === "el" ? `Καλώς ήρθες, ${displayName}! 👋` : `Welcome back, ${displayName}! 👋`}
@@ -46,30 +43,24 @@ const WelcomeSection = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {statItems.map((item, index) => (
-          <motion.div
+          <div
             key={item.label}
-            initial={{ opacity: 0, scale: 0.8, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: index * 0.08, type: "spring", stiffness: 200 }}
-            whileHover={{ scale: 1.03, y: -2 }}
-            className={`bg-gradient-to-br ${item.bg} rounded-xl p-3 flex items-center gap-3 border border-border/30 card-fancy backdrop-blur-sm`}
+            className={`bg-gradient-to-br ${item.bg} rounded-xl p-3 flex items-center gap-3 border border-border/30 card-fancy card-shadow ${isMobile ? "" : "stagger-up"}`}
+            style={isMobile ? undefined : { animationDelay: `${index * 0.06}s` }}
           >
-            <motion.div 
-              className="p-2.5 rounded-lg bg-background/40"
-              whileHover={{ rotate: 12 }}
-            >
+            <div className="p-2.5 rounded-lg bg-background/70 shadow-sm">
               <item.icon className={`w-4 h-4 sm:w-5 sm:h-5 ${item.color}`} />
-            </motion.div>
+            </div>
             <div>
               <p className="text-lg font-bold leading-none">
                 <AnimatedCounter value={item.value} />
               </p>
               <p className="text-[10px] sm:text-xs text-muted-foreground">{item.label}</p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

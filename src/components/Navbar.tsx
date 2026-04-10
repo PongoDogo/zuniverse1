@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Search, Menu, X, Film, Tv, Home, Compass, Heart, Sparkles, Star, Moon, Orbit } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import ThemeSwitcher from "./ThemeSwitcher";
 import NotificationCenter from "./NotificationCenter";
@@ -24,11 +23,27 @@ const Navbar = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+    let rafId = 0;
+    let ticking = false;
+
+    const updateScrollState = () => {
+      const nextIsScrolled = window.scrollY > 32;
+      setIsScrolled((prev) => (prev === nextIsScrolled ? prev : nextIsScrolled));
+      ticking = false;
     };
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      rafId = window.requestAnimationFrame(updateScrollState);
+    };
+
+    updateScrollState();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
   }, []);
 
   useEffect(() => {
@@ -76,6 +91,7 @@ const Navbar = () => {
   ];
 
   const isActive = (href: string) => location.pathname === href;
+  const isSurfaceActive = isScrolled || isMenuOpen || isSearchOpen;
 
   // Dynamic logo based on layout
   const layoutLogos: Record<string, { icon: React.ReactNode; name: string; gradient: string }> = {
@@ -106,8 +122,8 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top animate-fade-in ${
-          isScrolled || isMenuOpen ? "bg-background/85 backdrop-blur-md border-b border-border/30" : "bg-gradient-to-b from-background/80 to-transparent"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 safe-top ${
+          isSurfaceActive ? "performance-surface border-b border-border/30" : "bg-gradient-to-b from-background/80 to-transparent"
         }`}
       >
         <div className="container mx-auto px-3 sm:px-4">
@@ -141,27 +157,21 @@ const Navbar = () => {
 
             {/* Search, Language, Theme, Profile & Menu */}
             <div className="flex items-center gap-1 sm:gap-2">
-              <AnimatePresence>
-                {isSearchOpen && (
-                  <motion.form
-                    initial={{ opacity: 0, scaleX: 0 }}
-                    animate={{ opacity: 1, scaleX: 1 }}
-                    exit={{ opacity: 0, scaleX: 0 }}
-                    style={{ originX: 1 }}
-                    onSubmit={handleSearch}
-                    className="absolute left-3 right-14 top-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:right-auto sm:top-auto sm:translate-y-0 sm:w-[250px] z-50"
-                  >
-                    <Input
-                      type="text"
-                      placeholder={t("searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-secondary border-0 focus-visible:ring-primary h-10"
-                      autoFocus
-                    />
-                  </motion.form>
-                )}
-              </AnimatePresence>
+              {isSearchOpen && (
+                <form
+                  onSubmit={handleSearch}
+                  className="absolute left-3 right-14 top-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:right-auto sm:top-auto sm:translate-y-0 sm:w-[250px] z-50 performance-page-enter"
+                >
+                  <Input
+                    type="text"
+                    placeholder={t("searchPlaceholder")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-secondary border-0 focus-visible:ring-primary h-10"
+                    autoFocus
+                  />
+                </form>
+              )}
               
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -204,7 +214,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation - Full Screen Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-background/95 backdrop-blur-lg md:hidden pt-16 safe-top animate-fade-in">
+        <div className="fixed inset-0 z-40 bg-background/96 md:hidden pt-16 safe-top performance-page-enter">
           <div className="container mx-auto px-4 py-6">
             {/* Mobile Settings Row */}
             <div className="flex items-center justify-center gap-2 mb-6 pb-4 border-b border-border">

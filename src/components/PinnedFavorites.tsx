@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Play, Pin, X } from "lucide-react";
 import { getPinnedItems, unpinItem, PinnedItem } from "@/lib/userPreferences";
 import { getImageUrl } from "@/lib/tmdb";
@@ -24,28 +23,23 @@ const PinnedFavorites = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="mb-4 sm:mb-6">
+    <div className="mb-4 sm:mb-6 content-auto" style={{ containIntrinsicSize: "0 240px" }}>
       <div className="flex items-center gap-2 mb-2 sm:mb-3">
         <Pin className="w-4 h-4 text-primary" />
         <h2 className="text-base sm:text-lg md:text-xl font-bold">{t("pinnedFavorites")}</h2>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
-        {items.map((item, index) => (
-          <motion.div
-            key={`${item.mediaType}-${item.id}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className="group relative"
-          >
+        {items.map((item) => (
+          <div key={`${item.mediaType}-${item.id}`} className="group relative">
             <Link to={`/${item.mediaType}/${item.id}/watch`}>
               <div className="relative aspect-video rounded-lg overflow-hidden card-shadow ring-2 ring-primary/30">
                 <img
-                  src={getImageUrl(item.backdrop_path || item.poster_path, "w500")}
+                  src={getImageUrl(item.backdrop_path || item.poster_path, "w300")}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -55,7 +49,7 @@ const PinnedFavorites = () => {
                 </div>
                 <button
                   onClick={(e) => handleUnpin(item, e)}
-                  className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
+                  className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -64,7 +58,7 @@ const PinnedFavorites = () => {
                 </div>
               </div>
             </Link>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

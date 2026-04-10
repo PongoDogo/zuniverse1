@@ -62,7 +62,7 @@ const ContinueWatchingRow = () => {
   if (items.length === 0) return null;
 
   return (
-    <div className="relative group/row overflow-hidden">
+    <div className="relative group/row overflow-hidden content-auto" style={{ containIntrinsicSize: "0 240px" }}>
       <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2">
         <Clock className="w-5 h-5 text-primary" />
         {t("continueWatching")}
@@ -131,7 +131,7 @@ const ContinueWatchingRow = () => {
                   {/* Remove button */}
                   <button
                     onClick={(e) => handleRemove(e, item)}
-                    className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-background/80 opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive active:scale-90"
+                    className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-background/90 opacity-0 group-hover:opacity-100 transition-all hover:bg-destructive active:scale-90"
                   >
                     <X className="w-3 h-3 sm:w-4 sm:h-4" />
                   </button>

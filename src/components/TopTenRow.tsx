@@ -60,7 +60,7 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
 
   return (
     <div className="relative group/row overflow-hidden" style={{ contentVisibility: "auto", containIntrinsicSize: "0 260px" }}>
-      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2 animate-fade-in">
+      <h2 className="text-base sm:text-lg md:text-xl font-bold mb-2 sm:mb-3 flex items-center gap-2">
         <span className="text-gradient">🔥 {t("topTenThisWeek")}</span>
       </h2>
 
@@ -92,11 +92,7 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
             const mediaType = item.media_type || (item.first_air_date ? "tv" : "movie");
 
             return (
-              <div
-                key={item.id}
-                className="flex-shrink-0 group animate-fade-in"
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
+              <div key={item.id} className="flex-shrink-0 group">
                 <Link to={`/${mediaType}/${item.id}`} className="flex items-end">
                   {/* Large rank number */}
                   <span
@@ -113,10 +109,11 @@ const TopTenRow = ({ items, isLoading }: TopTenRowProps) => {
                   </span>
                   <div className="relative w-[100px] sm:w-[120px] md:w-[140px] aspect-[2/3] rounded-xl overflow-hidden card-shadow cyber-card">
                     <img
-                      src={getImageUrl(item.poster_path)}
+                      src={getImageUrl(item.poster_path, "w300")}
                       alt={title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
