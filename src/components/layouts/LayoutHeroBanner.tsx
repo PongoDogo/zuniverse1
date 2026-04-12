@@ -256,7 +256,7 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
               <div className="max-w-lg space-y-3">
                 <div className="flex items-start gap-4">
                   <img
-                    src={getImageUrl(current.poster_path, "w185")}
+                    src={getImageUrl(current.poster_path, "w200")}
                     alt={title}
                     className="w-20 sm:w-28 rounded-md shadow-lg hidden sm:block"
                     loading="lazy"
