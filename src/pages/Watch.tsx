@@ -1,6 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, Share2, Heart, Pin, Star, 
   Calendar, Clock, Info, ToggleLeft, ToggleRight, Play, Film, Tv,
@@ -151,18 +150,20 @@ const Watch = () => {
   };
 
   const backdropUrl = details?.backdrop_path ? getImageUrl(details.backdrop_path, "w780") : null;
+  const progressPercent = episodes?.length ? Math.round((currentEpisode / episodes.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background relative">
       <Navbar />
 
-      {/* Cinematic Backdrop */}
+      {/* Cinematic Backdrop - no blur, just opacity */}
       {backdropUrl && (
         <div className="fixed inset-0 z-0 pointer-events-none">
           <img 
             src={backdropUrl} 
             alt="" 
             className="w-full h-full object-cover opacity-[0.07]"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/80 to-background" />
         </div>
@@ -171,15 +172,11 @@ const Watch = () => {
       <div className="relative z-10 pt-16 sm:pt-20 pb-8 sm:pb-16 safe-bottom">
         <div className="container mx-auto px-3 sm:px-4 max-w-7xl">
           
-          {/* Top Cinema Bar */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-5 sm:mb-6 p-3 sm:p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl shadow-lg shadow-black/5"
-          >
+          {/* Top Cinema Bar - CSS only, no motion */}
+          <div className="flex items-center justify-between mb-5 sm:mb-6 p-3 sm:p-4 rounded-2xl border border-border/30 performance-surface shadow-lg shadow-black/5 performance-page-enter">
             <Link
               to={`/${mediaType}/${mediaId}`}
-              className="inline-flex items-center gap-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-all duration-300 group"
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200 group"
             >
               <div className="p-1.5 rounded-lg bg-secondary/80 group-hover:bg-primary/20 transition-colors">
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -233,7 +230,7 @@ const Watch = () => {
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
-          </motion.div>
+          </div>
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-[1fr,340px] gap-5 lg:gap-6">
@@ -242,12 +239,7 @@ const Watch = () => {
             <div className="space-y-5">
               
               {/* Title & Meta Hero */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 }}
-                className="space-y-3"
-              >
+              <div className="space-y-3 performance-page-enter">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-primary/10 text-primary shrink-0 mt-1">
                     {mediaType === "tv" ? <Tv className="w-5 h-5" /> : <Film className="w-5 h-5" />}
@@ -287,18 +279,11 @@ const Watch = () => {
                     "{currentEpisodeData.name}"
                   </p>
                 )}
-              </motion.div>
+              </div>
 
-              {/* Video Player with premium frame */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                className="relative group"
-              >
-                {/* Glow ring behind player */}
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-xl" />
-                <div className="relative rounded-2xl overflow-hidden border border-border/30 shadow-2xl shadow-black/20 bg-card/30 backdrop-blur-sm">
+              {/* Video Player - no glow ring (causes repaint), no motion wrapper */}
+              <div className="relative">
+                <div className="relative rounded-2xl overflow-hidden border border-border/30 shadow-2xl shadow-black/20 bg-black">
                   <VideoPlayer
                     tmdbId={mediaId}
                     mediaType={mediaType}
@@ -311,30 +296,23 @@ const Watch = () => {
                     onRequestNextEpisode={hasNextEpisode ? handleRequestNextEpisode : undefined}
                   />
                 </div>
-              </motion.div>
+              </div>
 
               {/* Auto-play countdown */}
-              <AnimatePresence>
-                {showCountdown && hasNextEpisode && (
-                  <AutoPlayCountdown
-                    seconds={10}
-                    onComplete={() => goToEpisode(currentEpisode + 1)}
-                    onCancel={() => setShowCountdown(false)}
-                    nextEpisodeName={nextEpisodeData?.name}
-                  />
-                )}
-              </AnimatePresence>
+              {showCountdown && hasNextEpisode && (
+                <AutoPlayCountdown
+                  seconds={10}
+                  onComplete={() => goToEpisode(currentEpisode + 1)}
+                  onCancel={() => setShowCountdown(false)}
+                  nextEpisodeName={nextEpisodeData?.name}
+                />
+              )}
 
               {/* TV Show Controls */}
               {mediaType === "tv" && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="space-y-4"
-                >
+                <div className="space-y-4 performance-page-enter">
                   {/* Navigation Controls */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-2xl border border-border/30 performance-surface">
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                       <Select
                         value={currentSeason.toString()}
@@ -398,9 +376,9 @@ const Watch = () => {
                     </div>
                   </div>
 
-                  {/* Premium Episode Grid */}
+                  {/* Episode Grid */}
                   {episodes && episodes.length > 0 && (
-                    <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                    <div className="p-4 rounded-2xl border border-border/30 performance-surface">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-semibold flex items-center gap-2">
                           <Eye className="w-4 h-4 text-primary" />
@@ -418,10 +396,10 @@ const Watch = () => {
                               key={ep.episode_number}
                               onClick={() => goToEpisode(ep.episode_number)}
                               title={ep.name}
-                              className={`relative aspect-square rounded-xl text-sm font-bold transition-all duration-300 overflow-hidden group/ep ${
+                              className={`relative aspect-square rounded-xl text-sm font-bold transition-all duration-200 overflow-hidden ${
                                 isCurrent
                                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-110 ring-2 ring-primary/50"
-                                  : "bg-secondary/60 hover:bg-secondary hover:scale-105 hover:shadow-md"
+                                  : "bg-secondary/60 hover:bg-secondary hover:scale-105"
                               }`}
                             >
                               {ep.still_path ? (
@@ -429,7 +407,7 @@ const Watch = () => {
                                   <img
                                     src={getImageUrl(ep.still_path, "w200")}
                                     alt={ep.name}
-                                    className={`absolute inset-0 w-full h-full object-cover transition-opacity ${isCurrent ? "opacity-30" : "opacity-20 group-hover/ep:opacity-40"}`}
+                                    className={`absolute inset-0 w-full h-full object-cover ${isCurrent ? "opacity-30" : "opacity-20"}`}
                                     loading="lazy"
                                   />
                                   <span className="relative z-10">{ep.episode_number}</span>
@@ -446,17 +424,12 @@ const Watch = () => {
                       </div>
                     </div>
                   )}
-                </motion.div>
+                </div>
               )}
 
               {/* Synopsis Panel */}
               {(currentEpisodeData?.overview || details?.overview) && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.25 }}
-                  className="p-5 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl"
-                >
+                <div className="p-5 rounded-2xl border border-border/30 performance-surface performance-page-enter">
                   <div className="flex items-center gap-2.5 mb-3">
                     <div className="p-1.5 rounded-lg bg-primary/10">
                       <Info className="w-4 h-4 text-primary" />
@@ -470,27 +443,22 @@ const Watch = () => {
                   <p className="text-muted-foreground leading-relaxed text-sm">
                     {currentEpisodeData?.overview || details?.overview}
                   </p>
-                </motion.div>
+                </div>
               )}
             </div>
 
             {/* Right Column - Info Panel */}
-            <motion.aside
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15, type: "spring", stiffness: 150 }}
-              className="hidden lg:flex flex-col gap-4"
-            >
+            <aside className="hidden lg:flex flex-col gap-4 performance-page-enter">
               {/* Poster Card */}
-              <div className="relative group/poster rounded-2xl overflow-hidden border border-border/30 bg-card/40 backdrop-blur-xl">
+              <div className="relative rounded-2xl overflow-hidden border border-border/30 performance-surface">
                 <div className="p-4">
                   <div className="relative overflow-hidden rounded-xl">
                     <img
-                      src={getImageUrl(details?.poster_path, "w500")}
+                      src={getImageUrl(details?.poster_path, "w300")}
                       alt={title}
-                      className="w-full rounded-xl shadow-lg transition-transform duration-500 group-hover/poster:scale-[1.02]"
+                      className="w-full rounded-xl shadow-lg"
+                      loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/poster:opacity-100 transition-opacity rounded-xl" />
                   </div>
                   
                   {details?.genres && details.genres.length > 0 && (
@@ -517,7 +485,7 @@ const Watch = () => {
 
               {/* Season Info Card */}
               {mediaType === "tv" && seasons.length > 0 && (
-                <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                <div className="p-4 rounded-2xl border border-border/30 performance-surface">
                   <h3 className="font-semibold mb-3 text-sm flex items-center gap-2">
                     <Layers className="w-4 h-4 text-primary" />
                     {language === "el" ? "Σεζόν" : "Season"} {currentSeason}
@@ -535,14 +503,12 @@ const Watch = () => {
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                           <span>{language === "el" ? "Πρόοδος" : "Progress"}</span>
-                          <span>{Math.round((currentEpisode / episodes.length) * 100)}%</span>
+                          <span>{progressPercent}%</span>
                         </div>
                         <div className="h-1.5 bg-secondary rounded-full overflow-hidden">
-                          <motion.div 
-                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(currentEpisode / episodes.length) * 100}%` }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          <div 
+                            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-[width] duration-500 ease-out"
+                            style={{ width: `${progressPercent}%` }}
                           />
                         </div>
                       </div>
@@ -559,7 +525,7 @@ const Watch = () => {
 
               {/* Quick Seasons Switcher */}
               {mediaType === "tv" && seasons.length > 1 && (
-                <div className="p-4 rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl">
+                <div className="p-4 rounded-2xl border border-border/30 performance-surface">
                   <h3 className="font-semibold mb-3 text-sm">
                     {language === "el" ? "Αλλαγή Σεζόν" : "Switch Season"}
                   </h3>
@@ -568,7 +534,7 @@ const Watch = () => {
                       <button
                         key={s.season_number}
                         onClick={() => goToSeason(s.season_number)}
-                        className={`px-2 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                        className={`px-2 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
                           s.season_number === currentSeason
                             ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                             : "bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground"
@@ -580,24 +546,19 @@ const Watch = () => {
                   </div>
                 </div>
               )}
-            </motion.aside>
+            </aside>
           </div>
 
           {/* Similar Content */}
           {similar && similar.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="mt-10 sm:mt-14"
-            >
+            <div className="mt-10 sm:mt-14 performance-page-enter">
               <MediaRow
                 title={language === "el" 
                   ? `Παρόμοιες ${mediaType === "tv" ? "Σειρές" : "Ταινίες"}` 
                   : `More ${mediaType === "tv" ? "TV Shows" : "Movies"} Like This`}
                 items={similar}
               />
-            </motion.div>
+            </div>
           )}
         </div>
       </div>

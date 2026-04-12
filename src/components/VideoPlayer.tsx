@@ -376,15 +376,14 @@ const VideoPlayer = ({
         </div>
       )}
 
-      {/* Player Container */}
+      {/* Player Container - no overlapping pointer-event elements over iframe */}
       <div 
         ref={containerRef}
         className="relative w-full aspect-video bg-black/90 rounded-xl overflow-hidden touch-manipulation"
       >
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-20 pointer-events-none">
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "1.5s" }} />
               <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-spin relative" />
             </div>
             <div className="text-center">
@@ -398,7 +397,7 @@ const VideoPlayer = ({
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-10 p-6 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/95 z-20 p-6 text-center">
             <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20">
               <AlertCircle className="w-10 h-10 text-destructive" />
             </div>
@@ -419,7 +418,8 @@ const VideoPlayer = ({
           key={`${embedUrl}-${retryCount}`}
           ref={iframeRef}
           src={embedUrl}
-          className={`w-full h-full transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+          className={`w-full h-full ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+          style={{ border: 'none' }}
           allowFullScreen
           allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
           onLoad={handleLoad}
