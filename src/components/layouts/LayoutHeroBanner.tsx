@@ -31,13 +31,6 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
   }, [featuredItems.length, isPaused]);
 
   const current = featuredItems[currentIndex];
-  if (!current) return null;
-
-  const title = current.title || current.name || "Unknown";
-  const mediaType = current.media_type || (current.first_air_date ? "tv" : "movie");
-  const year = (current.release_date || current.first_air_date || "").split("-")[0];
-  const inWatchlist = isInWatchlist(current.id, mediaType);
-  const itemPinned = isPinned(current.id, mediaType);
 
   const handleWatchlistToggle = () => {
     if (inWatchlist) {

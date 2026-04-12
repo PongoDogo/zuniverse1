@@ -454,7 +454,7 @@ const Watch = () => {
                 <div className="p-4">
                   <div className="relative overflow-hidden rounded-xl">
                     <img
-                      src={getImageUrl(details?.poster_path, "w342")}
+                      src={getImageUrl(details?.poster_path, "w300")}
                       alt={title}
                       className="w-full rounded-xl shadow-lg"
                       loading="lazy"
