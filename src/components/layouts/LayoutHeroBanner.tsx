@@ -68,6 +68,14 @@ const LayoutHeroBanner = ({ items }: LayoutHeroBannerProps) => {
   const goNext = useCallback(() => setCurrentIndex((p) => (p + 1) % featuredItems.length), [featuredItems.length]);
   const goPrev = useCallback(() => setCurrentIndex((p) => (p - 1 + featuredItems.length) % featuredItems.length), [featuredItems.length]);
 
+  if (!current) return null;
+
+  const title = current.title || current.name || "Unknown";
+  const mediaType = current.media_type || (current.first_air_date ? "tv" : "movie");
+  const year = (current.release_date || current.first_air_date || "").split("-")[0];
+  const inWatchlist = isInWatchlist(current.id, mediaType);
+  const itemPinned = isPinned(current.id, mediaType);
+
   const heightClasses: Record<string, string> = {
     cinetorrio: "h-[55vh] sm:h-[65vh] md:h-[80vh]",
     galaxia: "h-[60vh] sm:h-[70vh] md:h-[85vh]",
