@@ -65,6 +65,87 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          language: string | null
+          spoiler_mode: boolean | null
+          theme: string | null
+          ui_layout: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id: string
+          language?: string | null
+          spoiler_mode?: boolean | null
+          theme?: string | null
+          ui_layout?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          language?: string | null
+          spoiler_mode?: boolean | null
+          theme?: string | null
+          ui_layout?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      public_reviews: {
+        Row: {
+          created_at: string
+          helpful_count: number
+          id: string
+          media_id: number
+          media_type: string
+          rating: number
+          text: string
+          updated_at: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          media_id: number
+          media_type: string
+          rating: number
+          text: string
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Update: {
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          media_id?: number
+          media_type?: string
+          rating?: number
+          text?: string
+          updated_at?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -356,6 +437,33 @@ export type Database = {
         }
         Relationships: []
       }
+      watched_episodes: {
+        Row: {
+          episode_number: number
+          id: string
+          media_id: number
+          season: number
+          user_id: string
+          watched_at: string | null
+        }
+        Insert: {
+          episode_number: number
+          id?: string
+          media_id: number
+          season: number
+          user_id: string
+          watched_at?: string | null
+        }
+        Update: {
+          episode_number?: number
+          id?: string
+          media_id?: number
+          season?: number
+          user_id?: string
+          watched_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -363,6 +471,7 @@ export type Database = {
     Functions: {
       get_authenticated_user_id: { Args: never; Returns: string }
       get_clerk_user_id: { Args: never; Returns: string }
+      increment_helpful: { Args: { review_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
