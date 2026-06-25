@@ -1395,6 +1395,20 @@
     }
   }
 
+  /* User-toggled reduce-motion (from Settings) */
+  html[data-reduce-motion="true"] *,
+  html[data-reduce-motion="true"] *::before,
+  html[data-reduce-motion="true"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* UI density (from Settings) */
+  html[data-density="compact"] { font-size: 14px; }
+  html[data-density="cozy"]    { font-size: 15px; }
+  html[data-density="spacious"]{ font-size: 16px; }
+
   /* === CYBER CARD (uiverse.io inspired) === */
 
   .cyber-card {
