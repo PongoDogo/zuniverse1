@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { User, Settings, BarChart3, Trophy, LogOut, Mail, Save, Palette } from "lucide-react";
+import { User, Settings, BarChart3, Trophy, LogOut, Mail, Save } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PageTransition from "@/components/PageTransition";
+import SettingsPanel from "@/components/SettingsPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ThemeSwitcher from "@/components/ThemeSwitcher";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import UILayoutSwitcher from "@/components/UILayoutSwitcher";
 import { useSupabaseAuthSafe } from "@/contexts/SupabaseAuthContext";
 import { useUserData } from "@/hooks/useUserData";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -17,6 +15,7 @@ import { toast } from "sonner";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
+
 
 const COLORS = [
   "hsl(262, 83%, 58%)", "hsl(0, 85%, 50%)", "hsl(210, 100%, 55%)",
@@ -207,10 +206,14 @@ const Profile = () => {
               )}
             </TabsContent>
 
-            {/* Settings Tab */}
+            {/* Settings Tab — Comprehensive panel */}
             <TabsContent value="settings" className="space-y-4">
               <Card className="glass-panel border-border/30">
-                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><User className="w-4 h-4" /> {t("displayName")}</CardTitle></CardHeader>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <User className="w-4 h-4" /> {t("displayName")}
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="flex gap-3">
                   <Input
                     value={displayName}
@@ -218,21 +221,18 @@ const Profile = () => {
                     placeholder={t("displayName")}
                     className="flex-1"
                   />
-                  <Button onClick={handleSaveName} size="icon" className="shrink-0"><Save className="w-4 h-4" /></Button>
+                  <Button onClick={handleSaveName} size="icon" className="shrink-0">
+                    <Save className="w-4 h-4" />
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card className="glass-panel border-border/30">
-                <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Palette className="w-4 h-4" /> {t("preferences")}</CardTitle></CardHeader>
-                <CardContent className="flex flex-wrap gap-3">
-                  <ThemeSwitcher />
-                  <LanguageSwitcher />
-                  <UILayoutSwitcher />
-                </CardContent>
-              </Card>
+              <SettingsPanel />
 
               <Card className="glass-panel border-border/30">
-                <CardHeader><CardTitle className="text-sm">{t("accountManagement")}</CardTitle></CardHeader>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">{t("accountManagement")}</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <Button
                     variant="destructive"
@@ -244,6 +244,7 @@ const Profile = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
           </Tabs>
         </div>
       </div>
