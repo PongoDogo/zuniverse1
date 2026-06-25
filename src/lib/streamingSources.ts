@@ -1,3 +1,5 @@
+export type SourceStatus = "live" | "limited" | "down" | "unknown";
+
 export interface StreamingSource {
   id: string;
   name: string;
@@ -9,6 +11,47 @@ export interface StreamingSource {
     episode?: number
   ) => string;
 }
+
+// Liveness map populated from automated availability checks.
+// "live" = responded 200, "limited" = blocked at root but embed may work,
+// "down" = confirmed dead, "unknown" = bot probe blocked (often OK in real browsers).
+const SOURCE_STATUS: Record<string, SourceStatus> = {
+  vidsrcto: "live", embedsu: "live", vidsrcxyz: "unknown", vidsrcvip: "unknown",
+  vixsrc: "live", "2embed": "live", autoembed: "unknown", vidlink: "live",
+  vidplay: "live", warezcdn: "unknown", filmxy: "limited", showbox: "live",
+  vidsrcprime: "live", hdmovies: "unknown", movieapi: "unknown",
+  multiembed: "live", vidsrcme: "live", vidsrcpro: "live", smashystream: "unknown",
+  moviesapi: "unknown", vidsrcdev: "down", embedapi: "limited", mapletv: "unknown",
+  movieclub: "unknown", gdriveplayer: "live", godriveplayerapi: "unknown",
+  spencerdevs: "unknown", vidsrccc: "limited", vidsrcicu: "unknown",
+  vidsrcnl: "live", vidbinge: "unknown", vidsrcin: "live", vidsrcnet: "unknown",
+  vidsrccx: "unknown", embedsoap: "unknown", anyembed: "live",
+  vidsrcwtfpremium: "live", emberstream: "unknown", superstream: "unknown",
+  vidsrcwtf: "live", superembed: "live", rive: "live", catflix: "live",
+  primewire: "unknown", flixhq: "unknown", movieembed: "unknown", gomo: "unknown",
+  nontongopremium: "live", streamzone: "unknown", animehiber: "unknown",
+  moviecloud: "live", vidsrcembed: "live", nontongo: "live", moviee: "unknown",
+  frembed: "unknown", nunflix: "down", rgshows: "unknown", streamsrc: "unknown",
+  embedsito: "unknown", watchhub: "unknown", flixwave: "unknown",
+  cinezone: "unknown", vidwtf: "unknown",
+};
+
+export const getSourceStatus = (id: string): SourceStatus =>
+  SOURCE_STATUS[id] ?? "unknown";
+
+export const statusLabels: Record<SourceStatus, string> = {
+  live: "Live",
+  limited: "Limited",
+  down: "Offline",
+  unknown: "Unverified",
+};
+
+export const statusDotClass: Record<SourceStatus, string> = {
+  live: "bg-emerald-500 shadow-[0_0_8px_hsl(var(--primary)/0.8)]",
+  limited: "bg-amber-500",
+  down: "bg-red-500",
+  unknown: "bg-muted-foreground/40",
+};
 
 export type SourceCategory = 
   | "top"
@@ -781,7 +824,7 @@ export const getPreferredSource = (): StreamingSource => {
   const savedId = localStorage.getItem("preferredStreamingSource");
   if (savedId) {
     const source = streamingSources.find((s) => s.id === savedId);
-    if (source) return source;
+    if (source && getSourceStatus(source.id) !== "down") return source;
   }
   return getDefaultSource();
 };
@@ -789,10 +832,11 @@ export const getPreferredSource = (): StreamingSource => {
 // Get next source for auto-fallback
 export const getNextSource = (currentSourceId: string): StreamingSource | null => {
   const currentIndex = streamingSources.findIndex(s => s.id === currentSourceId);
-  if (currentIndex === -1 || currentIndex >= streamingSources.length - 1) {
-    return null;
+  if (currentIndex === -1) return null;
+  for (let i = currentIndex + 1; i < streamingSources.length; i++) {
+    if (getSourceStatus(streamingSources[i].id) !== "down") return streamingSources[i];
   }
-  return streamingSources[currentIndex + 1];
+  return null;
 };
 
 // Get total source count
