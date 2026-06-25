@@ -824,7 +824,7 @@ export const getPreferredSource = (): StreamingSource => {
   const savedId = localStorage.getItem("preferredStreamingSource");
   if (savedId) {
     const source = streamingSources.find((s) => s.id === savedId);
-    if (source) return source;
+    if (source && getSourceStatus(source.id) !== "down") return source;
   }
   return getDefaultSource();
 };
