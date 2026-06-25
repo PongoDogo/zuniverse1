@@ -832,10 +832,11 @@ export const getPreferredSource = (): StreamingSource => {
 // Get next source for auto-fallback
 export const getNextSource = (currentSourceId: string): StreamingSource | null => {
   const currentIndex = streamingSources.findIndex(s => s.id === currentSourceId);
-  if (currentIndex === -1 || currentIndex >= streamingSources.length - 1) {
-    return null;
+  if (currentIndex === -1) return null;
+  for (let i = currentIndex + 1; i < streamingSources.length; i++) {
+    if (getSourceStatus(streamingSources[i].id) !== "down") return streamingSources[i];
   }
-  return streamingSources[currentIndex + 1];
+  return null;
 };
 
 // Get total source count
